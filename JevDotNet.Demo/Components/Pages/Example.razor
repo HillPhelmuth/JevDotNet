@@ -1,0 +1,129 @@
+@page "/examples/{ScenarioId}"
+@implements IDisposable
+@using System.Net
+@using System.Globalization
+@using System.Text.Json
+@using JevDotNet
+@using JevDotNet.Demo.Services
+@inject DemoEvaluationService Evaluation
+
+@if (Scenario is null)
+{
+    <PageTitle>Example not found</PageTitle>
+    <div class="empty-state"><h1>Example not found</h1><a href="/">Back to examples</a></div>
+}
+else
+{
+    <PageTitle>@Scenario.Title · JevDotNet Demo</PageTitle>
+    <div class="page-heading">
+        <div>
+            <a class="back-link" href="/">← All demos</a>
+            <div class="eyebrow">WORKFLOW @Scenario.Number / 03</div>
+            <h1>@Scenario.Title<span class="title-period">.</span></h1>
+            <p>@Scenario.Summary</p>
+        </div>
+    </div>
+
+    @if (!Evaluation.HasApiKey)
+    {
+        <ApiKeyNotice />
+    }
+
+    <div class="workspace-grid">
+        <section class="workspace-panel editor-panel">
+            <div class="panel-heading"><h2>State</h2><span class="panel-aside">Editable sample</span></div>
+            <label for="demo-input">@Scenario.InputLabel</label>
+            <textarea id="demo-input" @bind="Input" @bind:event="oninput" maxlength="@DemoScenarioCatalog.MaxInputLength" disabled="@IsBusy"></textarea>
+            <div class="field-meta"><span>One live request per click</span><span>@Input.Length / @DemoScenarioCatalog.MaxInputLength</span></div>
+            <label for="demo-model">Decision model</label>
+            <select id="demo-model" class="model-select" @bind="SelectedModel" @bind:after="OnModelChanged" disabled="@IsBusy">
+                @foreach (var model in DemoDecisionModels.All)
+                {
+                    <option value="@model.Id">@model.Name</option>
+                }
+            </select>
+            @if (ValidationError is not null)
+            {
+                <p class="field-error" role="alert">@ValidationError</p>
+            }
+            <button class="button button-primary evaluate-button" @onclick="EvaluateAsync" disabled="@(IsBusy || !Evaluation.HasApiKey)">
+                @(IsBusy ? "Evaluating…" : "Evaluate") <span aria-hidden="true">↗</span>
+            </button>
+            <div class="panel-heading questions-heading"><h2>Questions</h2><span class="panel-aside">Sent together</span></div>
+            @foreach (var question in Questions)
+            {
+                <div class="question-row">
+                    <span class="type-pill @QuestionClass(question.Value)">@QuestionType(question.Value)</span>
+                    <div><strong>@DisplayName(question.Key)</strong><p>@question.Value.Instructions.ToJsonElement().GetString()</p></div>
+                </div>
+            }
+        </section>
+
+        <section class="workspace-panel output-panel" aria-live="polite">
+            <div class="panel-heading"><h2>Decision output</h2>@if (Response is not null) { <span class="live-badge"><span></span> LIVE RESULT</span> }</div>
+            @if (ErrorMessage is not null)
+            {
+                <div class="error-notice" role="alert"><strong>Evaluation failed.</strong> @ErrorMessage</div>
+            }
+            @if (Response is null && ErrorMessage is null)
+            {
+                <div class="output-placeholder"><span aria-hidden="true">◇</span><strong>Ready when you are</strong><p>Evaluate the state to see the model’s answers, probabilities, and a demo recommendation here.</p></div>
+            }
+            @if (Response is not null)
+            {
+            @if (Recommendation is not null)
+            {
+                <div class="recommendation-card"><span class="recommendation-label">ILLUSTRATIVE CODE DECISION</span><h3>@Recommendation.Title</h3><p>@Recommendation.Detail</p></div>
+            }
+            <div class="answer-grid">
+                @foreach (var entry in Response.Answers)
+                {
+                    <div class="answer-card">
+                        <div class="answer-top"><span>@DisplayName(entry.Key)</span><span class="type-pill @AnswerClass(entry.Value)">@AnswerType(entry.Value)</span></div>
+                        @if (entry.Value is NoulAnswer noul)
+                        {
+                            <div class="answer-value">@Percent(noul.Noul)% <small>yes probability</small></div>
+                            <div class="probability-track"><div style="@WidthStyle(noul.Noul)"></div></div>
+                            <p class="answer-note">Noul reports a probability, without a separate confidence value.</p>
+                        }
+                        else if (entry.Value is ChoiceAnswer choice)
+                        {
+                            <div class="answer-value">@DisplayName(choice.Choice)</div>
+                            <p class="answer-note">Confidence @Percent(choice.Confidence)%</p>
+                            @foreach (var probability in choice.Probabilities.OrderByDescending(item => item.Value))
+                            {
+                                <div class="probability-row"><span>@DisplayName(probability.Key)</span><strong>@Percent(probability.Value)%</strong></div>
+                                <div class="probability-track"><div style="@WidthStyle(probability.Value)"></div></div>
+                            }
+                        }
+                        else if (entry.Value is ScoreAnswer score)
+                        {
+                            <div class="answer-value">@score.Score.ToString("0.00") <small>on a 0–@(score.Legend.Count - 1) scale</small></div>
+                            <p class="answer-note">Confidence @Percent(score.Confidence)%</p>
+                            @foreach (var probability in score.Probabilities.OrderBy(item => int.TryParse(item.Key, out var index) ? index : int.MaxValue))
+                            {
+                                <div class="probability-row"><span>@(score.Legend.TryGetValue(probability.Key, out var label) ? label : probability.Key)</span><strong>@Percent(probability.Value)%</strong></div>
+                                <div class="probability-track"><div style="@WidthStyle(probability.Value)"></div></div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+            <div class="response-meta">
+                <span>Model <strong>@Response.Model</strong></span>
+                @if (!string.IsNullOrWhiteSpace(Response.Provider)) { <span>Provider <strong>@Response.Provider</strong></span> }
+                @if (!string.IsNullOrWhiteSpace(Response.Id)) { <span>Request ID <strong>@Response.Id</strong></span> }
+                <span>Input tokens <strong>@Response.Usage.InputTokens</strong></span>
+                <span>Output tokens <strong>@Response.Usage.OutputTokens</strong></span>
+                @if (Response.Usage.Cost is { } cost) { <span>Cost <strong>$@cost.ToString("0.#########", CultureInfo.InvariantCulture)</strong></span> }
+            </div>
+            <div class="wire-details">
+                <details><summary>View request JSON</summary><pre>@RequestJson</pre></details>
+                <details><summary>View response JSON</summary><pre>@ResponseJson</pre></details>
+            </div>
+            }
+        </section>
+    </div>
+}
+
+

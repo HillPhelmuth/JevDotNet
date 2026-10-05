@@ -1,0 +1,181 @@
+@page "/bulk-support"
+@implements IDisposable
+@using JevDotNet.Demo.Services
+@inject BulkTriageService Triage
+
+<PageTitle>Bulk support triage · JevDotNet Demo</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <a class="back-link" href="/">← All demos</a>
+        <div class="eyebrow">BULK SUPPORT TRIAGE</div>
+        <h1>Decisions vs Luna<span class="title-period">.</span></h1>
+        <p>Ask the same five questions about every support message. Compare probabilities and measured response times.</p>
+    </div>
+</div>
+
+@if (!Triage.HasApiKey)
+{
+    <ApiKeyNotice />
+}
+@if (LoadError is not null)
+{
+    <div class="error-notice" role="alert">Could not load the triage dataset: @LoadError</div>
+}
+
+<section class="bulk-controls workspace-panel">
+    <div>
+        <h2>@Messages.Count messages · @(@Messages.Count * BulkTriageCatalog.Categories.Count) questions</h2>
+        <label for="bulk-model">Decisions model</label>
+        <select id="bulk-model" class="model-select" @bind="SelectedDecisionModel" @bind:after="OnDecisionModelChanged" disabled="@IsBusy">
+            @foreach (var model in DemoDecisionModels.All)
+            {
+                <option value="@model.Id">@model.Name</option>
+            }
+        </select>
+        <p>The selected Decisions model evaluates message groups. Luna uses <strong>@BulkTriageCatalog.LunaModel</strong> and always evaluates messages one at a time.</p>
+        <label for="bulk-mode">Decisions request mode</label>
+        <select id="bulk-mode" class="model-select" @bind="Mode" @bind:after="OnRunOptionsChanged" disabled="@IsBusy">
+            <option value="@JevBulkMode.Batched">Batch messages</option>
+            <option value="@JevBulkMode.OneAtATime">One message per request</option>
+        </select>
+        @if (Mode == JevBulkMode.Batched)
+        {
+            <label for="bulk-size">Messages per Decisions request</label>
+            <input id="bulk-size" class="model-select bulk-size-input" type="number" min="2" max="95" step="1" required
+                   @bind="BatchSize" @bind:after="OnRunOptionsChanged" disabled="@IsBusy" />
+            @if (!IsBatchSizeValid)
+            {
+                <p class="field-error" role="alert">Enter a number from 2 to 95.</p>
+            }
+            <p class="bulk-help">Each request sends the chosen number of messages and five questions per message. The final request may contain fewer messages. A value of 95 sends all messages in one request.</p>
+        }
+    </div>
+    <div class="bulk-actions">
+        @if (IsBusy)
+        {
+            <button class="button bulk-cancel" @onclick="Cancel">Cancel run</button>
+        }
+        else
+        {
+            <button class="button button-primary" @onclick="StartAsync" disabled="@(!Triage.HasApiKey || Messages.Count == 0 || (Mode == JevBulkMode.Batched && !IsBatchSizeValid))">Run comparison ↗</button>
+        }
+        @if (Run is not null)
+        {
+            <div class="bulk-progress" aria-live="polite">
+                <strong>@(Run.Complete ? "Complete" : Run.Cancelled ? "Cancelled" : Run.JevError is not null ? "Decisions request failed" : IsBusy ? "Running" : "Stopped")</strong>
+                <span>Decisions @Run.Jev.Count/@Run.Messages.Count in @Run.JevRequests.Count requests · Luna @Run.Luna.Count/@Run.Messages.Count</span>
+            </div>
+        }
+    </div>
+</section>
+
+@if (Error is not null)
+{
+    <div class="error-notice" role="alert">@Error</div>
+}
+@if (Run?.JevError is not null)
+{
+    <div class="error-notice" role="alert">@Run.JevError</div>
+}
+
+@if (Run is not null)
+{
+    <div class="bulk-tabs" role="tablist" aria-label="Triage results">
+        <button id="tab-jev" role="tab" aria-controls="panel-jev" aria-selected="@(Tab == 0)" class="@(Tab == 0 ? "active" : "")" @onclick="() => Tab = 0">Decisions results</button>
+        <button id="tab-luna" role="tab" aria-controls="panel-luna" aria-selected="@(Tab == 1)" class="@(Tab == 1 ? "active" : "")" @onclick="() => Tab = 1">Luna results</button>
+        <button id="tab-compare" role="tab" aria-controls="panel-compare" aria-selected="@(Tab == 2)" class="@(Tab == 2 ? "active" : "")" @onclick="() => Tab = 2">Comparison</button>
+    </div>
+
+    @if (Tab == 0)
+    {
+        <section id="panel-jev" role="tabpanel" aria-labelledby="tab-jev" class="workspace-panel bulk-results">
+            <div class="bulk-summary"><h2>@Run.JevModel · @Run.Jev.Count results</h2><span>Total model time <strong>@Duration(Run.JevTotal)</strong> · @Run.JevRequests.Count requests</span></div>
+            <p class="bulk-help">Each row shows its Decisions request duration. Reference scores come from the supplied JSON.</p>
+            @if (Run.Mode == JevBulkMode.Batched && Run.JevRequests.Count > 0)
+            {
+                <div class="bulk-request-times" aria-label="Decisions request times">
+                    @foreach (var request in Run.JevRequests)
+                    {
+                        <span>Request @request.Number · @request.FirstMessageId–@request.LastMessageId · @request.MessageCount messages · @Duration(request.Elapsed)@(request.Error is null ? "" : " · failed")</span>
+                    }
+                </div>
+            }
+            <div class="bulk-table-scroll"><table class="bulk-table">
+                <thead><tr><th scope="col">ID</th><th scope="col">Message</th>@foreach (var category in BulkTriageCatalog.Categories) { <th scope="col">@category.Label</th> }<th scope="col">Response time</th></tr></thead>
+                <tbody>
+                @foreach (var message in Run.Messages)
+                {
+                    Run.Jev.TryGetValue(message.Id, out var result);
+                    <tr><th scope="row">@message.Id</th><td class="bulk-message">@message.Text</td>
+                    @foreach (var category in BulkTriageCatalog.Categories)
+                    {
+                        <td><strong>@Score(result?.Scores, category.Key)</strong><small>Ref @Percent(message.Reference.Get(category.Key))</small></td>
+                    }
+                    <td>@(result is null ? "—" : $"Request {result.RequestNumber} · {Duration(result.Elapsed)}")@if (result?.Error is not null) { <small class="bulk-error">@result.Error</small> }</td></tr>
+                }
+                </tbody>
+            </table></div>
+        </section>
+    }
+    else if (Tab == 1)
+    {
+        <section id="panel-luna" role="tabpanel" aria-labelledby="tab-luna" class="workspace-panel bulk-results">
+            <div class="bulk-summary"><h2>Luna · @Run.Luna.Count results</h2><span>Total model time <strong>@Duration(Run.LunaTotal)</strong> · @Run.Luna.Count requests</span></div>
+            <p class="bulk-help">Each message starts a new agent run. Reference scores come from the supplied JSON.</p>
+            <div class="bulk-table-scroll"><table class="bulk-table">
+                <thead><tr><th scope="col">ID</th><th scope="col">Message</th>@foreach (var category in BulkTriageCatalog.Categories) { <th scope="col">@category.Label</th> }<th scope="col">Response time</th></tr></thead>
+                <tbody>
+                @foreach (var message in Run.Messages)
+                {
+                    Run.Luna.TryGetValue(message.Id, out var result);
+                    <tr><th scope="row">@message.Id</th><td class="bulk-message">@message.Text</td>
+                    @foreach (var category in BulkTriageCatalog.Categories)
+                    {
+                        <td><strong>@Score(result?.Scores, category.Key)</strong><small>Ref @Percent(message.Reference.Get(category.Key))</small></td>
+                    }
+                    <td>@(result is null ? "—" : Duration(result.Elapsed))@if (result?.Error is not null) { <small class="bulk-error">@result.Error</small> }</td></tr>
+                }
+                </tbody>
+            </table></div>
+        </section>
+    }
+    else
+    {
+        var comparison = BulkTriageComparison.Calculate(Run);
+        <section id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" class="workspace-panel bulk-results">
+            <div class="bulk-summary"><h2>Overall comparison</h2><span>@comparison.Messages.Count paired messages</span></div>
+            @if (Run.Complete)
+            {
+                <div class="bulk-metrics">
+                    <div><span>Selected model total</span><strong>@Duration(Run.JevTotal)</strong></div>
+                    <div><span>Luna total</span><strong>@Duration(Run.LunaTotal)</strong></div>
+                    <div><span>Luna − selected model</span><strong>@SignedDuration(Run.LunaTotal - Run.JevTotal)</strong></div>
+                    <div><span>Yes/no agreement</span><strong>@comparison.Agreed / @comparison.Compared</strong></div>
+                    <div><span>Average score gap</span><strong>@comparison.MeanAbsoluteGapPoints.ToString("0.0") pp</strong></div>
+                </div>
+            }
+            else
+            {
+                <p class="bulk-help">Complete both model runs to compare total response times. Available paired answers are shown below.</p>
+            }
+            <p class="bulk-help">Agreement means both probabilities are on the same side of 50%. The score gap is the average absolute difference in percentage points. Only valid paired answers count.</p>
+            <div class="bulk-table-scroll"><table class="bulk-table bulk-category-table">
+                <thead><tr><th scope="col">Question</th><th scope="col">Yes/no agreement</th><th scope="col">Average score gap</th></tr></thead>
+                <tbody>@foreach (var category in comparison.Categories) { <tr><th scope="row">@category.Label</th><td>@category.Agreed / @category.Compared</td><td>@category.MeanAbsoluteGapPoints.ToString("0.0") pp</td></tr> }</tbody>
+            </table></div>
+            <h3 class="bulk-subheading">Message-level disagreements</h3>
+            @if (!comparison.Messages.Any(message => message.DisagreedCategories.Count > 0))
+            {
+                <p class="bulk-help">No yes/no disagreements among the available paired answers.</p>
+            }
+            else
+            {
+                <div class="bulk-table-scroll"><table class="bulk-table">
+                    <thead><tr><th scope="col">ID</th><th scope="col">Message</th><th scope="col">Disagreed questions</th><th scope="col">Average score gap</th></tr></thead>
+                    <tbody>@foreach (var message in comparison.Messages.Where(message => message.DisagreedCategories.Count > 0)) { <tr><th scope="row">@message.Id</th><td class="bulk-message">@message.Text</td><td>@string.Join(", ", message.DisagreedCategories)</td><td>@message.MeanAbsoluteGapPoints.ToString("0.0") pp</td></tr> }</tbody>
+                </table></div>
+            }
+        </section>
+    }
+}

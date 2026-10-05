@@ -1,0 +1,66 @@
+@page "/"
+@using JevDotNet.Demo.Services
+@inject DemoEvaluationService Evaluation
+
+<PageTitle>JevDotNet Demo</PageTitle>
+
+<section class="dashboard-intro">
+    <div>
+        <div class="eyebrow">DECISION MODEL SHOWCASE</div>
+        <h1>Decisions your code <em>can use.</em></h1>
+        <p>Explore decision workflows, judge response quality, compare models, or play against one in a live chase.</p>
+    </div>
+</section>
+
+@if (!Evaluation.HasApiKey)
+{
+    <ApiKeyNotice />
+}
+
+<section class="section-heading dashboard-heading">
+    <h2>Choose a demo</h2>
+    <p>Workflows run on Evaluate. The chase runs after Start.</p>
+</section>
+
+<div class="scenario-grid">
+    <a class="scenario-card" href="jev-as-judge">
+        <span class="card-number">RESPONSE QUALITY</span>
+        <span class="card-icon" aria-hidden="true">✓</span>
+        <h3>Jev as Judge</h3>
+        <p>Evaluate relevance, completeness, equivalence, and groundedness with five-level rubrics and 80 examples.</p>
+        <span class="card-footer"><span>Likert ratings · full probabilities</span><span aria-hidden="true">↗</span></span>
+    </a>
+    <a class="scenario-card" href="bulk-support">
+        <span class="card-number">MODEL COMPARISON</span>
+        <span class="card-icon" aria-hidden="true">▦</span>
+        <h3>Bulk support triage</h3>
+        <p>Run 95 support messages through Jev and GPT-6 Luna. Compare five scores, agreement, and elapsed time.</p>
+        <span class="card-footer"><span>Five questions · one batch or one at a time</span><span aria-hidden="true">↗</span></span>
+    </a>
+    <a class="scenario-card game-card" href="game">
+        <span class="card-number">INTERACTIVE GAME</span>
+        <span class="card-icon" aria-hidden="true">◎</span>
+        <h3>Live chase</h3>
+        <p>Run around a 6 × 6 grid while your selected model picks each move. Watch its choices and live usage.</p>
+        <span class="card-footer"><span>Choice · one request per move</span><span aria-hidden="true">↗</span></span>
+    </a>
+    @foreach (var scenario in DemoScenarioCatalog.All)
+    {
+        <a class="scenario-card" href="@($"examples/{scenario.Slug}")">
+            <span class="card-number">@scenario.Number / 03</span>
+            <span class="card-icon" aria-hidden="true">@Icon(scenario.Slug)</span>
+            <h3>@scenario.Title</h3>
+            <p>@scenario.Summary</p>
+            <span class="card-footer"><span>@scenario.Pattern</span><span aria-hidden="true">↗</span></span>
+        </a>
+    }
+</div>
+
+@code {
+    private static string Icon(string slug) => slug switch
+    {
+        "support" => "◎",
+        "content" => "◇",
+        _ => "↗"
+    };
+}

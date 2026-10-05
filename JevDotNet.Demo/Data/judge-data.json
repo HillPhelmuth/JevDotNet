@@ -1,0 +1,672 @@
+[
+  {
+    "id": "relevance-password-1",
+    "type": "relevance",
+    "title": "Reset a password · example 1",
+    "input": {
+      "query": "How do I reset my password on the Acorn app?",
+      "response": "The local museum opens at nine on Saturdays."
+    },
+    "expectedScore": 1,
+    "explanation": "The response is unrelated to account access."
+  },
+  {
+    "id": "relevance-password-2",
+    "type": "relevance",
+    "title": "Reset a password · example 2",
+    "input": {
+      "query": "How do I reset my password on the Acorn app?",
+      "response": "Acorn lets you change your avatar and notification settings in your profile."
+    },
+    "expectedScore": 2,
+    "explanation": "Account settings are adjacent to the topic, but password reset is not addressed."
+  },
+  {
+    "id": "relevance-password-3",
+    "type": "relevance",
+    "title": "Reset a password · example 3",
+    "input": {
+      "query": "How do I reset my password on the Acorn app?",
+      "response": "Acorn has a password-reset link. Its premium plan includes team dashboards, exports, and priority support."
+    },
+    "expectedScore": 3,
+    "explanation": "It mentions a reset link but spends most of the response on unrelated features."
+  },
+  {
+    "id": "relevance-password-4",
+    "type": "relevance",
+    "title": "Reset a password · example 4",
+    "input": {
+      "query": "How do I reset my password on the Acorn app?",
+      "response": "Select Forgot password on the sign-in page and follow the emailed link. Acorn also offers a dark theme."
+    },
+    "expectedScore": 4,
+    "explanation": "The requested reset process is addressed directly, with a minor unrelated aside."
+  },
+  {
+    "id": "relevance-password-5",
+    "type": "relevance",
+    "title": "Reset a password · example 5",
+    "input": {
+      "query": "How do I reset my password on the Acorn app?",
+      "response": "On the sign-in page, select Forgot password, enter your account email, and use the emailed link to choose a new password."
+    },
+    "expectedScore": 5,
+    "explanation": "Every sentence directly addresses the requested task."
+  },
+  {
+    "id": "relevance-plant-1",
+    "type": "relevance",
+    "title": "Watering a houseplant · example 1",
+    "input": {
+      "query": "What signs tell me my potted basil needs water?",
+      "response": "The train to the city center leaves from platform four."
+    },
+    "expectedScore": 1,
+    "explanation": "The response has no connection to basil or watering."
+  },
+  {
+    "id": "relevance-plant-2",
+    "type": "relevance",
+    "title": "Watering a houseplant · example 2",
+    "input": {
+      "query": "What signs tell me my potted basil needs water?",
+      "response": "Basil is delicious in pesto and pairs well with tomatoes."
+    },
+    "expectedScore": 2,
+    "explanation": "It discusses basil, but only as food rather than identifying watering signs."
+  },
+  {
+    "id": "relevance-plant-3",
+    "type": "relevance",
+    "title": "Watering a houseplant · example 3",
+    "input": {
+      "query": "What signs tell me my potted basil needs water?",
+      "response": "Dry soil can mean basil needs water. Basil is used in Mediterranean cooking, and pesto can be frozen in small jars."
+    },
+    "expectedScore": 3,
+    "explanation": "One relevant signal appears among substantial cooking advice."
+  },
+  {
+    "id": "relevance-plant-4",
+    "type": "relevance",
+    "title": "Watering a houseplant · example 4",
+    "input": {
+      "query": "What signs tell me my potted basil needs water?",
+      "response": "Check whether the top layer of soil is dry and the leaves are drooping. Fresh basil also tastes good on pizza."
+    },
+    "expectedScore": 4,
+    "explanation": "It focuses on watering signals, with one brief food-related distraction."
+  },
+  {
+    "id": "relevance-plant-5",
+    "type": "relevance",
+    "title": "Watering a houseplant · example 5",
+    "input": {
+      "query": "What signs tell me my potted basil needs water?",
+      "response": "Basil may need water when the top layer of soil feels dry, the pot feels light, or the leaves droop."
+    },
+    "expectedScore": 5,
+    "explanation": "The response stays focused on observable watering signals."
+  },
+  {
+    "id": "completeness-export-1",
+    "type": "completeness",
+    "title": "Export a report · example 1",
+    "input": {
+      "query": "How do I export a report as a CSV, including choosing its date range and finding the downloaded file?",
+      "response": "Delete the report; exports are not supported.",
+      "referenceAnswer": "Open Reports, select the date range, click Export, choose CSV, and find the file in your browser's Downloads folder."
+    },
+    "expectedScore": 1,
+    "explanation": "The answer is incorrect and supplies none of the required export steps."
+  },
+  {
+    "id": "completeness-export-2",
+    "type": "completeness",
+    "title": "Export a report · example 2",
+    "input": {
+      "query": "How do I export a report as a CSV, including choosing its date range and finding the downloaded file?",
+      "response": "Open Reports and take a screenshot to save your data.",
+      "referenceAnswer": "Open Reports, select the date range, click Export, choose CSV, and find the file in your browser's Downloads folder."
+    },
+    "expectedScore": 2,
+    "explanation": "Only the starting location is correct; the export method is wrong and most steps are absent."
+  },
+  {
+    "id": "completeness-export-3",
+    "type": "completeness",
+    "title": "Export a report · example 3",
+    "input": {
+      "query": "How do I export a report as a CSV, including choosing its date range and finding the downloaded file?",
+      "response": "Open Reports and click Export, then choose CSV.",
+      "referenceAnswer": "Open Reports, select the date range, click Export, choose CSV, and find the file in your browser's Downloads folder."
+    },
+    "expectedScore": 3,
+    "explanation": "Three steps are correct, but the requested date range and downloaded file location are missing."
+  },
+  {
+    "id": "completeness-export-4",
+    "type": "completeness",
+    "title": "Export a report · example 4",
+    "input": {
+      "query": "How do I export a report as a CSV, including choosing its date range and finding the downloaded file?",
+      "response": "Open Reports, select the date range, click Export, and choose CSV.",
+      "referenceAnswer": "Open Reports, select the date range, click Export, choose CSV, and find the file in your browser's Downloads folder."
+    },
+    "expectedScore": 4,
+    "explanation": "The export process is accurate, but the requested download location is omitted."
+  },
+  {
+    "id": "completeness-export-5",
+    "type": "completeness",
+    "title": "Export a report · example 5",
+    "input": {
+      "query": "How do I export a report as a CSV, including choosing its date range and finding the downloaded file?",
+      "response": "Open Reports, select the date range, click Export, choose CSV, and find the file in your browser's Downloads folder.",
+      "referenceAnswer": "Open Reports, select the date range, click Export, choose CSV, and find the file in your browser's Downloads folder."
+    },
+    "expectedScore": 5,
+    "explanation": "All required steps and the requested file location are covered accurately."
+  },
+  {
+    "id": "completeness-seed-1",
+    "type": "completeness",
+    "title": "Plant a bean seed · example 1",
+    "input": {
+      "query": "Using the instructions, describe the full process for planting a bean seed and caring for it afterward.",
+      "response": "Leave the seed on a dry shelf; it does not need soil or water.",
+      "referenceAnswer": "Fill a pot with potting mix, plant the bean seed 2 cm deep, cover it with mix, water gently, place the pot in a sunny spot, and keep the soil moist without making it soggy."
+    },
+    "expectedScore": 1,
+    "explanation": "The answer conflicts with the planting instructions and omits the process."
+  },
+  {
+    "id": "completeness-seed-2",
+    "type": "completeness",
+    "title": "Plant a bean seed · example 2",
+    "input": {
+      "query": "Using the instructions, describe the full process for planting a bean seed and caring for it afterward.",
+      "response": "Put the seed in a pot of mix and keep it completely dry in a cupboard.",
+      "referenceAnswer": "Fill a pot with potting mix, plant the bean seed 2 cm deep, cover it with mix, water gently, place the pot in a sunny spot, and keep the soil moist without making it soggy."
+    },
+    "expectedScore": 2,
+    "explanation": "It identifies a pot and mix but gives incorrect care instructions and omits major steps."
+  },
+  {
+    "id": "completeness-seed-3",
+    "type": "completeness",
+    "title": "Plant a bean seed · example 3",
+    "input": {
+      "query": "Using the instructions, describe the full process for planting a bean seed and caring for it afterward.",
+      "response": "Fill a pot with potting mix, plant the seed 2 cm deep, and cover it.",
+      "referenceAnswer": "Fill a pot with potting mix, plant the bean seed 2 cm deep, cover it with mix, water gently, place the pot in a sunny spot, and keep the soil moist without making it soggy."
+    },
+    "expectedScore": 3,
+    "explanation": "Planting is described accurately, but watering, placement, and ongoing care are missing."
+  },
+  {
+    "id": "completeness-seed-4",
+    "type": "completeness",
+    "title": "Plant a bean seed · example 4",
+    "input": {
+      "query": "Using the instructions, describe the full process for planting a bean seed and caring for it afterward.",
+      "response": "Fill a pot with mix, plant the seed 2 cm deep, cover it, water gently, and put it in a sunny spot.",
+      "referenceAnswer": "Fill a pot with potting mix, plant the bean seed 2 cm deep, cover it with mix, water gently, place the pot in a sunny spot, and keep the soil moist without making it soggy."
+    },
+    "expectedScore": 4,
+    "explanation": "The initial process is complete, but ongoing moisture care is omitted."
+  },
+  {
+    "id": "completeness-seed-5",
+    "type": "completeness",
+    "title": "Plant a bean seed · example 5",
+    "input": {
+      "query": "Using the instructions, describe the full process for planting a bean seed and caring for it afterward.",
+      "response": "Fill a pot with potting mix. Plant the bean 2 cm deep and cover it. Water gently, place the pot in a sunny spot, and keep the soil moist but not soggy.",
+      "referenceAnswer": "Fill a pot with potting mix, plant the bean seed 2 cm deep, cover it with mix, water gently, place the pot in a sunny spot, and keep the soil moist without making it soggy."
+    },
+    "expectedScore": 5,
+    "explanation": "Every planting and care instruction is included accurately."
+  },
+  {
+    "id": "equivalence-delivery-1",
+    "type": "equivalence",
+    "title": "Delivery policy meaning · example 1",
+    "input": {
+      "query": "What does the delivery policy say about standard orders?",
+      "response": "Standard orders ship immediately, tracking is never provided, and all deliveries happen on weekends.",
+      "referenceAnswer": "Standard orders ship within two business days. Tracking is emailed when the order ships. Weekend delivery is not available."
+    },
+    "expectedScore": 1,
+    "explanation": "The response contradicts all three core policy facts."
+  },
+  {
+    "id": "equivalence-delivery-2",
+    "type": "equivalence",
+    "title": "Delivery policy meaning · example 2",
+    "input": {
+      "query": "What does the delivery policy say about standard orders?",
+      "response": "Standard orders eventually ship. You must call to get tracking, and weekend delivery is available.",
+      "referenceAnswer": "Standard orders ship within two business days. Tracking is emailed when the order ships. Weekend delivery is not available."
+    },
+    "expectedScore": 2,
+    "explanation": "Only the general fact that orders ship is preserved; the policy details differ."
+  },
+  {
+    "id": "equivalence-delivery-3",
+    "type": "equivalence",
+    "title": "Delivery policy meaning · example 3",
+    "input": {
+      "query": "What does the delivery policy say about standard orders?",
+      "response": "Standard orders ship within two business days and tracking is emailed, but weekend delivery is available.",
+      "referenceAnswer": "Standard orders ship within two business days. Tracking is emailed when the order ships. Weekend delivery is not available."
+    },
+    "expectedScore": 3,
+    "explanation": "Shipping and tracking meaning are preserved, but the weekend policy is reversed."
+  },
+  {
+    "id": "equivalence-delivery-4",
+    "type": "equivalence",
+    "title": "Delivery policy meaning · example 4",
+    "input": {
+      "query": "What does the delivery policy say about standard orders?",
+      "response": "Standard orders ship within two business days, tracking arrives by email, and there are no weekend deliveries.",
+      "referenceAnswer": "Standard orders ship within two business days. Tracking is emailed when the order ships. Weekend delivery is not available."
+    },
+    "expectedScore": 4,
+    "explanation": "The core meaning is preserved; the detail that tracking is sent when the order ships is omitted."
+  },
+  {
+    "id": "equivalence-delivery-5",
+    "type": "equivalence",
+    "title": "Delivery policy meaning · example 5",
+    "input": {
+      "query": "What does the delivery policy say about standard orders?",
+      "response": "Your standard order is dispatched within two working days. We email tracking at dispatch, and delivery does not take place on weekends.",
+      "referenceAnswer": "Standard orders ship within two business days. Tracking is emailed when the order ships. Weekend delivery is not available."
+    },
+    "expectedScore": 5,
+    "explanation": "This paraphrase preserves all policy facts and timing."
+  },
+  {
+    "id": "equivalence-library-1",
+    "type": "equivalence",
+    "title": "Library borrowing meaning · example 1",
+    "input": {
+      "query": "What are the library's rules for borrowing books?",
+      "response": "Members cannot borrow books, and renewals are always prohibited.",
+      "referenceAnswer": "Members may borrow up to four books for three weeks. A book can be renewed once if nobody else has reserved it."
+    },
+    "expectedScore": 1,
+    "explanation": "The response contradicts both borrowing and renewal permissions."
+  },
+  {
+    "id": "equivalence-library-2",
+    "type": "equivalence",
+    "title": "Library borrowing meaning · example 2",
+    "input": {
+      "query": "What are the library's rules for borrowing books?",
+      "response": "Members can borrow books for one day, but they can never renew them.",
+      "referenceAnswer": "Members may borrow up to four books for three weeks. A book can be renewed once if nobody else has reserved it."
+    },
+    "expectedScore": 2,
+    "explanation": "Only the general permission to borrow is preserved."
+  },
+  {
+    "id": "equivalence-library-3",
+    "type": "equivalence",
+    "title": "Library borrowing meaning · example 3",
+    "input": {
+      "query": "What are the library's rules for borrowing books?",
+      "response": "Members can borrow four books for three weeks and renew them as often as they like.",
+      "referenceAnswer": "Members may borrow up to four books for three weeks. A book can be renewed once if nobody else has reserved it."
+    },
+    "expectedScore": 3,
+    "explanation": "The borrowing limit and duration match, but the renewal restrictions change materially."
+  },
+  {
+    "id": "equivalence-library-4",
+    "type": "equivalence",
+    "title": "Library borrowing meaning · example 4",
+    "input": {
+      "query": "What are the library's rules for borrowing books?",
+      "response": "Members can borrow four books for three weeks and renew each once unless another person wants it.",
+      "referenceAnswer": "Members may borrow up to four books for three weeks. A book can be renewed once if nobody else has reserved it."
+    },
+    "expectedScore": 4,
+    "explanation": "The essential rules are preserved, but 'wants it' is less precise than an existing reservation."
+  },
+  {
+    "id": "equivalence-library-5",
+    "type": "equivalence",
+    "title": "Library borrowing meaning · example 5",
+    "input": {
+      "query": "What are the library's rules for borrowing books?",
+      "response": "You may check out a maximum of four books for a three-week loan. One renewal is allowed provided no other member has placed a reservation.",
+      "referenceAnswer": "Members may borrow up to four books for three weeks. A book can be renewed once if nobody else has reserved it."
+    },
+    "expectedScore": 5,
+    "explanation": "All permissions, limits, and conditions are preserved in different wording."
+  },
+  {
+    "id": "groundedness-museum-1",
+    "type": "groundedness",
+    "title": "Museum source support · example 1",
+    "input": {
+      "query": "Summarize the museum's opening hours, admission, and visitor facilities.",
+      "response": "The museum is open every Monday until midnight, and adult entry is free.",
+      "sourceContext": "The Harbor Museum is open Tuesday through Sunday from 10 a.m. to 5 p.m. Adult admission is $12. Children under 12 enter free. The museum has a cafe."
+    },
+    "expectedScore": 1,
+    "explanation": "Both substantive claims contradict the source."
+  },
+  {
+    "id": "groundedness-museum-2",
+    "type": "groundedness",
+    "title": "Museum source support · example 2",
+    "input": {
+      "query": "Summarize the museum's opening hours, admission, and visitor facilities.",
+      "response": "The museum has a cafe. It is open all night, adult admission costs $30, and every visitor must pay for parking.",
+      "sourceContext": "The Harbor Museum is open Tuesday through Sunday from 10 a.m. to 5 p.m. Adult admission is $12. Children under 12 enter free. The museum has a cafe."
+    },
+    "expectedScore": 2,
+    "explanation": "Only the cafe claim is supported; most claims conflict with or go beyond the source."
+  },
+  {
+    "id": "groundedness-museum-3",
+    "type": "groundedness",
+    "title": "Museum source support · example 3",
+    "input": {
+      "query": "Summarize the museum's opening hours, admission, and visitor facilities.",
+      "response": "The museum opens at 10 a.m., adult admission is $12, it closes at 9 p.m., and tickets include a boat ride.",
+      "sourceContext": "The Harbor Museum is open Tuesday through Sunday from 10 a.m. to 5 p.m. Adult admission is $12. Children under 12 enter free. The museum has a cafe."
+    },
+    "expectedScore": 3,
+    "explanation": "Two claims are supported and two are contradicted or unsupported."
+  },
+  {
+    "id": "groundedness-museum-4",
+    "type": "groundedness",
+    "title": "Museum source support · example 4",
+    "input": {
+      "query": "Summarize the museum's opening hours, admission, and visitor facilities.",
+      "response": "The museum opens Tuesday through Sunday, 10 a.m. to 5 p.m. Adults pay $12; children under 12 enter free. It has a cafe with comfortable chairs.",
+      "sourceContext": "The Harbor Museum is open Tuesday through Sunday from 10 a.m. to 5 p.m. Adult admission is $12. Children under 12 enter free. The museum has a cafe."
+    },
+    "expectedScore": 4,
+    "explanation": "Hours, prices, and the cafe are supported; the small descriptive detail about chairs is unsupported."
+  },
+  {
+    "id": "groundedness-museum-5",
+    "type": "groundedness",
+    "title": "Museum source support · example 5",
+    "input": {
+      "query": "Summarize the museum's opening hours, admission, and visitor facilities.",
+      "response": "The museum is open Tuesday through Sunday from 10 a.m. to 5 p.m. Adults pay $12, children under 12 enter free, and there is a cafe.",
+      "sourceContext": "The Harbor Museum is open Tuesday through Sunday from 10 a.m. to 5 p.m. Adult admission is $12. Children under 12 enter free. The museum has a cafe."
+    },
+    "expectedScore": 5,
+    "explanation": "Every substantive claim is explicitly supported by the supplied source."
+  },
+  {
+    "id": "groundedness-headphones-1",
+    "type": "groundedness",
+    "title": "Headphone source support · example 1",
+    "input": {
+      "query": "Summarize the Cedar headphones' features and warranty.",
+      "response": "Cedar headphones have no microphone and include a lifetime warranty covering water damage.",
+      "sourceContext": "Cedar headphones support Bluetooth and wired connections. They have a built-in microphone and come with a carrying pouch. The warranty covers manufacturing defects for one year. Water damage is excluded."
+    },
+    "expectedScore": 1,
+    "explanation": "The main feature and warranty claims contradict the source."
+  },
+  {
+    "id": "groundedness-headphones-2",
+    "type": "groundedness",
+    "title": "Headphone source support · example 2",
+    "input": {
+      "query": "Summarize the Cedar headphones' features and warranty.",
+      "response": "Cedar headphones support Bluetooth, include a charging dock, are waterproof, and provide a lifetime warranty.",
+      "sourceContext": "Cedar headphones support Bluetooth and wired connections. They have a built-in microphone and come with a carrying pouch. The warranty covers manufacturing defects for one year. Water damage is excluded."
+    },
+    "expectedScore": 2,
+    "explanation": "Bluetooth is supported, but the other features and warranty are unsupported or contradicted."
+  },
+  {
+    "id": "groundedness-headphones-3",
+    "type": "groundedness",
+    "title": "Headphone source support · example 3",
+    "input": {
+      "query": "Summarize the Cedar headphones' features and warranty.",
+      "response": "Cedar headphones support Bluetooth and have a microphone. They are waterproof and their warranty lasts five years.",
+      "sourceContext": "Cedar headphones support Bluetooth and wired connections. They have a built-in microphone and come with a carrying pouch. The warranty covers manufacturing defects for one year. Water damage is excluded."
+    },
+    "expectedScore": 3,
+    "explanation": "Two feature claims are supported, while the water resistance and warranty claims are not."
+  },
+  {
+    "id": "groundedness-headphones-4",
+    "type": "groundedness",
+    "title": "Headphone source support · example 4",
+    "input": {
+      "query": "Summarize the Cedar headphones' features and warranty.",
+      "response": "Cedar headphones support Bluetooth and wired connections, have a microphone, and include a stylish carrying pouch. Their one-year warranty covers manufacturing defects but excludes water damage.",
+      "sourceContext": "Cedar headphones support Bluetooth and wired connections. They have a built-in microphone and come with a carrying pouch. The warranty covers manufacturing defects for one year. Water damage is excluded."
+    },
+    "expectedScore": 4,
+    "explanation": "The features and warranty are supported; calling the pouch stylish adds a minor unsupported detail."
+  },
+  {
+    "id": "groundedness-headphones-5",
+    "type": "groundedness",
+    "title": "Headphone source support · example 5",
+    "input": {
+      "query": "Summarize the Cedar headphones' features and warranty.",
+      "response": "Cedar headphones connect by Bluetooth or wire, include a microphone and carrying pouch, and have a one-year warranty for manufacturing defects that excludes water damage.",
+      "sourceContext": "Cedar headphones support Bluetooth and wired connections. They have a built-in microphone and come with a carrying pouch. The warranty covers manufacturing defects for one year. Water damage is excluded."
+    },
+    "expectedScore": 5,
+    "explanation": "All features and warranty terms are supported by the context."
+  },
+  {
+    "id": "relevance-parcel-1", "type": "relevance", "title": "Track a parcel · example 1",
+    "input": { "query": "Where can I find the tracking number for my Finch Store order?", "response": "A triangle has three sides." },
+    "expectedScore": 1, "explanation": "The response has no connection to orders or tracking."
+  },
+  {
+    "id": "relevance-parcel-2", "type": "relevance", "title": "Track a parcel · example 2",
+    "input": { "query": "Where can I find the tracking number for my Finch Store order?", "response": "Finch Store sells notebooks and pens, and orders can be gift-wrapped." },
+    "expectedScore": 2, "explanation": "It discusses the same store and orders but never addresses finding the tracking number."
+  },
+  {
+    "id": "relevance-parcel-3", "type": "relevance", "title": "Track a parcel · example 3",
+    "input": { "query": "Where can I find the tracking number for my Finch Store order?", "response": "Your shipping email includes tracking information. Finch Store's notebooks come in six colors, its pens use refillable cartridges, and gift wrapping is available." },
+    "expectedScore": 3, "explanation": "It partly answers the location question but devotes most of the response to products and extras."
+  },
+  {
+    "id": "relevance-parcel-4", "type": "relevance", "title": "Track a parcel · example 4",
+    "input": { "query": "Where can I find the tracking number for my Finch Store order?", "response": "Find the tracking number in your shipping confirmation email or under Orders in your account. Finch Store also offers recycled packaging." },
+    "expectedScore": 4, "explanation": "The two locations directly answer the query, with one brief unrelated packaging detail."
+  },
+  {
+    "id": "relevance-parcel-5", "type": "relevance", "title": "Track a parcel · example 5",
+    "input": { "query": "Where can I find the tracking number for my Finch Store order?", "response": "Check the shipping confirmation email, or sign in to your Finch Store account, open Orders, and select the order to view its tracking number." },
+    "expectedScore": 5, "explanation": "All of the response explains where to find the requested number."
+  },
+  {
+    "id": "relevance-compass-1", "type": "relevance", "title": "Read a compass label · example 1",
+    "input": { "query": "What does the letter N on a compass stand for?", "response": "Save your spreadsheet before closing the window." },
+    "expectedScore": 1, "explanation": "The spreadsheet instruction is unrelated to compass labels."
+  },
+  {
+    "id": "relevance-compass-2", "type": "relevance", "title": "Read a compass label · example 2",
+    "input": { "query": "What does the letter N on a compass stand for?", "response": "Compasses are useful for hiking and can fit in a pocket." },
+    "expectedScore": 2, "explanation": "The response discusses compasses but does not identify the label."
+  },
+  {
+    "id": "relevance-compass-3", "type": "relevance", "title": "Read a compass label · example 3",
+    "input": { "query": "What does the letter N on a compass stand for?", "response": "N means north. Hiking boots come in several materials, backpacks have different capacities, and trail snacks can be packed in reusable boxes." },
+    "expectedScore": 3, "explanation": "The answer appears, but most of the response wanders into hiking equipment."
+  },
+  {
+    "id": "relevance-compass-4", "type": "relevance", "title": "Read a compass label · example 4",
+    "input": { "query": "What does the letter N on a compass stand for?", "response": "N stands for north, one of the four main compass directions. A pocket compass makes a nice gift." },
+    "expectedScore": 4, "explanation": "The label is addressed directly with only a brief gift-related distraction."
+  },
+  {
+    "id": "relevance-compass-5", "type": "relevance", "title": "Read a compass label · example 5",
+    "input": { "query": "What does the letter N on a compass stand for?", "response": "N stands for north." },
+    "expectedScore": 5, "explanation": "The concise response is entirely focused on the requested label."
+  },
+  {
+    "id": "completeness-alerts-1", "type": "completeness", "title": "Change email alerts · example 1",
+    "input": { "query": "How do I turn off weekly email alerts in the Harbor app?", "response": "Delete your account; email preferences cannot be changed.", "referenceAnswer": "Open Settings, select Notifications, turn off Weekly email, and select Save. This changes weekly emails only; security alerts remain enabled." },
+    "expectedScore": 1, "explanation": "The response gives an incorrect process and none of the required steps or scope."
+  },
+  {
+    "id": "completeness-alerts-2", "type": "completeness", "title": "Change email alerts · example 2",
+    "input": { "query": "How do I turn off weekly email alerts in the Harbor app?", "response": "Open Settings and delete your profile to stop all alerts.", "referenceAnswer": "Open Settings, select Notifications, turn off Weekly email, and select Save. This changes weekly emails only; security alerts remain enabled." },
+    "expectedScore": 2, "explanation": "Only the starting location is correct; the main action and alert scope are wrong."
+  },
+  {
+    "id": "completeness-alerts-3", "type": "completeness", "title": "Change email alerts · example 3",
+    "input": { "query": "How do I turn off weekly email alerts in the Harbor app?", "response": "In Settings, open Notifications and turn off Weekly email.", "referenceAnswer": "Open Settings, select Notifications, turn off Weekly email, and select Save. This changes weekly emails only; security alerts remain enabled." },
+    "expectedScore": 3, "explanation": "The main control is identified, but saving and both facts about which alerts change are missing."
+  },
+  {
+    "id": "completeness-alerts-4", "type": "completeness", "title": "Change email alerts · example 4",
+    "input": { "query": "How do I turn off weekly email alerts in the Harbor app?", "response": "Open Settings, choose Notifications, switch Weekly email off, and select Save. Other email settings are unchanged.", "referenceAnswer": "Open Settings, select Notifications, turn off Weekly email, and select Save. This changes weekly emails only; security alerts remain enabled." },
+    "expectedScore": 4, "explanation": "The process and limited scope are correct; it omits the explicit reassurance that security alerts remain enabled."
+  },
+  {
+    "id": "completeness-alerts-5", "type": "completeness", "title": "Change email alerts · example 5",
+    "input": { "query": "How do I turn off weekly email alerts in the Harbor app?", "response": "Go to Settings, open Notifications, disable Weekly email, and press Save. Only the weekly emails stop; security alerts stay on.", "referenceAnswer": "Open Settings, select Notifications, turn off Weekly email, and select Save. This changes weekly emails only; security alerts remain enabled." },
+    "expectedScore": 5, "explanation": "Every required step and scope detail is accurately covered in equivalent wording."
+  },
+  {
+    "id": "completeness-water-1", "type": "completeness", "title": "Water's freezing and boiling points · example 1",
+    "input": { "query": "At standard atmospheric pressure, what are water's freezing and boiling points in Celsius and Fahrenheit?", "response": "Water freezes at 100 degrees Celsius and boils at 0 degrees Celsius.", "referenceAnswer": "At standard atmospheric pressure, water freezes at 0 degrees Celsius (32 degrees Fahrenheit) and boils at 100 degrees Celsius (212 degrees Fahrenheit)." },
+    "expectedScore": 1, "explanation": "The two Celsius temperatures are reversed and both Fahrenheit values are absent."
+  },
+  {
+    "id": "completeness-water-2", "type": "completeness", "title": "Water's freezing and boiling points · example 2",
+    "input": { "query": "At standard atmospheric pressure, what are water's freezing and boiling points in Celsius and Fahrenheit?", "response": "Water freezes at 0 degrees Celsius and boils at 50 degrees Celsius.", "referenceAnswer": "At standard atmospheric pressure, water freezes at 0 degrees Celsius (32 degrees Fahrenheit) and boils at 100 degrees Celsius (212 degrees Fahrenheit)." },
+    "expectedScore": 2, "explanation": "One required temperature is correct, one is wrong, and the Fahrenheit equivalents are missing."
+  },
+  {
+    "id": "completeness-water-3", "type": "completeness", "title": "Water's freezing and boiling points · example 3",
+    "input": { "query": "At standard atmospheric pressure, what are water's freezing and boiling points in Celsius and Fahrenheit?", "response": "At standard atmospheric pressure, water freezes at 0 degrees Celsius and boils at 100 degrees Celsius.", "referenceAnswer": "At standard atmospheric pressure, water freezes at 0 degrees Celsius (32 degrees Fahrenheit) and boils at 100 degrees Celsius (212 degrees Fahrenheit)." },
+    "expectedScore": 3, "explanation": "Both Celsius facts are right, but the requested Fahrenheit half of the answer is missing."
+  },
+  {
+    "id": "completeness-water-4", "type": "completeness", "title": "Water's freezing and boiling points · example 4",
+    "input": { "query": "At standard atmospheric pressure, what are water's freezing and boiling points in Celsius and Fahrenheit?", "response": "At standard atmospheric pressure, water freezes at 0 degrees Celsius or 32 degrees Fahrenheit, and boils at 100 degrees Celsius.", "referenceAnswer": "At standard atmospheric pressure, water freezes at 0 degrees Celsius (32 degrees Fahrenheit) and boils at 100 degrees Celsius (212 degrees Fahrenheit)." },
+    "expectedScore": 4, "explanation": "Three of the four required temperature values are correct; only the Fahrenheit boiling point is omitted."
+  },
+  {
+    "id": "completeness-water-5", "type": "completeness", "title": "Water's freezing and boiling points · example 5",
+    "input": { "query": "At standard atmospheric pressure, what are water's freezing and boiling points in Celsius and Fahrenheit?", "response": "Under standard atmospheric pressure, the freezing point is 0 degrees Celsius, equivalent to 32 degrees Fahrenheit. The boiling point is 100 degrees Celsius, equivalent to 212 degrees Fahrenheit.", "referenceAnswer": "At standard atmospheric pressure, water freezes at 0 degrees Celsius (32 degrees Fahrenheit) and boils at 100 degrees Celsius (212 degrees Fahrenheit)." },
+    "expectedScore": 5, "explanation": "Both points, both units, and the pressure condition are accurately stated."
+  },
+  {
+    "id": "equivalence-reservation-1", "type": "equivalence", "title": "Reservation cancellation meaning · example 1",
+    "input": { "query": "What are the Maple Workshop reservation cancellation terms?", "response": "Reservations cannot be cancelled and all payments are nonrefundable.", "referenceAnswer": "Cancel at least 24 hours before the workshop for a full refund. Later cancellations receive no refund. Email the booking team to cancel." },
+    "expectedScore": 1, "explanation": "The response contradicts both the cancellation option and the available refund."
+  },
+  {
+    "id": "equivalence-reservation-2", "type": "equivalence", "title": "Reservation cancellation meaning · example 2",
+    "input": { "query": "What are the Maple Workshop reservation cancellation terms?", "response": "You can cancel at any time for a partial refund by calling the instructor.", "referenceAnswer": "Cancel at least 24 hours before the workshop for a full refund. Later cancellations receive no refund. Email the booking team to cancel." },
+    "expectedScore": 2, "explanation": "Only the possibility of cancellation is preserved; the deadline, refund terms, and contact method differ."
+  },
+  {
+    "id": "equivalence-reservation-3", "type": "equivalence", "title": "Reservation cancellation meaning · example 3",
+    "input": { "query": "What are the Maple Workshop reservation cancellation terms?", "response": "Email the booking team at least 48 hours before the workshop for a full refund. Later cancellations are not refunded.", "referenceAnswer": "Cancel at least 24 hours before the workshop for a full refund. Later cancellations receive no refund. Email the booking team to cancel." },
+    "expectedScore": 3, "explanation": "The contact and refund structure match, but changing the deadline materially changes eligibility."
+  },
+  {
+    "id": "equivalence-reservation-4", "type": "equivalence", "title": "Reservation cancellation meaning · example 4",
+    "input": { "query": "What are the Maple Workshop reservation cancellation terms?", "response": "Cancel at least 24 hours before the workshop to get all your money back. Cancellations after that deadline are not refunded.", "referenceAnswer": "Cancel at least 24 hours before the workshop for a full refund. Later cancellations receive no refund. Email the booking team to cancel." },
+    "expectedScore": 4, "explanation": "The essential timing and refund meaning match, with only the contact method omitted."
+  },
+  {
+    "id": "equivalence-reservation-5", "type": "equivalence", "title": "Reservation cancellation meaning · example 5",
+    "input": { "query": "What are the Maple Workshop reservation cancellation terms?", "response": "To cancel, send an email to the booking team. You get your entire payment back if you cancel a day or more before the workshop; with less than a day's notice, there is no refund.", "referenceAnswer": "Cancel at least 24 hours before the workshop for a full refund. Later cancellations receive no refund. Email the booking team to cancel." },
+    "expectedScore": 5, "explanation": "The paraphrase preserves the deadline, both refund outcomes, and the cancellation method."
+  },
+  {
+    "id": "equivalence-file-1", "type": "equivalence", "title": "Save a copy meaning · example 1",
+    "input": { "query": "What happens when I use Save a Copy in Pine Editor?", "response": "It deletes the current file without creating another file.", "referenceAnswer": "Save a Copy creates a new file under the name and location you choose. The original file remains unchanged, and the editor stays open." },
+    "expectedScore": 1, "explanation": "The response reverses the new-file and original-preservation behavior."
+  },
+  {
+    "id": "equivalence-file-2", "type": "equivalence", "title": "Save a copy meaning · example 2",
+    "input": { "query": "What happens when I use Save a Copy in Pine Editor?", "response": "It saves your changes over the original file and closes the editor.", "referenceAnswer": "Save a Copy creates a new file under the name and location you choose. The original file remains unchanged, and the editor stays open." },
+    "expectedScore": 2, "explanation": "The broad idea of saving remains, but the destination, original-file behavior, and editor state differ."
+  },
+  {
+    "id": "equivalence-file-3", "type": "equivalence", "title": "Save a copy meaning · example 3",
+    "input": { "query": "What happens when I use Save a Copy in Pine Editor?", "response": "It makes a new file with your chosen name and location, then deletes the original. The editor remains open.", "referenceAnswer": "Save a Copy creates a new file under the name and location you choose. The original file remains unchanged, and the editor stays open." },
+    "expectedScore": 3, "explanation": "The new-file and editor behavior match, but deleting the original is a material contradiction."
+  },
+  {
+    "id": "equivalence-file-4", "type": "equivalence", "title": "Save a copy meaning · example 4",
+    "input": { "query": "What happens when I use Save a Copy in Pine Editor?", "response": "It creates a separate file with the name and location you select, leaving the original untouched.", "referenceAnswer": "Save a Copy creates a new file under the name and location you choose. The original file remains unchanged, and the editor stays open." },
+    "expectedScore": 4, "explanation": "The essential file behavior is equivalent; the minor editor-state detail is absent."
+  },
+  {
+    "id": "equivalence-file-5", "type": "equivalence", "title": "Save a copy meaning · example 5",
+    "input": { "query": "What happens when I use Save a Copy in Pine Editor?", "response": "You choose where to put the duplicate and what to call it. Your original is left as it was, and Pine Editor does not close.", "referenceAnswer": "Save a Copy creates a new file under the name and location you choose. The original file remains unchanged, and the editor stays open." },
+    "expectedScore": 5, "explanation": "Different wording preserves all three parts of the reference meaning."
+  },
+  {
+    "id": "groundedness-desk-1", "type": "groundedness", "title": "Desk source support · example 1",
+    "input": { "query": "Summarize the Alder desk's dimensions, assembly, and warranty.", "response": "The Alder desk is 140 cm wide, arrives fully assembled, and includes a lifetime warranty covering scratches.", "sourceContext": "The Alder desk is 120 cm wide and 60 cm deep. Assembly is required; an Allen key is included. Its two-year warranty covers manufacturing defects. Scratches caused by use are excluded." },
+    "expectedScore": 1, "explanation": "All main product claims conflict with the supplied context."
+  },
+  {
+    "id": "groundedness-desk-2", "type": "groundedness", "title": "Desk source support · example 2",
+    "input": { "query": "Summarize the Alder desk's dimensions, assembly, and warranty.", "response": "The desk is 120 cm wide and has a built-in charging port. Assembly takes ten minutes, and the warranty covers accidental damage for five years.", "sourceContext": "The Alder desk is 120 cm wide and 60 cm deep. Assembly is required; an Allen key is included. Its two-year warranty covers manufacturing defects. Scratches caused by use are excluded." },
+    "expectedScore": 2, "explanation": "Only the width is supported; plausible charging, assembly-time, and warranty claims are unsupported or contradicted."
+  },
+  {
+    "id": "groundedness-desk-3", "type": "groundedness", "title": "Desk source support · example 3",
+    "input": { "query": "Summarize the Alder desk's dimensions, assembly, and warranty.", "response": "The desk measures 120 by 60 cm and needs assembly with the included Allen key. It supports 100 kg and includes free replacement parts for ten years.", "sourceContext": "The Alder desk is 120 cm wide and 60 cm deep. Assembly is required; an Allen key is included. Its two-year warranty covers manufacturing defects. Scratches caused by use are excluded." },
+    "expectedScore": 3, "explanation": "Dimensions and assembly are supported, while the substantial load-limit and replacement-parts claims have no source support."
+  },
+  {
+    "id": "groundedness-desk-4", "type": "groundedness", "title": "Desk source support · example 4",
+    "input": { "query": "Summarize the Alder desk's dimensions, assembly, and warranty.", "response": "The desk is 120 cm wide and 60 cm deep. Assembly requires the included Allen key, which comes in a neat pouch. Its two-year manufacturing-defect warranty excludes scratches from use.", "sourceContext": "The Alder desk is 120 cm wide and 60 cm deep. Assembly is required; an Allen key is included. Its two-year warranty covers manufacturing defects. Scratches caused by use are excluded." },
+    "expectedScore": 4, "explanation": "The main dimensions, assembly, and warranty claims are supported; only the small packaging detail is unsupported."
+  },
+  {
+    "id": "groundedness-desk-5", "type": "groundedness", "title": "Desk source support · example 5",
+    "input": { "query": "Summarize the Alder desk's dimensions, assembly, and warranty.", "response": "Alder is 120 cm across and 60 cm deep. You must assemble it using the included Allen key. Manufacturing defects are covered for two years, but scratches from use are not.", "sourceContext": "The Alder desk is 120 cm wide and 60 cm deep. Assembly is required; an Allen key is included. Its two-year warranty covers manufacturing defects. Scratches caused by use are excluded." },
+    "expectedScore": 5, "explanation": "Every substantive statement is directly supported by the source."
+  },
+  {
+    "id": "groundedness-pool-1", "type": "groundedness", "title": "Pool source support · example 1",
+    "input": { "query": "Summarize the Brook Pool's opening times, admission, and towel policy.", "response": "Brook Pool opens at 6 am daily, admission is free, and towels are provided at no charge.", "sourceContext": "Brook Pool opens Tuesday through Sunday from 9 am to 6 pm and is closed on Mondays. Adult admission is 8 credits. Visitors must bring their own towels; no towel rentals are available." },
+    "expectedScore": 1, "explanation": "The opening, admission, and towel claims all contradict the context."
+  },
+  {
+    "id": "groundedness-pool-2", "type": "groundedness", "title": "Pool source support · example 2",
+    "input": { "query": "Summarize the Brook Pool's opening times, admission, and towel policy.", "response": "Brook Pool opens at 9 am and offers evening swimming until 10 pm. Adults pay 5 credits, and towels can be rented at reception.", "sourceContext": "Brook Pool opens Tuesday through Sunday from 9 am to 6 pm and is closed on Mondays. Adult admission is 8 credits. Visitors must bring their own towels; no towel rentals are available." },
+    "expectedScore": 2, "explanation": "The opening hour is supported, but most of the practical claims conflict with the source."
+  },
+  {
+    "id": "groundedness-pool-3", "type": "groundedness", "title": "Pool source support · example 3",
+    "input": { "query": "Summarize the Brook Pool's opening times, admission, and towel policy.", "response": "Brook Pool is open Tuesday through Sunday from 9 am to 6 pm. Adult admission is 8 credits and includes a locker and towel rental.", "sourceContext": "Brook Pool opens Tuesday through Sunday from 9 am to 6 pm and is closed on Mondays. Adult admission is 8 credits. Visitors must bring their own towels; no towel rentals are available." },
+    "expectedScore": 3, "explanation": "Hours and price are supported, while locker inclusion is unsupported and towel rental is contradicted."
+  },
+  {
+    "id": "groundedness-pool-4", "type": "groundedness", "title": "Pool source support · example 4",
+    "input": { "query": "Summarize the Brook Pool's opening times, admission, and towel policy.", "response": "Brook Pool opens Tuesday to Sunday, 9 am to 6 pm, and closes on Mondays. Adults pay 8 credits. Bring your own towel, preferably blue, because rentals are unavailable.", "sourceContext": "Brook Pool opens Tuesday through Sunday from 9 am to 6 pm and is closed on Mondays. Adult admission is 8 credits. Visitors must bring their own towels; no towel rentals are available." },
+    "expectedScore": 4, "explanation": "All main policy facts match; the minor preference for a blue towel has no source support."
+  },
+  {
+    "id": "groundedness-pool-5", "type": "groundedness", "title": "Pool source support · example 5",
+    "input": { "query": "Summarize the Brook Pool's opening times, admission, and towel policy.", "response": "Visit between 9 am and 6 pm on Tuesday through Sunday; the pool is closed Monday. Adult entry costs 8 credits. Take your own towel because towels cannot be rented.", "sourceContext": "Brook Pool opens Tuesday through Sunday from 9 am to 6 pm and is closed on Mondays. Adult admission is 8 credits. Visitors must bring their own towels; no towel rentals are available." },
+    "expectedScore": 5, "explanation": "The paraphrase makes only claims supported by the supplied opening, admission, and towel policies."
+  }
+]

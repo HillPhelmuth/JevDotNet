@@ -1,0 +1,762 @@
+[
+  {
+    "Message": "Please cancel my subscription effective immediately.",
+    "Cancelling": "98.0%",
+    "Refund": "7.0%",
+    "Angry": "29.0%",
+    "Bug": "3.0%",
+    "Needs a person": "93.0%"
+  },
+  {
+    "Message": "Please delete my account and all my data.",
+    "Cancelling": "94.0%",
+    "Refund": "3.0%",
+    "Angry": "20.0%",
+    "Bug": "4.0%",
+    "Needs a person": "91.0%"
+  },
+  {
+    "Message": "We are evaluating alternatives for next quarter, can someone walk us through the roadmap?",
+    "Cancelling": "92.0%",
+    "Refund": "2.0%",
+    "Angry": "33.0%",
+    "Bug": "4.0%",
+    "Needs a person": "90.0%"
+  },
+  {
+    "Message": "Downgrading to the free plan for now, budget cuts.",
+    "Cancelling": "89.0%",
+    "Refund": "7.0%",
+    "Angry": "32.0%",
+    "Bug": "6.0%",
+    "Needs a person": "59.0%"
+  },
+  {
+    "Message": "Honestly Notion does this better and cheaper, why am I paying you?",
+    "Cancelling": "84.0%",
+    "Refund": "8.0%",
+    "Angry": "94.0%",
+    "Bug": "6.0%",
+    "Needs a person": "70.0%"
+  },
+  {
+    "Message": "This is the third outage this month. We cannot keep running our business like this.",
+    "Cancelling": "82.0%",
+    "Refund": "6.0%",
+    "Angry": "98.0%",
+    "Bug": "97.0%",
+    "Needs a person": "94.0%"
+  },
+  {
+    "Message": "We were told a refund would be issued two weeks ago and nothing has arrived.",
+    "Cancelling": "58.0%",
+    "Refund": "92.0%",
+    "Angry": "93.0%",
+    "Bug": "84.0%",
+    "Needs a person": "96.0%"
+  },
+  {
+    "Message": "The trial ended but I was never given a chance to enter payment details.",
+    "Cancelling": "49.0%",
+    "Refund": "10.0%",
+    "Angry": "68.0%",
+    "Bug": "80.0%",
+    "Needs a person": "85.0%"
+  },
+  {
+    "Message": "How do I export everything before my trial ends tomorrow?",
+    "Cancelling": "41.0%",
+    "Refund": "3.0%",
+    "Angry": "20.0%",
+    "Bug": "7.0%",
+    "Needs a person": "60.0%"
+  },
+  {
+    "Message": "My account says it is suspended but I paid last week.",
+    "Cancelling": "36.0%",
+    "Refund": "8.0%",
+    "Angry": "65.0%",
+    "Bug": "92.0%",
+    "Needs a person": "95.0%"
+  },
+  {
+    "Message": "Customer data export contains other customers rows. This is urgent and serious.",
+    "Cancelling": "36.0%",
+    "Refund": "3.0%",
+    "Angry": "90.0%",
+    "Bug": "98.0%",
+    "Needs a person": "96.0%"
+  },
+  {
+    "Message": "What happens to our data if we cancel?",
+    "Cancelling": "30.0%",
+    "Refund": "3.0%",
+    "Angry": "9.0%",
+    "Bug": "4.0%",
+    "Needs a person": "21.0%"
+  },
+  {
+    "Message": "Our whole team is locked out and we have a client demo in 40 minutes.",
+    "Cancelling": "29.0%",
+    "Refund": "2.0%",
+    "Angry": "87.0%",
+    "Bug": "95.0%",
+    "Needs a person": "97.0%"
+  },
+  {
+    "Message": "Our SSO login redirects to a 500 error page since this morning, 200 employees affected.",
+    "Cancelling": "28.0%",
+    "Refund": "3.0%",
+    "Angry": "72.0%",
+    "Bug": "99.0%",
+    "Needs a person": "97.0%"
+  },
+  {
+    "Message": "A former employee still has access even though we removed them a month ago.",
+    "Cancelling": "28.0%",
+    "Refund": "2.0%",
+    "Angry": "62.0%",
+    "Bug": "96.0%",
+    "Needs a person": "95.0%"
+  },
+  {
+    "Message": "Our admin left the company and nobody else can manage billing.",
+    "Cancelling": "24.0%",
+    "Refund": "3.0%",
+    "Angry": "40.0%",
+    "Bug": "45.0%",
+    "Needs a person": "94.0%"
+  },
+  {
+    "Message": "Production sync has been failing for six hours and our customers see stale prices.",
+    "Cancelling": "20.0%",
+    "Refund": "2.0%",
+    "Angry": "79.0%",
+    "Bug": "98.0%",
+    "Needs a person": "96.0%"
+  },
+  {
+    "Message": "Payment failed for invoice 8821, the card was declined but it works elsewhere.",
+    "Cancelling": "19.0%",
+    "Refund": "5.0%",
+    "Angry": "39.0%",
+    "Bug": "97.0%",
+    "Needs a person": "88.0%"
+  },
+  {
+    "Message": "Any ETA on the public API v2? We are blocking a project on it.",
+    "Cancelling": "19.0%",
+    "Refund": "2.0%",
+    "Angry": "48.0%",
+    "Bug": "7.0%",
+    "Needs a person": "54.0%"
+  },
+  {
+    "Message": "The app logged me out mid-form and I lost twenty minutes of work.",
+    "Cancelling": "19.0%",
+    "Refund": "3.0%",
+    "Angry": "83.0%",
+    "Bug": "97.0%",
+    "Needs a person": "84.0%"
+  },
+  {
+    "Message": "I was charged twice this month, please refund the duplicate.",
+    "Cancelling": "16.0%",
+    "Refund": "99.0%",
+    "Angry": "32.0%",
+    "Bug": "80.0%",
+    "Needs a person": "93.0%"
+  },
+  {
+    "Message": "Search is slow today, taking over ten seconds per query.",
+    "Cancelling": "16.0%",
+    "Refund": "2.0%",
+    "Angry": "47.0%",
+    "Bug": "90.0%",
+    "Needs a person": "70.0%"
+  },
+  {
+    "Message": "The API is returning 429s since 3pm UTC even though we are well under our limit.",
+    "Cancelling": "15.0%",
+    "Refund": "3.0%",
+    "Angry": "55.0%",
+    "Bug": "97.0%",
+    "Needs a person": "88.0%"
+  },
+  {
+    "Message": "The Zapier integration stopped triggering yesterday.",
+    "Cancelling": "15.0%",
+    "Refund": "2.0%",
+    "Angry": "21.0%",
+    "Bug": "97.0%",
+    "Needs a person": "83.0%"
+  },
+  {
+    "Message": "Tax was not applied to our last invoice and finance is asking why.",
+    "Cancelling": "15.0%",
+    "Refund": "6.0%",
+    "Angry": "43.0%",
+    "Bug": "87.0%",
+    "Needs a person": "89.0%"
+  },
+  {
+    "Message": "Pricing page and checkout show different prices for the Team plan.",
+    "Cancelling": "14.0%",
+    "Refund": "4.0%",
+    "Angry": "24.0%",
+    "Bug": "94.0%",
+    "Needs a person": "64.0%"
+  },
+  {
+    "Message": "Cannot remove a credit card that is no longer valid.",
+    "Cancelling": "14.0%",
+    "Refund": "3.0%",
+    "Angry": "49.0%",
+    "Bug": "93.0%",
+    "Needs a person": "82.0%"
+  },
+  {
+    "Message": "What is the difference between the Team and Business plans?",
+    "Cancelling": "13.0%",
+    "Refund": "2.0%",
+    "Angry": "3.0%",
+    "Bug": "3.0%",
+    "Needs a person": "9.0%"
+  },
+  {
+    "Message": "The status page says all systems operational but uploads have been failing for an hour.",
+    "Cancelling": "13.0%",
+    "Refund": "2.0%",
+    "Angry": "79.0%",
+    "Bug": "97.0%",
+    "Needs a person": "91.0%"
+  },
+  {
+    "Message": "Wrong tier is showing on our account, we upgraded to Business on Tuesday.",
+    "Cancelling": "13.0%",
+    "Refund": "3.0%",
+    "Angry": "36.0%",
+    "Bug": "94.0%",
+    "Needs a person": "91.0%"
+  },
+  {
+    "Message": "Data from yesterday afternoon is missing from the reports. Was there an incident?",
+    "Cancelling": "12.0%",
+    "Refund": "3.0%",
+    "Angry": "29.0%",
+    "Bug": "87.0%",
+    "Needs a person": "90.0%"
+  },
+  {
+    "Message": "Is the platform HIPAA compliant?",
+    "Cancelling": "12.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "4.0%",
+    "Needs a person": "24.0%"
+  },
+  {
+    "Message": "I forgot my password and the reset email never arrives.",
+    "Cancelling": "11.0%",
+    "Refund": "2.0%",
+    "Angry": "39.0%",
+    "Bug": "95.0%",
+    "Needs a person": "75.0%"
+  },
+  {
+    "Message": "Two-factor codes are rejected even though my phone time is correct.",
+    "Cancelling": "11.0%",
+    "Refund": "2.0%",
+    "Angry": "44.0%",
+    "Bug": "96.0%",
+    "Needs a person": "69.0%"
+  },
+  {
+    "Message": "Charged in USD even though the account is set to EUR.",
+    "Cancelling": "11.0%",
+    "Refund": "22.0%",
+    "Angry": "58.0%",
+    "Bug": "95.0%",
+    "Needs a person": "86.0%"
+  },
+  {
+    "Message": "The mobile app asks for camera permission it does not need.",
+    "Cancelling": "11.0%",
+    "Refund": "2.0%",
+    "Angry": "45.0%",
+    "Bug": "80.0%",
+    "Needs a person": "38.0%"
+  },
+  {
+    "Message": "The bulk import silently drops rows with commas in the name field.",
+    "Cancelling": "10.0%",
+    "Refund": "2.0%",
+    "Angry": "52.0%",
+    "Bug": "98.0%",
+    "Needs a person": "68.0%"
+  },
+  {
+    "Message": "Getting a blank white screen on the settings page, hard refresh does not help.",
+    "Cancelling": "10.0%",
+    "Refund": "2.0%",
+    "Angry": "62.0%",
+    "Bug": "98.0%",
+    "Needs a person": "64.0%"
+  },
+  {
+    "Message": "Cannot log in with Google, it says account already exists with email.",
+    "Cancelling": "10.0%",
+    "Refund": "2.0%",
+    "Angry": "32.0%",
+    "Bug": "96.0%",
+    "Needs a person": "79.0%"
+  },
+  {
+    "Message": "Rate limit errors on the reports endpoint, started after the 2.14 deploy.",
+    "Cancelling": "10.0%",
+    "Refund": "2.0%",
+    "Angry": "31.0%",
+    "Bug": "97.0%",
+    "Needs a person": "79.0%"
+  },
+  {
+    "Message": "Upload of a 90 MB file hangs at 99 percent.",
+    "Cancelling": "10.0%",
+    "Refund": "3.0%",
+    "Angry": "27.0%",
+    "Bug": "97.0%",
+    "Needs a person": "65.0%"
+  },
+  {
+    "Message": "Login loop on Safari after the latest update, cannot get past the password screen.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "47.0%",
+    "Bug": "98.0%",
+    "Needs a person": "57.0%"
+  },
+  {
+    "Message": "Dashboard widgets render blank on Firefox 130, console shows a TypeError.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "25.0%",
+    "Bug": "98.0%",
+    "Needs a person": "65.0%"
+  },
+  {
+    "Message": "Webhook deliveries are delayed by about ten minutes today.",
+    "Cancelling": "9.0%",
+    "Refund": "3.0%",
+    "Angry": "17.0%",
+    "Bug": "85.0%",
+    "Needs a person": "73.0%"
+  },
+  {
+    "Message": "Mobile app crashes on launch after updating to iOS 19.1.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "29.0%",
+    "Bug": "99.0%",
+    "Needs a person": "78.0%"
+  },
+  {
+    "Message": "The search returns results from archived projects, which is confusing.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "39.0%",
+    "Bug": "87.0%",
+    "Needs a person": "24.0%"
+  },
+  {
+    "Message": "PDF export cuts off the last page of long documents.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "27.0%",
+    "Bug": "97.0%",
+    "Needs a person": "32.0%"
+  },
+  {
+    "Message": "I cannot invite users with a .gov email, the form says invalid domain.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "34.0%",
+    "Bug": "94.0%",
+    "Needs a person": "59.0%"
+  },
+  {
+    "Message": "Can we get a dedicated account manager on our plan?",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "7.0%",
+    "Bug": "3.0%",
+    "Needs a person": "79.0%"
+  },
+  {
+    "Message": "Promo code SUMMER25 says expired but the email I got today says valid until Friday.",
+    "Cancelling": "9.0%",
+    "Refund": "6.0%",
+    "Angry": "62.0%",
+    "Bug": "91.0%",
+    "Needs a person": "83.0%"
+  },
+  {
+    "Message": "Emails from your system land in spam for our whole domain.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "48.0%",
+    "Bug": "93.0%",
+    "Needs a person": "83.0%"
+  },
+  {
+    "Message": "Account verification email link says expired immediately after clicking.",
+    "Cancelling": "9.0%",
+    "Refund": "2.0%",
+    "Angry": "50.0%",
+    "Bug": "97.0%",
+    "Needs a person": "75.0%"
+  },
+  {
+    "Message": "Can I pay annually instead of monthly?",
+    "Cancelling": "8.0%",
+    "Refund": "3.0%",
+    "Angry": "4.0%",
+    "Bug": "3.0%",
+    "Needs a person": "36.0%"
+  },
+  {
+    "Message": "Love the product but the onboarding tour keeps reappearing every login.",
+    "Cancelling": "8.0%",
+    "Refund": "2.0%",
+    "Angry": "50.0%",
+    "Bug": "87.0%",
+    "Needs a person": "28.0%"
+  },
+  {
+    "Message": "The API docs mention a batch endpoint that returns 404.",
+    "Cancelling": "8.0%",
+    "Refund": "2.0%",
+    "Angry": "27.0%",
+    "Bug": "95.0%",
+    "Needs a person": "50.0%"
+  },
+  {
+    "Message": "The receipt for March is missing from the billing page.",
+    "Cancelling": "8.0%",
+    "Refund": "4.0%",
+    "Angry": "22.0%",
+    "Bug": "80.0%",
+    "Needs a person": "81.0%"
+  },
+  {
+    "Message": "Requesting a call to discuss an enterprise agreement for 400 seats.",
+    "Cancelling": "8.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "3.0%",
+    "Needs a person": "94.0%"
+  },
+  {
+    "Message": "What are your data retention policies?",
+    "Cancelling": "7.0%",
+    "Refund": "2.0%",
+    "Angry": "5.0%",
+    "Bug": "3.0%",
+    "Needs a person": "15.0%"
+  },
+  {
+    "Message": "How long does the free trial last?",
+    "Cancelling": "7.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "3.0%",
+    "Needs a person": "9.0%"
+  },
+  {
+    "Message": "Add an option to disable the AI suggestions, they are distracting.",
+    "Cancelling": "7.0%",
+    "Refund": "2.0%",
+    "Angry": "40.0%",
+    "Bug": "6.0%",
+    "Needs a person": "18.0%"
+  },
+  {
+    "Message": "Can I get a copy of your DPA for legal review?",
+    "Cancelling": "7.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "3.0%",
+    "Needs a person": "51.0%"
+  },
+  {
+    "Message": "It would be useful to duplicate a project with all its settings.",
+    "Cancelling": "7.0%",
+    "Refund": "2.0%",
+    "Angry": "6.0%",
+    "Bug": "7.0%",
+    "Needs a person": "15.0%"
+  },
+  {
+    "Message": "Notifications arrive twice, once by email and once in app, can I pick one?",
+    "Cancelling": "7.0%",
+    "Refund": "2.0%",
+    "Angry": "15.0%",
+    "Bug": "38.0%",
+    "Needs a person": "23.0%"
+  },
+  {
+    "Message": "Is there an offline mode?",
+    "Cancelling": "7.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "4.0%",
+    "Needs a person": "12.0%"
+  },
+  {
+    "Message": "Keyboard shortcut Cmd+K stopped working in the latest release.",
+    "Cancelling": "6.0%",
+    "Refund": "2.0%",
+    "Angry": "25.0%",
+    "Bug": "97.0%",
+    "Needs a person": "55.0%"
+  },
+  {
+    "Message": "I need to transfer ownership of a workspace to a colleague.",
+    "Cancelling": "6.0%",
+    "Refund": "2.0%",
+    "Angry": "5.0%",
+    "Bug": "6.0%",
+    "Needs a person": "50.0%"
+  },
+  {
+    "Message": "Please add Portuguese to the supported languages.",
+    "Cancelling": "6.0%",
+    "Refund": "2.0%",
+    "Angry": "6.0%",
+    "Bug": "4.0%",
+    "Needs a person": "21.0%"
+  },
+  {
+    "Message": "Charts flicker when switching tabs quickly, minor but annoying.",
+    "Cancelling": "6.0%",
+    "Refund": "2.0%",
+    "Angry": "45.0%",
+    "Bug": "89.0%",
+    "Needs a person": "19.0%"
+  },
+  {
+    "Message": "Would be great if the export supported CSV as well as PDF.",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "4.0%",
+    "Needs a person": "10.0%"
+  },
+  {
+    "Message": "The invoice still shows our old company name, can you update it?",
+    "Cancelling": "5.0%",
+    "Refund": "3.0%",
+    "Angry": "11.0%",
+    "Bug": "49.0%",
+    "Needs a person": "89.0%"
+  },
+  {
+    "Message": "Is there a student discount?",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "3.0%",
+    "Bug": "3.0%",
+    "Needs a person": "14.0%"
+  },
+  {
+    "Message": "The Android widget shows yesterday count instead of today.",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "28.0%",
+    "Bug": "97.0%",
+    "Needs a person": "27.0%"
+  },
+  {
+    "Message": "Comments sometimes post twice when I hit Enter quickly.",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "16.0%",
+    "Bug": "94.0%",
+    "Needs a person": "22.0%"
+  },
+  {
+    "Message": "Would love a way to pin favorite projects to the top.",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "5.0%",
+    "Bug": "4.0%",
+    "Needs a person": "14.0%"
+  },
+  {
+    "Message": "The tooltip text overlaps the button on narrow screens.",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "20.0%",
+    "Bug": "91.0%",
+    "Needs a person": "19.0%"
+  },
+  {
+    "Message": "Could the weekly digest email be sent on Mondays instead of Sundays?",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "6.0%",
+    "Bug": "4.0%",
+    "Needs a person": "33.0%"
+  },
+  {
+    "Message": "How do I enable SCIM provisioning?",
+    "Cancelling": "5.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "5.0%",
+    "Needs a person": "18.0%"
+  },
+  {
+    "Message": "Any plans for a dark mode on mobile?",
+    "Cancelling": "4.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "3.0%",
+    "Needs a person": "12.0%"
+  },
+  {
+    "Message": "We need an audit log export for our SOC 2 audit next week.",
+    "Cancelling": "4.0%",
+    "Refund": "2.0%",
+    "Angry": "5.0%",
+    "Bug": "5.0%",
+    "Needs a person": "73.0%"
+  },
+  {
+    "Message": "Can you add Slack notifications for failed jobs?",
+    "Cancelling": "4.0%",
+    "Refund": "2.0%",
+    "Angry": "5.0%",
+    "Bug": "5.0%",
+    "Needs a person": "30.0%"
+  },
+  {
+    "Message": "Could you support Markdown in comments?",
+    "Cancelling": "4.0%",
+    "Refund": "1.0%",
+    "Angry": "5.0%",
+    "Bug": "5.0%",
+    "Needs a person": "16.0%"
+  },
+  {
+    "Message": "Feature request: recurring tasks with custom intervals.",
+    "Cancelling": "4.0%",
+    "Refund": "2.0%",
+    "Angry": "5.0%",
+    "Bug": "4.0%",
+    "Needs a person": "15.0%"
+  },
+  {
+    "Message": "Who do I contact about a partnership?",
+    "Cancelling": "4.0%",
+    "Refund": "1.0%",
+    "Angry": "4.0%",
+    "Bug": "3.0%",
+    "Needs a person": "50.0%"
+  },
+  {
+    "Message": "Everything is working fine, just checking whether there is a referral program.",
+    "Cancelling": "4.0%",
+    "Refund": "2.0%",
+    "Angry": "3.0%",
+    "Bug": "3.0%",
+    "Needs a person": "12.0%"
+  },
+  {
+    "Message": "How do I add a teammate to my workspace?",
+    "Cancelling": "3.0%",
+    "Refund": "2.0%",
+    "Angry": "3.0%",
+    "Bug": "3.0%",
+    "Needs a person": "11.0%"
+  },
+  {
+    "Message": "Where do I find the SSO settings?",
+    "Cancelling": "3.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "3.0%",
+    "Needs a person": "13.0%"
+  },
+  {
+    "Message": "How do I change the timezone for scheduled reports?",
+    "Cancelling": "3.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "4.0%",
+    "Needs a person": "12.0%"
+  },
+  {
+    "Message": "Requesting a W-9 form for our accounts payable team.",
+    "Cancelling": "3.0%",
+    "Refund": "2.0%",
+    "Angry": "4.0%",
+    "Bug": "4.0%",
+    "Needs a person": "76.0%"
+  },
+  {
+    "Message": "It would help if the calendar view showed weekends in a different color.",
+    "Cancelling": "3.0%",
+    "Refund": "1.0%",
+    "Angry": "6.0%",
+    "Bug": "5.0%",
+    "Needs a person": "12.0%"
+  },
+  {
+    "Message": "Thanks, resolved, you can close this.",
+    "Cancelling": "3.0%",
+    "Refund": "2.0%",
+    "Angry": "3.0%",
+    "Bug": "4.0%",
+    "Needs a person": "33.0%"
+  },
+  {
+    "Message": "Great release notes this month, very clear.",
+    "Cancelling": "3.0%",
+    "Refund": "1.0%",
+    "Angry": "2.0%",
+    "Bug": "2.0%",
+    "Needs a person": "5.0%"
+  },
+  {
+    "Message": "Thanks for the quick turnaround yesterday, the fix works.",
+    "Cancelling": "2.0%",
+    "Refund": "2.0%",
+    "Angry": "2.0%",
+    "Bug": "3.0%",
+    "Needs a person": "18.0%"
+  },
+  {
+    "Message": "The new sidebar looks great, nice work.",
+    "Cancelling": "2.0%",
+    "Refund": "2.0%",
+    "Angry": "2.0%",
+    "Bug": "2.0%",
+    "Needs a person": "8.0%"
+  },
+  {
+    "Message": "Just wanted to say the support team has been excellent, thank you.",
+    "Cancelling": "2.0%",
+    "Refund": "2.0%",
+    "Angry": "2.0%",
+    "Bug": "2.0%",
+    "Needs a person": "19.0%"
+  },
+  {
+    "Message": "Nice touch with the confetti on project completion.",
+    "Cancelling": "2.0%",
+    "Refund": "2.0%",
+    "Angry": "2.0%",
+    "Bug": "3.0%",
+    "Needs a person": "9.0%"
+  }
+]

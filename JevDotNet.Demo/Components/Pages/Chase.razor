@@ -1,0 +1,311 @@
+@page "/game"
+@implements IDisposable
+@using System.Diagnostics
+@using System.Globalization
+@using System.Net
+@using System.Text.Json
+@using JevDotNet
+@using JevDotNet.Demo.Services
+@inject DemoEvaluationService Evaluation
+
+<PageTitle>Live chase · JevDotNet Demo</PageTitle>
+
+<div class="page-heading chase-page-heading">
+    <div>
+        <a class="back-link" href="/">← All demos</a>
+        <div class="eyebrow">PLAY AGAINST A DECISION MODEL</div>
+        <h1>Live chase<span class="title-period">.</span></h1>
+        <p>You run. Your selected model chases. One OpenRouter Decisions request per chaser move.</p>
+    </div>
+    <div class="chase-toolbar">
+        @if (IsRunning)
+        {
+            <button class="button button-primary" @onclick="Pause">Pause chase</button>
+        }
+        else
+        {
+            <button class="button button-primary" @onclick="StartAsync" disabled="@(!Evaluation.HasApiKey || Game.IsRoundComplete)">@(Game.ChaserMoves == 0 ? "Start chase" : "Resume chase") <span aria-hidden="true">↗</span></button>
+        }
+        <button class="button chase-reset" @onclick="Reset">Reset</button>
+    </div>
+</div>
+
+@if (!Evaluation.HasApiKey)
+{
+    <ApiKeyNotice />
+}
+
+@if (ErrorMessage is not null)
+{
+    <div class="error-notice" role="alert"><strong>Chase paused.</strong> @ErrorMessage</div>
+}
+
+<div class="chase-layout">
+    <section class="chase-board-panel" aria-label="Chase board and controls">
+        <div class="chase-panel-heading"><h2>Board</h2><span>@(IsThinking ? "MODEL IS DECIDING" : IsRunning ? "CHASING" : "READY")</span></div>
+        <div class="chase-model-field">
+            <label for="chase-model">Decision model</label>
+            <select id="chase-model" class="model-select" @bind="SelectedModel" disabled="@(IsRunning || Game.ChaserMoves > 0)">
+                @foreach (var model in DemoDecisionModels.All)
+                {
+                    <option value="@model.Id">@model.Name</option>
+                }
+            </select>
+        </div>
+        <div class="chase-board" tabindex="0" role="group" aria-label="Six by six chase board. Use the arrow keys to move the runner while playing." @ref="Board" @onkeydown="HandleKeyDown" @onkeydown:preventDefault>
+            @for (var row = 1; row <= ChaseGame.GridSize; row++)
+            {
+                @for (var column = 1; column <= ChaseGame.GridSize; column++)
+                {
+                    var position = new GridPosition(column, row);
+                    <div class="chase-cell @(ChaseGame.IsWall(position) ? "wall" : "")" aria-label="@CellLabel(position)">
+                        @if (position == Game.Runner)
+                        {
+                            <span class="runner-piece" title="Runner"></span>
+                        }
+                        @if (position == Game.Chaser)
+                        {
+                            <span class="chaser-piece" title="Model chaser"></span>
+                        }
+                    </div>
+                }
+            }
+        </div>
+        <div class="chase-controls" aria-label="Move runner">
+            <button @onclick='() => MoveRunnerAsync("up")' disabled="@(!IsRunning || Game.IsCaught)" aria-label="Move runner up">↑</button>
+            <button @onclick='() => MoveRunnerAsync("left")' disabled="@(!IsRunning || Game.IsCaught)" aria-label="Move runner left">←</button>
+            <button @onclick='() => MoveRunnerAsync("down")' disabled="@(!IsRunning || Game.IsCaught)" aria-label="Move runner down">↓</button>
+            <button @onclick='() => MoveRunnerAsync("right")' disabled="@(!IsRunning || Game.IsCaught)" aria-label="Move runner right">→</button>
+        </div>
+        <p class="chase-status" role="status">@StatusMessage</p>
+        <p class="chase-help">Solid disc: you · Ring: chaser · Arrow keys or buttons move you</p>
+    </section>
+
+    <aside class="chase-info-card chase-dashboard">
+        <section class="chase-decision">
+            <div class="chase-panel-heading"><h2>Last decision</h2><span>UP TO @ChaseGame.MaxChaserMoves MOVES</span></div>
+            @if (LastResponse is null)
+            {
+                <p>The model's legal moves and how it weighed them appear here after the first move.</p>
+            }
+            else
+            {
+                var choice = LastResponse.GetAnswer<ChoiceAnswer>("move");
+                <div class="chase-choice">Chaser chose <strong>@choice.Choice</strong> <span>· @Percent(choice.Confidence)% confidence</span></div>
+                @foreach (var probability in choice.Probabilities.OrderByDescending(item => item.Value))
+                {
+                    <div class="probability-row"><span>@probability.Key</span><strong>@Percent(probability.Value)%</strong></div>
+                    <div class="probability-track"><div style="width: @Percent(probability.Value)%"></div></div>
+                }
+            }
+        </section>
+
+        <section class="chase-usage">
+            <h2>Live usage</h2>
+            <div class="chase-stat-grid">
+                <div class="chase-stat"><span>Chaser moves / requests</span><strong>@Game.ChaserMoves / @RequestsSent</strong></div>
+                <div class="chase-stat"><span>Runner moves</span><strong>@Game.RunnerMoves</strong></div>
+                <div class="chase-stat"><span>Decisions / second</span><strong>@Rate.DecisionsPerSecond.ToString("0.00", CultureInfo.InvariantCulture)</strong></div>
+                <div class="chase-stat"><span>Shortest path</span><strong>@ChaseGame.ShortestDistance(Game.Chaser, Game.Runner) steps</strong></div>
+                <div class="chase-stat"><span>Total cost</span><strong>@(HasCost ? "$" + TotalCost.ToString("0.#########", CultureInfo.InvariantCulture) : "—")</strong></div>
+            </div>
+            <div class="chase-meta"><span>Input / output tokens <strong>@InputTokens / @OutputTokens</strong></span>
+            @if (LastResponse is not null)
+            {
+                <span>Resolved model <strong>@LastResponse.Model</strong></span>
+                @if (!string.IsNullOrWhiteSpace(LastResponse.Provider))
+                {
+                    <span>Provider <strong>@LastResponse.Provider</strong></span>
+                }
+            }
+            </div>
+        </section>
+
+        <section class="chase-details">
+            <details><summary>How it works</summary><p>The runner moves locally. For each chaser turn, the server describes both positions, the walls, and the shortest path after every legal move. The selected model picks one move through OpenRouter.</p><p>Start begins repeated live requests. Pause or leave this page to stop. Each round is limited to @ChaseGame.MaxChaserMoves chaser moves. The displayed decision rate averages completed turns with the 400 ms pacing and excludes pauses. Reset to change models.</p></details>
+            @if (LastRequest is not null)
+            {
+                <details><summary>Last request JSON</summary><pre>@JsonSerializer.Serialize(LastRequest, PrettyJson)</pre></details>
+            }
+            @if (LastResponse is not null)
+            {
+                <details><summary>Last response JSON</summary><pre>@JsonSerializer.Serialize(LastResponse, PrettyJson)</pre></details>
+            }
+        </section>
+    </aside>
+</div>
+
+@code {
+    private static readonly JsonSerializerOptions PrettyJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private ChaseGame Game = new();
+    private ChaseDecisionRate Rate = new();
+    private string SelectedModel = DemoDecisionModels.DefaultModelId;
+    private ElementReference Board;
+    private CancellationTokenSource? Session;
+    private bool IsRunning;
+    private bool IsThinking;
+    private bool HasCost;
+    private bool Disposed;
+    private int RequestsSent;
+    private int InputTokens;
+    private int OutputTokens;
+    private decimal TotalCost;
+    private string StatusMessage = "Ready. Start the chase to make the first live decision.";
+    private string? ErrorMessage;
+    private DecisionsRequest? LastRequest;
+    private JevResponse? LastResponse;
+
+    private async Task StartAsync()
+    {
+        if (IsRunning || !Evaluation.HasApiKey || Game.IsRoundComplete) return;
+        ErrorMessage = null;
+        IsRunning = true;
+        StatusMessage = "The model is choosing a move…";
+        var session = new CancellationTokenSource();
+        Session = session;
+        _ = RunChaseAsync(session);
+        await Board.FocusAsync();
+    }
+
+    private async Task RunChaseAsync(CancellationTokenSource session)
+    {
+        var token = session.Token;
+        try
+        {
+            while (!token.IsCancellationRequested && !Game.IsRoundComplete)
+            {
+                var turnStarted = Stopwatch.GetTimestamp();
+                var request = Game.BuildRequest(SelectedModel);
+                LastRequest = request;
+                IsThinking = true;
+                await InvokeAsync(StateHasChanged);
+
+                RequestsSent++;
+                var response = await Evaluation.EvaluateAsync(request, token);
+                if (token.IsCancellationRequested || Game.IsCaught) break;
+
+                var choice = response.GetAnswer<ChoiceAnswer>("move");
+                Game.ApplyChaserMove(choice.Choice);
+                Rate.Record(Stopwatch.GetElapsedTime(turnStarted));
+                LastResponse = response;
+                InputTokens += response.Usage.InputTokens;
+                OutputTokens += response.Usage.OutputTokens;
+                if (response.Usage.Cost is { } cost)
+                {
+                    TotalCost += cost;
+                    HasCost = true;
+                }
+                IsThinking = false;
+                StatusMessage = Game.IsCaught
+                    ? $"The chaser caught you in {Game.ChaserMoves} moves. Reset to play again."
+                    : Game.IsRoundComplete
+                        ? $"The {ChaseGame.MaxChaserMoves}-move round is complete. Reset to play again."
+                        : $"The chaser moved {choice.Choice}. Keep running!";
+                await InvokeAsync(StateHasChanged);
+                var remaining = ChaseDecisionRate.TurnInterval - Stopwatch.GetElapsedTime(turnStarted);
+                if (!Game.IsRoundComplete && remaining > TimeSpan.Zero)
+                    await Task.Delay(remaining, token);
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (JevApiException error)
+        {
+            if (!token.IsCancellationRequested)
+                ErrorMessage = error.StatusCode switch
+                {
+                    HttpStatusCode.Unauthorized => "OpenRouter rejected the API key. Check the OpenRouter:ApiKey user secret.",
+                    HttpStatusCode.PaymentRequired => "OpenRouter reports insufficient credits. Add credits to the account and try again.",
+                    HttpStatusCode.TooManyRequests => "OpenRouter's rate limit was reached. Resume shortly.",
+                    _ => $"OpenRouter returned HTTP {(int)error.StatusCode}: {error.ResponseBody}"
+                };
+        }
+        catch (Exception error) when (error is HttpRequestException or JsonException or InvalidOperationException)
+        {
+            if (!token.IsCancellationRequested) ErrorMessage = error.Message;
+        }
+        finally
+        {
+            session.Dispose();
+            if (ReferenceEquals(Session, session))
+            {
+                Session = null;
+                IsRunning = false;
+                IsThinking = false;
+                if (ErrorMessage is not null) StatusMessage = "The chase is paused. Check the error above, then resume.";
+                if (!Disposed) await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private void Pause()
+    {
+        Session?.Cancel();
+        IsRunning = false;
+        IsThinking = false;
+        if (!Game.IsRoundComplete) StatusMessage = "Paused. Resume when you're ready.";
+    }
+
+    private void Reset()
+    {
+        Pause();
+        Session = null;
+        Game = new ChaseGame();
+        Rate = new ChaseDecisionRate();
+        RequestsSent = 0;
+        InputTokens = 0;
+        OutputTokens = 0;
+        TotalCost = 0;
+        HasCost = false;
+        LastRequest = null;
+        LastResponse = null;
+        ErrorMessage = null;
+        StatusMessage = "Ready. Start the chase to make the first live decision.";
+    }
+
+    private async Task MoveRunnerAsync(string direction)
+    {
+        MoveRunner(direction);
+        await Board.FocusAsync();
+    }
+
+    private void MoveRunner(string direction)
+    {
+        if (!IsRunning || !Game.TryMoveRunner(direction)) return;
+        if (Game.IsCaught)
+        {
+            Pause();
+            StatusMessage = "You ran into the chaser. Reset to play again.";
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        var direction = args.Key switch
+        {
+            "ArrowUp" => "up",
+            "ArrowDown" => "down",
+            "ArrowLeft" => "left",
+            "ArrowRight" => "right",
+            _ => null
+        };
+        if (direction is not null) MoveRunner(direction);
+    }
+
+    private string CellLabel(GridPosition position)
+    {
+        var label = $"Column {position.Column}, row {position.Row}";
+        if (ChaseGame.IsWall(position)) return label + ", wall";
+        if (position == Game.Runner && position == Game.Chaser) return label + ", runner caught by the chaser";
+        if (position == Game.Runner) return label + ", runner";
+        if (position == Game.Chaser) return label + ", model chaser";
+        return label + ", empty";
+    }
+
+    private static int Percent(double value) => (int)Math.Round(Math.Clamp(value, 0, 1) * 100);
+
+    public void Dispose()
+    {
+        Disposed = true;
+        Session?.Cancel();
+    }
+}

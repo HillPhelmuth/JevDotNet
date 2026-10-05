@@ -1,0 +1,38 @@
+@using JevDotNet.Demo.Services
+
+<h2>@Example.Title</h2>
+@if (Modified)
+{
+    <p class="bulk-help">Edited example · reset to restore the original inputs and expected score.</p>
+}
+else
+{
+    <p class="judge-reference"><strong>Expected rating: @Example.ExpectedScore / 5</strong><br />Author-written reference: @Example.Explanation</p>
+}
+<label for="judge-query">Query</label>
+<textarea id="judge-query" rows="2" maxlength="@JudgeCatalog.MaxInputLength" value="@Input.Query" disabled="@Disabled"
+          @oninput="e => Changed.InvokeAsync(Input with { Query = e.Value?.ToString() ?? string.Empty })"></textarea>
+@if (Evaluator.NeedsReference)
+{
+    <label for="judge-reference">Reference answer</label>
+    <textarea id="judge-reference" rows="3" maxlength="@JudgeCatalog.MaxInputLength" value="@Input.ReferenceAnswer" disabled="@Disabled"
+              @oninput="e => Changed.InvokeAsync(Input with { ReferenceAnswer = e.Value?.ToString() ?? string.Empty })"></textarea>
+}
+@if (Evaluator.NeedsContext)
+{
+    <label for="judge-context">Source context</label>
+    <textarea id="judge-context" rows="4" maxlength="@JudgeCatalog.MaxInputLength" value="@Input.SourceContext" disabled="@Disabled"
+              @oninput="e => Changed.InvokeAsync(Input with { SourceContext = e.Value?.ToString() ?? string.Empty })"></textarea>
+}
+<label for="judge-response">Response to judge</label>
+<textarea id="judge-response" rows="4" maxlength="@JudgeCatalog.MaxInputLength" value="@Input.Response" disabled="@Disabled"
+          @oninput="e => Changed.InvokeAsync(Input with { Response = e.Value?.ToString() ?? string.Empty })"></textarea>
+
+@code {
+    [Parameter, EditorRequired] public JudgeEvaluator Evaluator { get; set; } = default!;
+    [Parameter, EditorRequired] public JudgeExample Example { get; set; } = default!;
+    [Parameter, EditorRequired] public JudgeInput Input { get; set; } = default!;
+    [Parameter] public bool Modified { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback<JudgeInput> Changed { get; set; }
+}

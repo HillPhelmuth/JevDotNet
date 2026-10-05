@@ -1,0 +1,49 @@
+@using JevDotNet.Demo.Services
+
+<section class="workspace-panel bulk-results judge-dataset">
+    <div class="bulk-summary"><h2>Decision model vs GPT-6 Luna</h2><span>@Run.Decisions.Model vs @LunaJudgeAgent.ModelId</span></div>
+    @{
+        var summary = JudgeComparisonSummary.Calculate(Run);
+        var decisions = JudgeSummary.Calculate(Run.Decisions.Attempts);
+    }
+    <p class="bulk-progress" aria-live="polite">@(Run.Complete ? "Comparison complete" : Run.Cancelled ? "Comparison cancelled" : Busy ? "Comparing" : "Ready to compare") · Decisions @Run.Decisions.Attempts.Count/@Run.Decisions.Examples.Count · Luna @Run.Luna.Count/@Run.Decisions.Examples.Count</p>
+    <div class="bulk-metrics">
+        <div><span>Judge agreement</span><strong>@summary.Agreed / @summary.Paired</strong></div>
+        <div><span>Mean rating gap</span><strong>@(summary.MeanGap?.ToString("0.00") ?? "—")</strong></div>
+        <div><span>Decisions vs expected</span><strong>@decisions.Agreed / @decisions.Successful</strong><small>Error @(decisions.MeanAbsoluteError?.ToString("0.00") ?? "—")</small></div>
+        <div><span>Luna vs expected</span><strong>@summary.LunaReferenceAgreement / @summary.LunaSuccessful</strong><small>Error @(summary.LunaReferenceError?.ToString("0.00") ?? "—")</small></div>
+        <div><span>Decisions request time</span><strong>@summary.DecisionTime.TotalSeconds.ToString("0.00") s</strong></div>
+        <div><span>Luna original request time</span><strong>@summary.LunaOriginalTime.TotalSeconds.ToString("0.00") s</strong></div>
+        <div><span>Luna responses reused</span><strong>@summary.Stored</strong></div>
+        <div><span>New Luna responses</span><strong>@summary.Live</strong></div>
+    </div>
+    <p class="bulk-help">Both judges use the same original inputs and five-level rubric. Agreement compares integer ratings; errors and gaps are measured in Likert levels and exclude failed results. Luna times are the original model request times, including for stored responses, not cache retrieval times.</p>
+    <div class="bulk-table-scroll"><table class="bulk-table">
+        <thead><tr><th scope="col">Example</th><th scope="col">Expected</th><th scope="col">Decisions</th><th scope="col">Luna</th><th scope="col">Decisions − Luna</th><th scope="col">Luna source</th><th scope="col">Luna rationale</th></tr></thead>
+        <tbody>
+        @foreach (var example in Run.Decisions.Examples)
+        {
+            var decision = Run.Decisions.Attempts.FirstOrDefault(item => item.Example.Id == example.Id);
+            var luna = Run.Luna.FirstOrDefault(item => item.Example.Id == example.Id);
+            var result = luna?.Judgment?.Result;
+            <tr @key="example.Id">
+                <th scope="row"><button class="judge-example-link" disabled="@Busy" @onclick="() => Selected.InvokeAsync(example.Id)">@example.Title</button></th>
+                <td>@example.ExpectedScore</td>
+                <td>@(decision?.Result?.Rating.ToString() ?? "—")@if (decision?.Error is not null) { <small class="bulk-error" role="alert">@decision.Error</small> }</td>
+                <td>@(result?.Rating.ToString() ?? "—")@if (luna?.Error is not null) { <small class="bulk-error" role="alert">@luna.Error</small> }</td>
+                <td>@(decision?.Result is null || result is null ? "—" : (decision.Result.Rating - result.Rating).ToString("+0;-0;0"))</td>
+                <td>@(luna?.Judgment is null ? "—" : luna.Judgment.FromCache ? "Stored" : "Live → stored")
+                    @if (result is not null) { <small>@result.Elapsed.TotalSeconds.ToString("0.00") s originally</small> }
+                </td>
+                <td class="bulk-message">@(result?.Rationale ?? "—")</td>
+            </tr>
+        }
+        </tbody>
+    </table></div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public JudgeComparisonRun Run { get; set; } = default!;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<string> Selected { get; set; }
+}

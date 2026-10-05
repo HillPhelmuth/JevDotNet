@@ -1,0 +1,57 @@
+name: Publish JevDotNet to NuGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-nuget
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Check NuGet configuration
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo '::error::Set the NUGET_API_KEY repository secret.'
+            exit 1
+          fi
+
+      - name: Restore dependencies
+        run: dotnet restore JevDotNet.slnx
+
+      - name: Build
+        # Disable the library's automatic packaging to its local Windows path.
+        run: dotnet build JevDotNet.slnx --configuration Release --no-restore -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
+
+      - name: Run contract checks
+        run: dotnet run --project JevDotNet.Tests/JevDotNet.Tests.csproj --configuration Release --no-build
+
+      - name: Pack JevDotNet
+        run: dotnet pack JevDotNet/JevDotNet.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
+
+      - name: Publish packages and symbols to nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "./artifacts/nuget/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate

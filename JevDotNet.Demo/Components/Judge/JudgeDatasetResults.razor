@@ -1,0 +1,46 @@
+@using JevDotNet.Demo.Services
+
+<section class="workspace-panel bulk-results judge-dataset">
+    <div class="bulk-summary"><h2>@Evaluator.Name dataset · @Examples.Count examples</h2><span>Four examples at each expected rating</span></div>
+    <p class="bulk-help">These are illustrative, author-labeled examples. Dataset runs use the original inputs. Select a row to inspect its inputs and any completed result.</p>
+    @if (Run is not null)
+    {
+        var summary = JudgeSummary.Calculate(Run.Attempts);
+        <p class="bulk-progress" aria-live="polite">@(Run.Complete ? "Complete" : Run.Cancelled ? "Cancelled" : Busy ? "Running" : "Stopped") · @Run.Attempts.Count / @Examples.Count attempted · @summary.Successful successful</p>
+        <div class="bulk-metrics">
+            <div><span>Exact rating agreement</span><strong>@summary.Agreed / @summary.Successful</strong></div>
+            <div><span>Mean absolute rating error</span><strong>@(summary.MeanAbsoluteError?.ToString("0.00") ?? "—")</strong></div>
+            <div><span>Failed requests</span><strong>@Run.Attempts.Count(attempt => attempt.Error is not null)</strong></div>
+        </div>
+        <p class="bulk-help">Agreement and error include successful results only. Error is measured in Likert levels.</p>
+    }
+    <div class="bulk-table-scroll"><table class="bulk-table">
+        <thead><tr><th scope="col">Example</th><th scope="col">Response</th><th scope="col">Expected</th><th scope="col">Rating</th><th scope="col">Difference</th><th scope="col">Request time</th></tr></thead>
+        <tbody>
+            @foreach (var example in Examples)
+            {
+                var attempt = Run?.Attempts.FirstOrDefault(item => item.Example.Id == example.Id);
+                var result = attempt?.Result;
+                <tr @key="example.Id">
+                    <th scope="row"><button class="judge-example-link" disabled="@Busy" @onclick="() => Selected.InvokeAsync(example.Id)">@example.Title</button><small>@example.Id</small></th>
+                    <td class="bulk-message">@example.Input.Response</td>
+                    <td>@example.ExpectedScore / 5</td>
+                    <td>@(result is null ? "—" : $"{result.Rating} / 5")
+                        @if (result is not null) { <small>Weighted @result.WeightedScore.ToString("0.00")</small> }
+                        @if (attempt?.Error is not null) { <small class="bulk-error" role="alert">@attempt.Error</small> }
+                    </td>
+                    <td>@(result is null ? "—" : (result.Rating - example.ExpectedScore).ToString("+0;-0;0"))</td>
+                    <td>@(result is null ? "—" : $"{result.Elapsed.TotalSeconds:0.00} s")</td>
+                </tr>
+            }
+        </tbody>
+    </table></div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public JudgeEvaluator Evaluator { get; set; } = default!;
+    [Parameter, EditorRequired] public IReadOnlyList<JudgeExample> Examples { get; set; } = [];
+    [Parameter] public JudgeRun? Run { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<string> Selected { get; set; }
+}

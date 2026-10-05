@@ -1,0 +1,87 @@
+@page "/jev-as-judge"
+@implements IAsyncDisposable
+@using JevDotNet.Demo.Services
+@using JevDotNet.Demo.Components.Judge
+@inject JudgeService Judge
+@inject JudgeComparisonService Comparison
+
+<PageTitle>Jev as Judge · JevDotNet Demo</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <a class="back-link" href="/">← All demos</a>
+        <div class="eyebrow">LLM RESPONSE EVALUATION</div>
+        <h1>Jev as Judge<span class="title-period">.</span></h1>
+        <p>Judge response quality with decision models. Four rubrics, eighty examples, and a Likert rating from 1 to 5.</p>
+    </div>
+</div>
+@if (!Judge.HasApiKey) { <ApiKeyNotice /> }
+@if (LoadError is not null)
+{
+    <div class="error-notice" role="alert">Could not load the judge dataset: @LoadError</div>
+}
+else if (Example is not null)
+{
+    <section class="workspace-panel judge-controls">
+        <div>
+            <label for="judge-model">Decisions model</label>
+            <select id="judge-model" class="model-select" @bind="Model" @bind:after="ModelChanged" disabled="@IsBusy">
+                @foreach (var model in DemoDecisionModels.All) { <option @key="model.Id" value="@model.Id">@model.Name</option> }
+            </select>
+        </div>
+        <div>
+            <label for="judge-evaluator">Quality evaluator</label>
+            <select id="judge-evaluator" class="model-select" @bind="Type" @bind:after="EvaluatorChanged" disabled="@IsBusy">
+                @foreach (var evaluator in JudgeCatalog.All) { <option @key="evaluator.Key" value="@evaluator.Key">@evaluator.Name</option> }
+            </select>
+        </div>
+    </section>
+    @if (IsBusy || Status is not null)
+    {
+        <div class="judge-run-actions" aria-live="polite">
+            @if (IsBusy) { <button class="button bulk-cancel" @onclick="Cancel">Cancel @(DatasetBusy ? "run" : "request")</button> }
+            <span>@Status</span>
+        </div>
+    }
+    @if (Error is not null) { <div class="error-notice" role="alert">@Error</div> }
+    <JudgeTabs Id="judge-execution" Label="Execution mode" FirstLabel="Single execution run" SecondLabel="Bulk execution run"
+               SecondSelected="BulkSelected" Selected="value => BulkSelected = value">
+        <FirstContent>
+    <section class="workspace-panel judge-example-picker">
+        <label for="judge-example">Example</label>
+        <select id="judge-example" class="model-select" value="@Example.Id" @onchange="e => SelectExample(e.Value?.ToString() ?? string.Empty)" disabled="@IsBusy">
+            @foreach (var example in Examples) { <option @key="example.Id" value="@example.Id">@example.ExpectedScore / 5 · @example.Title</option> }
+        </select>
+    </section>
+    <div class="judge-workspace">
+        <div class="judge-input-column">
+            <JudgeRubric Evaluator="Evaluator" />
+            <section class="workspace-panel judge-editor">
+                <JudgeExampleEditor Evaluator="Evaluator" Example="Example" Input="Input" Modified="Modified" Disabled="IsBusy" Changed="InputChanged" />
+                <div class="judge-actions">
+                    <button class="button button-primary" @onclick="JudgeResponseAsync" disabled="@(IsBusy || !Judge.HasApiKey)">Judge response ↗</button>
+                    <button class="button" @onclick="ResetExample" disabled="@IsBusy">Reset example</button>
+                </div>
+            </section>
+        </div>
+        <JudgeSingleResult Evaluator="Evaluator" Result="Result" ExpectedScore="@(Modified ? null : (int?)Example.ExpectedScore)" Busy="@(IsBusy && !DatasetBusy)" />
+    </div>
+        </FirstContent>
+        <SecondContent>
+            <div class="judge-run-actions">
+                <button class="button button-primary" @onclick="CompareDatasetAsync" disabled="@(IsBusy || !Judge.HasApiKey)">Run @Examples.Count examples · Jev + Luna ↗</button>
+            </div>
+            <p class="bulk-help">Every bulk run compares Jev with GPT-6 Luna using the original @Examples.Count examples. Saved Luna judgments are reused for identical inputs and rubrics across runs and app restarts.</p>
+            <details class="judge-bulk-rubric"><summary>@Evaluator.Name rubric · 1–5</summary><JudgeRubric Evaluator="Evaluator" /></details>
+            <JudgeTabs Id="judge-bulk-results" Label="Bulk result view" FirstLabel="Luna vs Jev" SecondLabel="Jev details"
+                       SecondSelected="JevDetailsSelected" Selected="value => JevDetailsSelected = value">
+                <FirstContent>
+                    <JudgeComparisonResults Run="@(ComparisonRun ?? new JudgeComparisonRun(Examples, Model))" Busy="IsBusy" Selected="InspectExample" />
+                </FirstContent>
+                <SecondContent>
+                    <JudgeDatasetResults Evaluator="Evaluator" Examples="Examples" Run="Run" Busy="IsBusy" Selected="InspectExample" />
+                </SecondContent>
+            </JudgeTabs>
+        </SecondContent>
+    </JudgeTabs>
+}

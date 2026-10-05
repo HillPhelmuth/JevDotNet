@@ -1,0 +1,14 @@
+@using JevDotNet.Demo.Services
+
+<div class="brand"><span class="brand-mark">J<span>•</span></span><div><strong>JevDotNet</strong><small>MODEL SHOWCASE</small></div></div>
+<nav aria-label="Main navigation">
+    <div class="nav-label">EXPLORE</div>
+    <NavLink class="nav-link" href="" Match="NavLinkMatch.All"><span class="nav-symbol">⌂</span> Overview</NavLink>
+    @foreach (var scenario in DemoScenarioCatalog.All)
+    {
+        <NavLink class="nav-link" href="@($"examples/{scenario.Slug}")"><span class="nav-symbol">@scenario.Number</span> @scenario.Title</NavLink>
+    }
+    <NavLink class="nav-link" href="bulk-support"><span class="nav-symbol">▦</span> Bulk triage</NavLink>
+    <NavLink class="nav-link" href="jev-as-judge"><span class="nav-symbol">✓</span> Jev as Judge</NavLink>
+    <NavLink class="nav-link" href="game"><span class="nav-symbol">◎</span> Live chase</NavLink>
+</nav>

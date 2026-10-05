@@ -1,0 +1,18 @@
+@using JevDotNet.Demo.Services
+
+<section class="workspace-panel judge-rubric">
+    <div class="eyebrow">FIVE-LEVEL RUBRIC</div>
+    <h2>@Evaluator.Name</h2>
+    <p>@Evaluator.Question</p>
+    <ol>
+        @foreach (var level in Evaluator.Levels)
+        {
+            <li @key="level">@level</li>
+        }
+    </ol>
+    <p class="bulk-help">The same rubric is used for a single response and every dataset example.</p>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public JudgeEvaluator Evaluator { get; set; } = default!;
+}

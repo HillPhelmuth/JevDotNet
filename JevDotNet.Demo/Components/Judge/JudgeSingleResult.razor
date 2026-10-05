@@ -1,0 +1,44 @@
+@using JevDotNet.Demo.Services
+
+<section class="workspace-panel judge-result" aria-live="polite">
+    <div class="eyebrow">JUDGE RESULT</div>
+    @if (Result is null)
+    {
+        <h2>@(Busy ? "Judging…" : "A rating your code can use")</h2>
+        <p>Select an example, inspect its rubric, then judge the response. The result includes a typed rating and the probability of each level.</p>
+    }
+    else
+    {
+        <h2 class="judge-rating">@Result.Rating <span>/ 5</span></h2>
+        <p>Most probable Likert rating · weighted score <strong>@Result.WeightedScore.ToString("0.00") / 5</strong></p>
+        @if (ExpectedScore is not null)
+        {
+            <p>Expected @ExpectedScore / 5 · difference <strong>@((Result.Rating - ExpectedScore.Value).ToString("+0;-0;0"))</strong></p>
+        }
+        <div class="judge-probabilities">
+            @for (var index = 0; index < 5; index++)
+            {
+                var level = index + 1;
+                var probability = Result.Probabilities[index];
+                <div class="judge-probability" @key="level">
+                    <label for="@($"judge-probability-{level}")"><strong>@level</strong> · @Evaluator.Levels[index]</label>
+                    <div><progress id="@($"judge-probability-{level}")" value="@probability" max="1"></progress><span>@((probability * 100).ToString("0.0"))%</span></div>
+                </div>
+            }
+        </div>
+        <p class="bulk-help">Confidence: @((Result.Confidence * 100).ToString("0.0"))%. This measures distribution concentration, not the probability that the rating is correct.</p>
+        <div class="judge-result-meta">
+            <span>Model <strong>@Result.Model</strong></span>
+            <span>Request time <strong>@Result.Elapsed.TotalSeconds.ToString("0.00") s</strong></span>
+            <span>Tokens <strong>@Result.Usage.InputTokens input · @Result.Usage.OutputTokens output</strong></span>
+            <span>Reported cost <strong>@(Result.Usage.Cost is { } cost ? $"${cost:0.00000000}" : "Unavailable")</strong></span>
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public JudgeEvaluator Evaluator { get; set; } = default!;
+    [Parameter] public JudgeResult? Result { get; set; }
+    [Parameter] public int? ExpectedScore { get; set; }
+    [Parameter] public bool Busy { get; set; }
+}

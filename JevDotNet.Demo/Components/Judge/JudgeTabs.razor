@@ -1,0 +1,35 @@
+<div class="bulk-tabs judge-tabs" role="tablist" aria-label="@Label">
+    <button @ref="FirstTab" id="@(Id + "-first")" role="tab" class="@(!SecondSelected ? "active" : null)"
+            aria-selected="@(!SecondSelected ? "true" : "false")" aria-controls="@(Id + "-panel")" tabindex="@(!SecondSelected ? 0 : -1)"
+            @onclick="() => Selected.InvokeAsync(false)" @onkeydown="NavigateAsync">@FirstLabel</button>
+    <button @ref="SecondTab" id="@(Id + "-second")" role="tab" class="@(SecondSelected ? "active" : null)"
+            aria-selected="@(SecondSelected ? "true" : "false")" aria-controls="@(Id + "-panel")" tabindex="@(SecondSelected ? 0 : -1)"
+            @onclick="() => Selected.InvokeAsync(true)" @onkeydown="NavigateAsync">@SecondLabel</button>
+</div>
+<div id="@(Id + "-panel")" role="tabpanel" aria-labelledby="@(Id + (SecondSelected ? "-second" : "-first"))" tabindex="0">
+    @if (SecondSelected) { @SecondContent } else { @FirstContent }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Id { get; set; } = "";
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter, EditorRequired] public string FirstLabel { get; set; } = "";
+    [Parameter, EditorRequired] public string SecondLabel { get; set; } = "";
+    [Parameter] public bool SecondSelected { get; set; }
+    [Parameter] public EventCallback<bool> Selected { get; set; }
+    [Parameter] public RenderFragment? FirstContent { get; set; }
+    [Parameter] public RenderFragment? SecondContent { get; set; }
+    private ElementReference FirstTab;
+    private ElementReference SecondTab;
+
+    private async Task NavigateAsync(KeyboardEventArgs args)
+    {
+        bool second;
+        if (args.Key is "ArrowLeft" or "ArrowRight") second = !SecondSelected;
+        else if (args.Key == "Home") second = false;
+        else if (args.Key == "End") second = true;
+        else return;
+        await Selected.InvokeAsync(second);
+        await (second ? SecondTab : FirstTab).FocusAsync();
+    }
+}

@@ -1,0 +1,70 @@
+name: Deploy JevDotNet.Demo to Azure App Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'JevDotNet/**'
+      - 'JevDotNet.Demo/**'
+      - 'JevDotNet.Tests/**'
+      - 'JevDotNet.slnx'
+      - 'README.md'
+      - 'global.json'
+      - 'Directory.*'
+      - 'NuGet.Config'
+      - '.github/workflows/deploy-demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+      AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Check Azure configuration
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          if [ -z "$AZURE_WEBAPP_NAME" ] || [ -z "$AZURE_WEBAPP_PUBLISH_PROFILE" ]; then
+            echo '::error::Set the AZURE_WEBAPP_NAME repository variable and AZURE_WEBAPP_PUBLISH_PROFILE repository secret.'
+            exit 1
+          fi
+
+      - name: Restore dependencies
+        run: dotnet restore JevDotNet.slnx
+
+      - name: Build
+        # Disable the library's automatic packaging to its local Windows path.
+        run: dotnet build JevDotNet.slnx --configuration Release --no-restore -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
+
+      - name: Run contract checks
+        run: dotnet run --project JevDotNet.Tests/JevDotNet.Tests.csproj --configuration Release --no-build
+
+      - name: Publish demo
+        run: dotnet publish JevDotNet.Demo/JevDotNet.Demo.csproj --configuration Release --no-build --output ./artifacts/demo -p:GeneratePackageOnBuild=false
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./artifacts/demo
