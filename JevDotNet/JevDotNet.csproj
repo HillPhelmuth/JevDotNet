@@ -15,10 +15,12 @@
     <PackageTags>Jev;TypeSafe;OpenRouter;AI;decisions;SDK;dotnet</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageOutputPath>C:\Users\adamh\source\LocalPackages</PackageOutputPath>
+    <PackageOutputPath Condition="'$(Configuration)' == 'Debug'">C:\Users\adamh\source\LocalPackages</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/HillPhelmuth/JevDotNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HillPhelmuth/JevDotNet</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

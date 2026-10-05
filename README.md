@@ -48,27 +48,6 @@ dotnet pack JevDotNet/JevDotNet.csproj
 
 The contract checks use fake HTTP handlers and need no API key. The direct client follows the [TypeSafe AI API reference](https://docs.typesafe.ai/api) and [model listing reference](https://docs.typesafe.ai/models).
 
-## GitHub Actions publishing
-
-Both workflows in `.github/workflows` install .NET 10, build in Release, and run the contract checks before publishing. Configure their secrets and variables in the repository's **Settings > Secrets and variables > Actions**.
-
-### NuGet
-
-`publish-nuget.yml` publishes `JevDotNet` to nuget.org when a GitHub release is published, or when manually run from the Actions tab. Set the repository secret `NUGET_API_KEY` to a nuget.org API key with permission to push `JevDotNet`.
-
-The package version comes from `PackageVersion` in `JevDotNet/JevDotNet.csproj`; update it before creating a release and use a matching release tag (for example, `v1.0.1`). The workflow overrides the local package output path, pushes the package and its `.snupkg` symbols, and skips versions already published.
-
-### Azure App Service demo
-
-`deploy-demo.yml` deploys `JevDotNet.Demo` on relevant pushes to `main`, or when manually run from the Actions tab. Change its branch filter if your default branch has a different name. Create an Azure App Service with the .NET 10 runtime, then configure:
-
-- Repository variable `AZURE_WEBAPP_NAME`: the existing App Service name.
-- Repository secret `AZURE_WEBAPP_PUBLISH_PROFILE`: the complete contents of the App Service's downloaded publish profile. Publish profile authentication requires **SCM Basic Auth Publishing Credentials** to be enabled; see [Azure's GitHub Actions deployment guide](https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions).
-- App Service application setting `OpenRouter__ApiKey`: the OpenRouter API key used by the demo.
-- App Service application setting `Judge__LunaCachePath`: a persistent, writable directory outside the deployed application directory, such as `/home/data/judge-luna-cache` on Linux or `D:\home\data\judge-luna-cache` on Windows, to preserve cached Luna judgments across deployments.
-
-The workflow deploys the framework-dependent publish output to the production slot using `azure/webapps-deploy`.
-
 ## OpenRouter Decisions API
 
 Set `OPENROUTER_API_KEY` in your environment, then use the same `DecisionsRequest` and typed questions with `OpenRouterDecisionsClient`:
