@@ -1,0 +1,33 @@
+@using JevDotNet.Demo.Services
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<canvas class="lane-road" width="360" height="540" @ref="Canvas" role="img" aria-label="Three-lane road with a model-driven blue car and approaching barriers"></canvas>
+
+@code {
+    [Parameter] public EventCallback Ready { get; set; }
+    [Parameter] public EventCallback<LaneEvent> RoadEvent { get; set; }
+    private ElementReference Canvas;
+    private DotNetObjectReference<LaneRoad>? Reference;
+    private LaneRoadInterop? Interop;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        Reference = DotNetObjectReference.Create(this);
+        Interop = new(JS);
+        await Interop.InitializeAsync(Canvas, Reference);
+        await Ready.InvokeAsync();
+    }
+    public ValueTask<LaneSnapshot> ResetAsync(int id, int seconds) => Interop!.ResetAsync(id, seconds);
+    public ValueTask<bool> StartAsync(int id) => Interop!.StartAsync(id);
+    public ValueTask<LaneSnapshot> PauseAsync(int id) => Interop!.PauseAsync(id);
+    public ValueTask<LaneSnapshot> SnapshotAsync() => Interop!.SnapshotAsync();
+    public ValueTask<bool> SteerAsync(int id, int lane) => Interop!.SteerAsync(id, lane);
+    [JSInvokable] public Task OnRoadEvent(LaneEvent update) => InvokeAsync(() => RoadEvent.InvokeAsync(update));
+    public async ValueTask DisposeAsync()
+    {
+        if (Interop is not null) await Interop.DisposeAsync();
+        Reference?.Dispose();
+    }
+}

@@ -9,6 +9,8 @@
 .judge-example-picker .model-select { width: 100%; margin-bottom: 0; }
 .judge-bulk-rubric { margin: 12px 0 16px; }
 .judge-bulk-rubric summary { cursor: pointer; font-size: 13px; color: #277758; font-weight: 700; }
+.judge-filter { display: flex; align-items: center; gap: 8px; margin: 16px 0; font-size: 13px; font-weight: 700; }
+.judge-filter input { accent-color: #277758; }
 .judge-controls > div, .judge-input-column { min-width: 0; }
 .judge-controls label, .judge-editor label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
 .judge-controls .model-select { margin-bottom: 0; }

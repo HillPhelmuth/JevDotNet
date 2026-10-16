@@ -1,7 +1,7 @@
 @using JevDotNet.Demo.Services
 
 <section class="workspace-panel bulk-results judge-dataset">
-    <div class="bulk-summary"><h2>@Evaluator.Name dataset · @Examples.Count examples</h2><span>Four examples at each expected rating</span></div>
+    <div class="bulk-summary"><h2>@Evaluator.Name dataset · @Examples.Count examples</h2><span>Five examples at each expected rating</span></div>
     <p class="bulk-help">These are illustrative, author-labeled examples. Dataset runs use the original inputs. Select a row to inspect its inputs and any completed result.</p>
     @if (Run is not null)
     {
@@ -14,10 +14,16 @@
         </div>
         <p class="bulk-help">Agreement and error include successful results only. Error is measured in Likert levels.</p>
     }
+    @{
+        var shown = Examples.Where(example => !OnlyDifferences || JudgeResultFilter.DiffersFromExpected(example.ExpectedScore,
+            Run?.Attempts.FirstOrDefault(attempt => attempt.Example.Id == example.Id)?.Result?.Rating)).ToArray();
+    }
+    <p class="bulk-help" aria-live="polite">Showing @shown.Length of @Examples.Count examples</p>
     <div class="bulk-table-scroll"><table class="bulk-table">
         <thead><tr><th scope="col">Example</th><th scope="col">Response</th><th scope="col">Expected</th><th scope="col">Rating</th><th scope="col">Difference</th><th scope="col">Request time</th></tr></thead>
         <tbody>
-            @foreach (var example in Examples)
+            @if (shown.Length == 0) { <tr><td colspan="6">No completed ratings differ from expected.</td></tr> }
+            @foreach (var example in shown)
             {
                 var attempt = Run?.Attempts.FirstOrDefault(item => item.Example.Id == example.Id);
                 var result = attempt?.Result;
@@ -42,5 +48,6 @@
     [Parameter, EditorRequired] public IReadOnlyList<JudgeExample> Examples { get; set; } = [];
     [Parameter] public JudgeRun? Run { get; set; }
     [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool OnlyDifferences { get; set; }
     [Parameter] public EventCallback<string> Selected { get; set; }
 }

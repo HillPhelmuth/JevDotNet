@@ -1,0 +1,58 @@
+@using System.Globalization
+@using System.Text.Json
+@using JevDotNet
+@using JevDotNet.Demo.Services
+
+<aside class="chase-info-card chase-dashboard @(Compact ? "lane-dashboard-compact" : "")">
+    <section class="chase-decision">
+        <div class="chase-panel-heading"><h2>Which lane?</h2><span>MODEL CHOICE</span></div>
+        @if (Response is null) { <p>Start driving to see the model's lane probabilities.</p> }
+        @for (var lane = 1; lane <= 3; lane++)
+        {
+            var key = $"lane_{lane}";
+            var answer = Response?.GetAnswer<ChoiceAnswer>("lane");
+            var p = answer?.Probabilities.GetValueOrDefault(key) ?? 0;
+            <div class="lane-probability @(answer?.Choice == key ? "chosen" : "")">
+                <span>Lane @lane</span><progress max="1" value="@Number(p)" aria-label="Lane @lane probability"></progress><strong>@(answer is null ? "—" : p.ToString("0.00", CultureInfo.InvariantCulture))</strong>
+            </div>
+        }
+    </section>
+    <section class="chase-usage"><h2>Live usage</h2>
+        <div class="chase-stat-grid">
+            <div class="chase-stat"><span>Barriers passed</span><strong>@Passed</strong></div>
+            <div class="chase-stat"><span>Decisions / requests</span><strong>@Decisions / @Requests</strong></div>
+            <div class="chase-stat"><span>Decisions / second</span><strong>@Number(ElapsedMs > 0 ? Decisions * 1000 / Math.Max(ElapsedMs, Decisions * LaneDecision.Interval.TotalMilliseconds) : 0)</strong></div>
+            <div class="chase-stat"><span>Last response</span><strong>@(Response is null ? "—" : $"{LatencyMs:0} ms")</strong></div>
+            <div class="chase-stat"><span>Driving time</span><strong>@Number(ElapsedMs / 1000) s</strong></div>
+            <div class="chase-stat"><span>Total cost</span><strong>@(Cost is null ? "—" : "$" + Cost.Value.ToString("0.#########", CultureInfo.InvariantCulture))</strong></div>
+        </div>
+        <div class="chase-meta"><span>Input / output tokens <strong>@InputTokens / @OutputTokens</strong></span>
+            @if (Response is not null) { <span>Resolved model <strong>@Response.Model</strong></span><span>Provider <strong>@Response.Provider</strong></span> }
+        </div>
+    </section>
+    @if (!Running)
+    {
+    <section class="chase-details">
+        <details><summary>How it works</summary><p>The model receives the car's lane and the time until each visible barrier reaches it. It chooses lane 1, 2, or 3. The road keeps moving during requests, so a slow or unsafe decision can cause a crash.</p><p>At most two requests start per second, with one in flight. A round ends on collision or after 100 decisions. Pause, hide this tab, or leave this page to stop. Reset to change model or speed. Probabilities show the latest completed decision.</p></details>
+        @if (Request is not null) { <details><summary>Last request JSON</summary><pre>@JsonSerializer.Serialize(Request, Json)</pre></details> }
+        @if (Response is not null) { <details><summary>Last response JSON</summary><pre>@JsonSerializer.Serialize(Response, Json)</pre></details> }
+    </section>
+    }
+</aside>
+
+@code {
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public bool Running { get; set; }
+    [Parameter] public JevResponse? Response { get; set; }
+    [Parameter] public DecisionsRequest? Request { get; set; }
+    [Parameter] public int Decisions { get; set; }
+    [Parameter] public int Requests { get; set; }
+    [Parameter] public int Passed { get; set; }
+    [Parameter] public int InputTokens { get; set; }
+    [Parameter] public int OutputTokens { get; set; }
+    [Parameter] public double ElapsedMs { get; set; }
+    [Parameter] public double LatencyMs { get; set; }
+    [Parameter] public decimal? Cost { get; set; }
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private static string Number(double value) => value.ToString("0.00", CultureInfo.InvariantCulture);
+}

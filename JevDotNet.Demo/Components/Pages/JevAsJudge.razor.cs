@@ -21,6 +21,7 @@ public partial class JevAsJudge
     private bool DatasetBusy;
     private bool BulkSelected;
     private bool JevDetailsSelected;
+    private bool OnlyDifferences;
     private bool Disposed;
     private string? LoadError;
     private string? Error;

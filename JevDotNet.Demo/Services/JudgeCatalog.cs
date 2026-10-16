@@ -53,8 +53,8 @@ public static class JudgeCatalog
         foreach (var evaluator in All)
         {
             var group = examples.Where(example => example.Type == evaluator.Key).ToArray();
-            if (group.Length != 20 || Enumerable.Range(1, 5).Any(score => group.Count(example => example.ExpectedScore == score) != 4))
-                throw new JsonException($"{evaluator.Name} needs twenty examples, with four at each expected score.");
+            if (group.Length != 25 || Enumerable.Range(1, 5).Any(score => group.Count(example => example.ExpectedScore == score) != 5))
+                throw new JsonException($"{evaluator.Name} needs twenty-five examples, with five at each expected score.");
         }
     }
 

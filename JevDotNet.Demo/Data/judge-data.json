@@ -668,5 +668,105 @@
     "id": "groundedness-pool-5", "type": "groundedness", "title": "Pool source support · example 5",
     "input": { "query": "Summarize the Brook Pool's opening times, admission, and towel policy.", "response": "Visit between 9 am and 6 pm on Tuesday through Sunday; the pool is closed Monday. Adult entry costs 8 credits. Take your own towel because towels cannot be rented.", "sourceContext": "Brook Pool opens Tuesday through Sunday from 9 am to 6 pm and is closed on Mondays. Adult admission is 8 credits. Visitors must bring their own towels; no towel rentals are available." },
     "expectedScore": 5, "explanation": "The paraphrase makes only claims supported by the supplied opening, admission, and towel policies."
+  },
+  {
+    "id": "relevance-calendar-1", "type": "relevance", "title": "Share a calendar · example 1",
+    "input": { "query": "How do I share my calendar with a teammate in the Willow app?", "response": "The cafe serves soup at lunchtime." },
+    "expectedScore": 1, "explanation": "The response has no connection to calendars or sharing."
+  },
+  {
+    "id": "relevance-calendar-2", "type": "relevance", "title": "Share a calendar · example 2",
+    "input": { "query": "How do I share my calendar with a teammate in the Willow app?", "response": "Willow calendars can use different colors, and events can have reminders." },
+    "expectedScore": 2, "explanation": "The response discusses calendars but does not address sharing with another person."
+  },
+  {
+    "id": "relevance-calendar-3", "type": "relevance", "title": "Share a calendar · example 3",
+    "input": { "query": "How do I share my calendar with a teammate in the Willow app?", "response": "Your calendar has a Share menu. Willow also includes task lists, color themes, and a timer for focused work. You can organize tasks into projects." },
+    "expectedScore": 3, "explanation": "It identifies a relevant menu but spends most of the response on unrelated features."
+  },
+  {
+    "id": "relevance-calendar-4", "type": "relevance", "title": "Share a calendar · example 4",
+    "input": { "query": "How do I share my calendar with a teammate in the Willow app?", "response": "Open your calendar, select Share, enter your teammate's email, and choose their access level before sending the invitation. Willow also has a dark theme." },
+    "expectedScore": 4, "explanation": "The response directly explains sharing, with one minor unrelated aside."
+  },
+  {
+    "id": "relevance-calendar-5", "type": "relevance", "title": "Share a calendar · example 5",
+    "input": { "query": "How do I share my calendar with a teammate in the Willow app?", "response": "Open the calendar you want to share, select Share, enter your teammate's email, choose whether they can view or edit, and send the invitation." },
+    "expectedScore": 5, "explanation": "Every part of the response focuses on the requested calendar-sharing task."
+  },
+  {
+    "id": "completeness-label-1", "type": "completeness", "title": "Print a return label · example 1",
+    "input": { "query": "How do I print a return label for a Birch Shop order?", "response": "Return labels cannot be printed; buy a new order instead.", "referenceAnswer": "Sign in, open Orders, select the order, choose Start return, select the items, and download the label PDF. Print it at actual size and attach it to the parcel." },
+    "expectedScore": 1, "explanation": "The response incorrectly denies the task and provides none of the required steps."
+  },
+  {
+    "id": "completeness-label-2", "type": "completeness", "title": "Print a return label · example 2",
+    "input": { "query": "How do I print a return label for a Birch Shop order?", "response": "Sign in and open Orders, then print the order receipt as your return label.", "referenceAnswer": "Sign in, open Orders, select the order, choose Start return, select the items, and download the label PDF. Print it at actual size and attach it to the parcel." },
+    "expectedScore": 2, "explanation": "The starting location is correct, but the main label-generation instruction is wrong and most steps are missing."
+  },
+  {
+    "id": "completeness-label-3", "type": "completeness", "title": "Print a return label · example 3",
+    "input": { "query": "How do I print a return label for a Birch Shop order?", "response": "Sign in, open Orders, select your order, and choose Start return.", "referenceAnswer": "Sign in, open Orders, select the order, choose Start return, select the items, and download the label PDF. Print it at actual size and attach it to the parcel." },
+    "expectedScore": 3, "explanation": "Several setup steps are correct, but item selection, obtaining the PDF, printing, and attachment are omitted."
+  },
+  {
+    "id": "completeness-label-4", "type": "completeness", "title": "Print a return label · example 4",
+    "input": { "query": "How do I print a return label for a Birch Shop order?", "response": "Sign in, open Orders, choose the order, select Start return and the items, then download the label PDF. Print the label and attach it to your parcel.", "referenceAnswer": "Sign in, open Orders, select the order, choose Start return, select the items, and download the label PDF. Print it at actual size and attach it to the parcel." },
+    "expectedScore": 4, "explanation": "All main steps are covered accurately; the actual-size printing setting is the only omission."
+  },
+  {
+    "id": "completeness-label-5", "type": "completeness", "title": "Print a return label · example 5",
+    "input": { "query": "How do I print a return label for a Birch Shop order?", "response": "Log in and go to Orders. Open the relevant order, choose Start return, and pick the items being returned. Download the label PDF, print it without scaling, and attach it to the parcel.", "referenceAnswer": "Sign in, open Orders, select the order, choose Start return, select the items, and download the label PDF. Print it at actual size and attach it to the parcel." },
+    "expectedScore": 5, "explanation": "The paraphrase accurately includes all required actions, including actual-size printing."
+  },
+  {
+    "id": "equivalence-gallery-1", "type": "equivalence", "title": "Gallery photography meaning · example 1",
+    "input": { "query": "What is the Elm Gallery's photography policy?", "response": "Photography is prohibited everywhere, including the lobby.", "referenceAnswer": "Photography without flash is allowed in the permanent collection. Photography is prohibited in temporary exhibitions. Tripods are not allowed." },
+    "expectedScore": 1, "explanation": "The response contradicts the central permission to photograph the permanent collection."
+  },
+  {
+    "id": "equivalence-gallery-2", "type": "equivalence", "title": "Gallery photography meaning · example 2",
+    "input": { "query": "What is the Elm Gallery's photography policy?", "response": "Photography is allowed in every exhibition, flash is welcome, but tripods are prohibited.", "referenceAnswer": "Photography without flash is allowed in the permanent collection. Photography is prohibited in temporary exhibitions. Tripods are not allowed." },
+    "expectedScore": 2, "explanation": "Only the tripod restriction is preserved; the exhibition and flash rules materially conflict."
+  },
+  {
+    "id": "equivalence-gallery-3", "type": "equivalence", "title": "Gallery photography meaning · example 3",
+    "input": { "query": "What is the Elm Gallery's photography policy?", "response": "You may take photos without flash in both permanent and temporary exhibitions. Tripods are forbidden.", "referenceAnswer": "Photography without flash is allowed in the permanent collection. Photography is prohibited in temporary exhibitions. Tripods are not allowed." },
+    "expectedScore": 3, "explanation": "The permanent-collection, flash, and tripod rules match, but permission for temporary exhibitions changes an important policy."
+  },
+  {
+    "id": "equivalence-gallery-4", "type": "equivalence", "title": "Gallery photography meaning · example 4",
+    "input": { "query": "What is the Elm Gallery's photography policy?", "response": "Non-flash photos are permitted in the permanent collection, but you cannot photograph temporary exhibitions.", "referenceAnswer": "Photography without flash is allowed in the permanent collection. Photography is prohibited in temporary exhibitions. Tripods are not allowed." },
+    "expectedScore": 4, "explanation": "The essential photography permissions are preserved; the additional tripod rule is omitted."
+  },
+  {
+    "id": "equivalence-gallery-5", "type": "equivalence", "title": "Gallery photography meaning · example 5",
+    "input": { "query": "What is the Elm Gallery's photography policy?", "response": "Keep your flash off when taking pictures of the permanent collection. Do not take pictures in temporary shows, and do not use a tripod.", "referenceAnswer": "Photography without flash is allowed in the permanent collection. Photography is prohibited in temporary exhibitions. Tripods are not allowed." },
+    "expectedScore": 5, "explanation": "The paraphrase preserves all permissions and restrictions without changing their meaning."
+  },
+  {
+    "id": "groundedness-ferry-1", "type": "groundedness", "title": "Ferry source support · example 1",
+    "input": { "query": "Summarize the Cove ferry's schedule, ticket price, and bicycle policy.", "response": "The ferry runs every ten minutes overnight, costs nothing, and does not allow bicycles.", "sourceContext": "The Cove ferry departs every hour from 8 am through 5 pm. A one-way adult ticket costs 6 credits. Bicycles are allowed at no extra charge. Tickets are sold at the pier." },
+    "expectedScore": 1, "explanation": "All main claims about the schedule, price, and bicycles contradict the source."
+  },
+  {
+    "id": "groundedness-ferry-2", "type": "groundedness", "title": "Ferry source support · example 2",
+    "input": { "query": "Summarize the Cove ferry's schedule, ticket price, and bicycle policy.", "response": "Adult tickets cost 6 credits. The ferry operates around the clock, offers reserved seats, and charges 3 credits per bicycle.", "sourceContext": "The Cove ferry departs every hour from 8 am through 5 pm. A one-way adult ticket costs 6 credits. Bicycles are allowed at no extra charge. Tickets are sold at the pier." },
+    "expectedScore": 2, "explanation": "The adult price is supported, but most claims are unsupported or contradicted, including plausible reserved seating."
+  },
+  {
+    "id": "groundedness-ferry-3", "type": "groundedness", "title": "Ferry source support · example 3",
+    "input": { "query": "Summarize the Cove ferry's schedule, ticket price, and bicycle policy.", "response": "Departures are hourly from 8 am to 5 pm and adult one-way tickets cost 6 credits. Bicycles require reservations and a separate ticket bought online.", "sourceContext": "The Cove ferry departs every hour from 8 am through 5 pm. A one-way adult ticket costs 6 credits. Bicycles are allowed at no extra charge. Tickets are sold at the pier." },
+    "expectedScore": 3, "explanation": "Schedule and fare are supported, while the substantial bicycle reservation and ticketing claims are unsupported."
+  },
+  {
+    "id": "groundedness-ferry-4", "type": "groundedness", "title": "Ferry source support · example 4",
+    "input": { "query": "Summarize the Cove ferry's schedule, ticket price, and bicycle policy.", "response": "The ferry leaves hourly from 8 am through 5 pm. Adult one-way tickets cost 6 credits and are sold at the pier's blue ticket booth. Bicycles travel without an extra fee.", "sourceContext": "The Cove ferry departs every hour from 8 am through 5 pm. A one-way adult ticket costs 6 credits. Bicycles are allowed at no extra charge. Tickets are sold at the pier." },
+    "expectedScore": 4, "explanation": "All main facts are supported; only the minor booth description is unsupported."
+  },
+  {
+    "id": "groundedness-ferry-5", "type": "groundedness", "title": "Ferry source support · example 5",
+    "input": { "query": "Summarize the Cove ferry's schedule, ticket price, and bicycle policy.", "response": "Cove has an hourly ferry service, starting at 8 am and ending with the 5 pm departure. Adults pay 6 credits for a one-way ticket at the pier. You can bring a bicycle free of additional charges.", "sourceContext": "The Cove ferry departs every hour from 8 am through 5 pm. A one-way adult ticket costs 6 credits. Bicycles are allowed at no extra charge. Tickets are sold at the pier." },
+    "expectedScore": 5, "explanation": "Every substantive claim is supported by the source, with the schedule and bicycle policy correctly paraphrased."
   }
 ]

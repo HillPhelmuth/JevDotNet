@@ -13,9 +13,9 @@ internal static class DependencyInjectionChecks
             await CheckProviderAsync(useConfiguration, openRouter: true);
         }
 
-        ExpectArgument(() => new ServiceCollection().AddJevDecisionsClient(" "), "Direct empty key");
+        ExpectArgument(() => new ServiceCollection().AddJevSystemOneClient(" "), "Direct empty key");
         ExpectArgument(() => new ServiceCollection().AddOpenRouterDecisionsClient(" "), "OpenRouter empty key");
-        ExpectMissingKey(() => new ServiceCollection().AddJevDecisionsClient(new ConfigurationBuilder().Build()),
+        ExpectMissingKey(() => new ServiceCollection().AddJevSystemOneClient(new ConfigurationBuilder().Build()),
             "TypeSafe:ApiKey");
         ExpectMissingKey(() => new ServiceCollection().AddOpenRouterDecisionsClient(new ConfigurationBuilder().Build()),
             "OpenRouter:ApiKey");
@@ -41,8 +41,8 @@ internal static class DependencyInjectionChecks
                 ? services.AddOpenRouterDecisionsClient(configuration)
                 : services.AddOpenRouterDecisionsClient(expectedKey)
             : useConfiguration
-                ? services.AddJevDecisionsClient(configuration)
-                : services.AddJevDecisionsClient(expectedKey);
+                ? services.AddJevSystemOneClient(configuration)
+                : services.AddJevSystemOneClient(expectedKey);
         if (useConfiguration)
             configuration[openRouter ? "OpenRouter:ApiKey" : "TypeSafe:ApiKey"] = "changed-after-registration";
 

@@ -23,7 +23,7 @@ internal static class DemoChecks
                 $"{scenario.Slug}: wire discriminators");
         }
 
-        Check(DemoDecisionModels.All.Count >= 6 &&
+        Check(DemoDecisionModels.All.Count > 0 &&
             DemoDecisionModels.All.Select(model => model.Id).Distinct().Count() == DemoDecisionModels.All.Count,
             "Distinct Decisions model options");
         foreach (var scenario in DemoScenarioCatalog.All)

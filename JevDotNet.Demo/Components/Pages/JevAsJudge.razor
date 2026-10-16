@@ -12,7 +12,7 @@
         <a class="back-link" href="/">← All demos</a>
         <div class="eyebrow">LLM RESPONSE EVALUATION</div>
         <h1>Jev as Judge<span class="title-period">.</span></h1>
-        <p>Judge response quality with decision models. Four rubrics, eighty examples, and a Likert rating from 1 to 5.</p>
+        <p>Judge response quality with decision models. Four rubrics, one hundred examples, and a Likert rating from 1 to 5.</p>
     </div>
 </div>
 @if (!Judge.HasApiKey) { <ApiKeyNotice /> }
@@ -73,13 +73,18 @@ else if (Example is not null)
             </div>
             <p class="bulk-help">Every bulk run compares Jev with GPT-6 Luna using the original @Examples.Count examples. Saved Luna judgments are reused for identical inputs and rubrics across runs and app restarts.</p>
             <details class="judge-bulk-rubric"><summary>@Evaluator.Name rubric · 1–5</summary><JudgeRubric Evaluator="Evaluator" /></details>
+            <label class="judge-filter"><input type="checkbox" @bind="OnlyDifferences" /> Only show results that differ from expected</label>
+            @if (OnlyDifferences)
+            {
+                <p class="bulk-help">Jev details shows differing Jev ratings; Luna vs Jev shows rows where either judge differs from expected. Summaries still include all results. Pending and failed requests have no rating; turn this off to see them.</p>
+            }
             <JudgeTabs Id="judge-bulk-results" Label="Bulk result view" FirstLabel="Luna vs Jev" SecondLabel="Jev details"
                        SecondSelected="JevDetailsSelected" Selected="value => JevDetailsSelected = value">
                 <FirstContent>
-                    <JudgeComparisonResults Run="@(ComparisonRun ?? new JudgeComparisonRun(Examples, Model))" Busy="IsBusy" Selected="InspectExample" />
+                    <JudgeComparisonResults Run="@(ComparisonRun ?? new JudgeComparisonRun(Examples, Model))" Busy="IsBusy" Selected="InspectExample" OnlyDifferences="OnlyDifferences" />
                 </FirstContent>
                 <SecondContent>
-                    <JudgeDatasetResults Evaluator="Evaluator" Examples="Examples" Run="Run" Busy="IsBusy" Selected="InspectExample" />
+                    <JudgeDatasetResults Evaluator="Evaluator" Examples="Examples" Run="Run" Busy="IsBusy" Selected="InspectExample" OnlyDifferences="OnlyDifferences" />
                 </SecondContent>
             </JudgeTabs>
         </SecondContent>

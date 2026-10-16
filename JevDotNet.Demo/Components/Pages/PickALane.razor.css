@@ -1,0 +1,24 @@
+.lane-layout { display: grid; grid-template-columns: minmax(330px, 460px) minmax(340px, 1fr); gap: 24px; align-items: start; }
+.lane-settings { display: grid; gap: 12px; margin: 16px 0; }
+.lane-settings label { display: grid; gap: 7px; font-size: 13px; }
+@media (max-width: 950px) { .lane-layout { grid-template-columns: 1fr; } }
+.lane-session-summary { font-size: 11px; color: #6c8173; margin: 0 0 8px; overflow-wrap: anywhere; }
+.lane-playing .page-heading { align-items: center; margin-bottom: 12px; }
+.lane-playing .page-heading .back-link,
+.lane-playing .page-heading .eyebrow,
+.lane-playing .page-heading p { display: none; }
+.lane-playing .page-heading h1 { font-size: 28px; margin: 0; }
+.lane-playing .chase-board-panel { max-width: none; }
+.lane-playing ::deep .lane-road { width: auto; max-width: 100%; height: clamp(180px, calc(100svh - 260px), 450px); margin: 8px auto; }
+.lane-playing .chase-help { display: none; }
+@media (max-width: 950px) {
+    .lane-playing .lane-layout { gap: 12px; }
+    .lane-playing ::deep .lane-road { height: clamp(150px, calc(100svh - 470px), 270px); }
+    .lane-playing .page-heading { flex-direction: row; gap: 8px; }
+    .lane-playing .page-heading h1 { font-size: 24px; }
+}
+@media (max-width: 560px) {
+    .lane-playing .page-heading h1 { font-size: 20px; }
+    .lane-playing .chase-toolbar { gap: 6px; }
+    .lane-playing .chase-toolbar .button { padding: 8px 10px; font-size: 11px; }
+}

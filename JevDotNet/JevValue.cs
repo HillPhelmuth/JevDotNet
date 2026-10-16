@@ -18,6 +18,7 @@ public sealed class JevValue
 
     public static JevValue Text(string value) => new(JsonSerializer.SerializeToElement(
         value ?? throw new ArgumentNullException(nameof(value))));
+    public string AsText() => _value.GetString() ?? throw new InvalidOperationException("The value is not a JSON string.");
 
     public static JevValue FromObject<T>(T value, JsonSerializerOptions? options = null) where T : notnull
         => FromSerialized(value, JsonValueKind.Object, options);

@@ -49,7 +49,16 @@ public sealed class OpenRouterDecisionsClient : IDecisionsClient, IDisposable
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var body = JsonSerializer.Serialize(request, JsonOptions);
+        var state = request.State.ToJsonElement();
+        var stateText = state.ValueKind == JsonValueKind.String
+            ? state.GetString()!
+            : JsonSerializer.Serialize(state, JsonOptions);
+        var body = JsonSerializer.Serialize(new
+        {
+            state = stateText,
+            model = request.Model,
+            questions = request.Questions
+        }, JsonOptions);
 
         for (var attempt = 1; ; attempt++)
         {

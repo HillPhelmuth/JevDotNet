@@ -10,10 +10,12 @@ internal static class OpenRouterChecks
         var calls = 0;
         var questions = new Dictionary<string, JevQuestion>
         {
-            ["urgent"] = new NoulQuestion("Is this urgent?"),
+            ["urgent"] = new NoulQuestion(JevValue.FromObject(new { prompt = "Is this urgent?" }),
+                new NoulCriteria(True: JevValue.FromObject(new { description = "Time-sensitive" }))),
             ["team"] = new ChoiceQuestion("Which team?", new Dictionary<string, JevValue?>
             {
-                ["billing"] = "Payments", ["technical"] = "Bugs"
+                ["billing"] = JevValue.FromObject(new { description = "Payments" }),
+                ["technical"] = JevValue.FromArray(new[] { "Bugs" })
             }),
             ["severity"] = new ScoreQuestion("How severe?", new JevValue[] { "Low", "High" })
         };
@@ -28,10 +30,20 @@ internal static class OpenRouterChecks
             using var body = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
             var root = body.RootElement;
             Check(root.GetProperty("model").GetString() == "typesafe/jev-1.13", "OpenRouter model");
-            Check(root.GetProperty("state").GetProperty("message").GetString() == "Help", "OpenRouter state");
+            Check(root.GetProperty("state").ValueKind == JsonValueKind.String, "OpenRouter state is a string");
+            using var state = JsonDocument.Parse(root.GetProperty("state").GetString()!);
+            Check(state.RootElement.GetProperty("message").GetString() == "Help", "OpenRouter object state contents");
             Check(root.GetProperty("questions").GetProperty("urgent").GetProperty("type").GetString() == "noul", "OpenRouter noul");
             Check(root.GetProperty("questions").GetProperty("team").GetProperty("type").GetString() == "choice", "OpenRouter choice");
             Check(root.GetProperty("questions").GetProperty("severity").GetProperty("type").GetString() == "score", "OpenRouter score");
+            var sentQuestions = root.GetProperty("questions");
+            Check(sentQuestions.GetProperty("urgent").GetProperty("instructions").GetProperty("prompt").GetString() == "Is this urgent?",
+                "OpenRouter structured instructions preserved");
+            Check(sentQuestions.GetProperty("urgent").GetProperty("criteria").GetProperty("true").GetProperty("description").GetString() == "Time-sensitive",
+                "OpenRouter structured noul criteria preserved");
+            Check(sentQuestions.GetProperty("team").GetProperty("criteria").GetProperty("billing").GetProperty("description").GetString() == "Payments" &&
+                sentQuestions.GetProperty("team").GetProperty("criteria").GetProperty("technical")[0].GetString() == "Bugs",
+                "OpenRouter structured choice criteria preserved");
             return Success();
         }))))
         {
@@ -44,11 +56,47 @@ internal static class OpenRouterChecks
             Check(result.GetAnswer<ScoreAnswer>("severity").Score == 1.5, "OpenRouter typed score");
         }
         Check(calls == 1, "One OpenRouter call");
+        Check(request.State.ToJsonElement().ValueKind == JsonValueKind.Object &&
+            request.State.ToJsonElement().GetProperty("message").GetString() == "Help", "Original object state preserved");
+
+        var states = new[]
+        {
+            JevValue.FromArray(new object[] { "Help", new { nested = new[] { 1, 2 } }, true, 3 }),
+            JevValue.Text("Help"), JevValue.Text(""),
+            JevValue.Text("Quotes: \"help\"; path: C:\\temp\\file\nNext line\r\nUnicode: café 日本語 😀"),
+            JevValue.Text("{\"message\":\"Help\"}")
+        };
+        foreach (var input in states)
+        {
+            var original = input.ToJsonElement();
+            using var client = new OpenRouterDecisionsClient("router-key", new HttpClient(new StubHandler(message =>
+            {
+                using var body = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+                var sentState = body.RootElement.GetProperty("state");
+                Check(sentState.ValueKind == JsonValueKind.String, "Every OpenRouter state is a string");
+                if (original.ValueKind == JsonValueKind.String)
+                    Check(sentState.GetString() == original.GetString(), "OpenRouter text preserved exactly");
+                else
+                {
+                    using var decoded = JsonDocument.Parse(sentState.GetString()!);
+                    Check(JsonElement.DeepEquals(decoded.RootElement, original), "OpenRouter array contents preserved");
+                }
+                return Success();
+            })));
+            await client.EvaluateAsync(new DecisionsRequest(input, questions, "test/string-only-model"));
+            Check(JsonElement.DeepEquals(input.ToJsonElement(), original), "Original state preserved");
+        }
 
         var retries = 0;
+        string? firstRetryBody = null;
         var statuses = new[] { 429, 502, 503, 529 };
-        using (var client = new OpenRouterDecisionsClient("router-key", new HttpClient(new StubHandler(_ =>
+        using (var client = new OpenRouterDecisionsClient("router-key", new HttpClient(new StubHandler(message =>
         {
+            var retryBody = message.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            firstRetryBody ??= retryBody;
+            Check(retryBody == firstRetryBody, "OpenRouter retry bodies are identical");
+            using var body = JsonDocument.Parse(retryBody);
+            Check(body.RootElement.GetProperty("state").ValueKind == JsonValueKind.String, "OpenRouter retry state is a string");
             var status = retries++;
             if (status >= statuses.Length) return Success();
             var response = new HttpResponseMessage((HttpStatusCode)statuses[status])

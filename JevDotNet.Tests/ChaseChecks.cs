@@ -30,10 +30,61 @@ internal static class ChaseChecks
             Check(state.Contains("column 6, row 6") && state.Contains("column 1, row 1") &&
                 state.Contains("10 steps away") && state.Contains("column 3, row 4"), "Worded chase state");
             Check(criteria.EnumerateObject().Count() == 2 &&
-                criteria.GetProperty("down").GetString()!.Contains("column 1, row 2") &&
-                criteria.GetProperty("down").GetString()!.Contains("9 steps away") &&
-                criteria.GetProperty("right").GetString()!.Contains("column 2, row 1") &&
-                criteria.GetProperty("right").GetString()!.Contains("9 steps away"), "Legal options with distances");
+                criteria.GetProperty("up").GetString() ==
+                    "Chaser moves up to column 1, row 0. The runner is then 11 steps away around the walls." &&
+                criteria.GetProperty("right").GetString() ==
+                    "Chaser moves right to column 2, row 1. The runner is then 9 steps away around the walls.",
+                "Original legal move descriptions and distances preserved");
+        }
+
+        var answer = new ChoiceAnswer
+        {
+            Choice = "up",
+            Confidence = 0.8,
+            Probabilities = new Dictionary<string, double> { ["up"] = 0.1, ["right"] = 0.9 }
+        };
+        var initialMove = game.ResolveMove(answer);
+        Check(initialMove.Choice == "down", "Returned choice is ignored in favor of derived legal probabilities");
+        Check(Math.Abs(initialMove.Probabilities["down"] - 0.9) < 0.001 &&
+            Math.Abs(initialMove.Probabilities["left"] - 0.1) < 0.001, "Opposite probabilities are complements");
+        var downGame = new ChaseGame();
+        downGame.ApplyChaserMove("down");
+        var wallCriteria = ((ChoiceQuestion)downGame.BuildRequest().Questions["move"]).Criteria;
+        Check(wallCriteria.Count == 2 && wallCriteria["right"]!.ToJsonElement().GetString() ==
+            "Chaser moves right to column 2, row 2. The runner is then 8 steps away around the walls.",
+            "Wall destination retains concrete criterion without unavailable wording");
+        var wallMove = downGame.ResolveMove(answer);
+        Check(wallMove.Choice != "right", "Wall destination cannot be selected");
+        downGame.ApplyChaserMove("down");
+        var downCriteria = ((ChoiceQuestion)downGame.BuildRequest().Questions["move"]).Criteria;
+        Check(downCriteria.Count == 2 && downCriteria.ContainsKey("up") && downCriteria.ContainsKey("right"),
+            "Exactly up and right criteria");
+        Check(downCriteria["up"]!.ToJsonElement().GetString() ==
+            "Chaser moves up to column 1, row 2. The runner is then 9 steps away around the walls.",
+            "Legal up criterion retains move description and distance");
+        var downMove = downGame.ResolveMove(answer with
+        {
+            Probabilities = new Dictionary<string, double> { ["up"] = 0.1, ["right"] = 0.2 }
+        });
+        Check(downMove.Choice == "down", "Derived down probability selects a move");
+        var leftGame = new ChaseGame();
+        leftGame.ApplyChaserMove("right");
+        var leftMove = leftGame.ResolveMove(answer with
+        {
+            Probabilities = new Dictionary<string, double> { ["up"] = 0.8, ["right"] = 0.2 }
+        });
+        Check(leftMove.Choice == "left", "Derived left probability selects a move");
+        foreach (var invalid in new[] { double.NaN, double.PositiveInfinity, -0.1, 1.1 })
+        {
+            try
+            {
+                game.ResolveMove(answer with
+                {
+                    Probabilities = new Dictionary<string, double> { ["up"] = invalid, ["right"] = 0.2 }
+                });
+                throw new Exception("Expected invalid chase probability");
+            }
+            catch (InvalidOperationException) { }
         }
 
         Check(game.TryMoveRunner("up") && game.Runner == new GridPosition(6, 5), "Runner legal move");

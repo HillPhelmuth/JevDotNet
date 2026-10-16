@@ -56,14 +56,31 @@ internal static class LunaJudgeChecks
             var failed = original with { Prompt = "failed" };
             var failingClient = new FakeLuna { Fail = true };
             await ExpectAsync<HttpRequestException>(() => cache.GetOrEvaluateAsync(failed, failingClient));
-            await ExpectAsync<InvalidOperationException>(() => restarted.GetOrEvaluateAsync(failed, failingClient));
-            Check(failingClient.Calls == 1, "Failed attempts are not automatically repeated");
+            Check(!File.Exists(Path.Combine(directory, failed.CacheKey + ".json")), "Failed judgment is not cached");
+            failingClient.Fail = false;
+            Check(!(await restarted.GetOrEvaluateAsync(failed, failingClient)).FromCache && failingClient.Calls == 2,
+                "Later run retries a failed judgment");
+            Check((await cache.GetOrEvaluateAsync(failed, null)).FromCache, "Successful retry is cached");
+
+            var malformed = original with { Prompt = "malformed result" };
+            var malformedClient = new DelegateLuna((request, _) => Task.FromResult(new LunaJudgeResult(
+                5, "Supported.", "{\"error\":\"provider failed\"}", request.Model, TimeSpan.Zero, DateTimeOffset.UtcNow, null, null)));
+            await ExpectAsync<JsonException>(() => cache.GetOrEvaluateAsync(malformed, malformedClient));
+            Check(!File.Exists(Path.Combine(directory, malformed.CacheKey + ".json")), "Invalid response is not cached");
+
+            var legacyClient = new FakeLuna();
+            var legacyError = original with { Prompt = "legacy error" };
+            await File.WriteAllTextAsync(Path.Combine(directory, legacyError.CacheKey + ".json"), JsonSerializer.Serialize(
+                new LunaJudgeCacheEntry(legacyError.CacheKey, legacyError, DateTimeOffset.UtcNow, Error: "Previous provider error"),
+                new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+            Check(!(await restarted.GetOrEvaluateAsync(legacyError, legacyClient)).FromCache && legacyClient.Calls == 1,
+                "Legacy cached errors are discarded and retried");
 
             var interrupted = original with { Prompt = "interrupted" };
             await File.WriteAllTextAsync(Path.Combine(directory, interrupted.CacheKey + ".json"), JsonSerializer.Serialize(
                 new LunaJudgeCacheEntry(interrupted.CacheKey, interrupted, DateTimeOffset.UtcNow), new JsonSerializerOptions(JsonSerializerDefaults.Web)));
-            await ExpectAsync<InvalidOperationException>(() => cache.GetOrEvaluateAsync(interrupted, client));
-            Check(client.Calls == 3, "Interrupted requests cannot be resubmitted");
+            Check(!(await cache.GetOrEvaluateAsync(interrupted, legacyClient)).FromCache && legacyClient.Calls == 2,
+                "Legacy pending requests can be retried");
 
             var corrupt = original with { Prompt = "corrupt" };
             await File.WriteAllTextAsync(Path.Combine(directory, corrupt.CacheKey + ".json"), "not JSON");
@@ -74,6 +91,17 @@ internal static class LunaJudgeChecks
             cancellation.Cancel();
             await ExpectAsync<OperationCanceledException>(() => cache.GetOrEvaluateAsync(original with { Prompt = "cancelled" }, client, cancellation.Token));
             Check(client.Calls == 3, "Cancellation before send makes no LLM request");
+
+            using var inFlightCancellation = new CancellationTokenSource();
+            var cancelledRequest = original with { Prompt = "cancel during request" };
+            var cancelledClient = new DelegateLuna((_, token) =>
+            {
+                inFlightCancellation.Cancel();
+                return Task.FromCanceled<LunaJudgeResult>(token);
+            });
+            await ExpectAsync<OperationCanceledException>(() => cache.GetOrEvaluateAsync(cancelledRequest, cancelledClient, inFlightCancellation.Token));
+            Check(!File.Exists(Path.Combine(directory, cancelledRequest.CacheKey + ".json")), "In-flight cancellation leaves no error entry");
+            Check(!(await restarted.GetOrEvaluateAsync(cancelledRequest, legacyClient)).FromCache, "Cancelled judgment can be retried");
 
             using var afterResponseCancellation = new CancellationTokenSource();
             var lateRequest = original with { Prompt = "cancel after response" };
@@ -94,25 +122,27 @@ internal static class LunaJudgeChecks
             var run = new JudgeComparisonRun(group, DemoDecisionModels.DefaultModelId);
             var updates = 0;
             await comparison.RunAsync(run, () => { updates++; return Task.CompletedTask; });
-            Check(run.Complete && run.Luna.Count == 20 && updates == 40 && comparisonClient.Calls == 20, "Full original dataset comparison");
+            Check(run.Complete && run.Luna.Count == 25 && updates == 50 && comparisonClient.Calls == 25, "Full original dataset comparison");
             var summary = JudgeComparisonSummary.Calculate(run);
-            Check(summary.Paired == 20 && summary.Agreed == 20 && summary.MeanGap == 0 &&
-                summary.LunaReferenceAgreement == 4 && summary.LunaReferenceError == 2 && summary.Live == 20, "Paired and reference metrics");
-            var warmRun = new JudgeComparisonRun(group, "~typesafe/jev-latest");
+            Check(summary.Paired == 25 && summary.Agreed == 25 && summary.MeanGap == 0 &&
+                summary.LunaReferenceAgreement == 5 && summary.LunaReferenceError == 2 && summary.Live == 25, "Paired and reference metrics");
+            var warmRun = new JudgeComparisonRun(group,
+                DemoDecisionModels.All.First(model => model.Id != DemoDecisionModels.DefaultModelId).Id);
             await new JudgeComparisonService(judge, new LunaJudgeCache(directory), null).RunAsync(warmRun);
-            Check(JudgeComparisonSummary.Calculate(warmRun).Stored == 20 && comparisonClient.Calls == 20, "Switching decision model reuses Luna baseline");
+            Check(JudgeComparisonSummary.Calculate(warmRun).Stored == 25 && comparisonClient.Calls == 25, "Switching decision model reuses Luna baseline");
             Check(JudgeComparisonSummary.Calculate(warmRun).LunaOriginalTime == summary.LunaOriginalTime, "Stored time retains original LLM latency");
 
-            var failureClient = new FakeLuna { FailCall = 2 };
+            var failureClient = new FakeLuna { FailCall = 2, InvalidFinishReason = true };
             var failureGroup = examples.Where(item => item.Type == "groundedness").ToArray();
             var failureRun = new JudgeComparisonRun(failureGroup, DemoDecisionModels.DefaultModelId);
             await new JudgeComparisonService(judge, cache, failureClient).RunAsync(failureRun);
-            Check(failureRun.Complete && failureRun.Luna.Count == 20 && failureRun.Luna[1].Error is not null &&
-                JudgeComparisonSummary.Calculate(failureRun).Paired == 19, "Comparison continues after individual failure");
+            Check(failureRun.Complete && failureRun.Luna.Count == 25 && failureRun.Luna[1].Error is not null &&
+                JudgeComparisonSummary.Calculate(failureRun).Paired == 24, "Comparison continues after individual failure");
             var failureWarm = new JudgeComparisonRun(failureGroup, DemoDecisionModels.DefaultModelId);
             await new JudgeComparisonService(judge, restarted, failureClient).RunAsync(failureWarm);
-            Check(failureClient.Calls == 20 && failureWarm.Luna[1].Error is not null &&
-                JudgeComparisonSummary.Calculate(failureWarm).Stored == 19, "Warm comparison reuses successes and does not retry failed item");
+            Check(failureClient.Calls == 26 && failureWarm.Luna.All(item => item.Error is null) &&
+                JudgeComparisonSummary.Calculate(failureWarm).Stored == 24 && JudgeComparisonSummary.Calculate(failureWarm).Live == 1,
+                "Warm comparison reuses successes and retries only the failed item");
         }
         finally { Directory.Delete(directory, recursive: true); }
     }
@@ -158,11 +188,16 @@ internal static class LunaJudgeChecks
         public int Calls;
         public bool Fail;
         public int FailCall;
+        public bool InvalidFinishReason;
         public async Task<LunaJudgeResult> EvaluateAsync(LunaJudgeRequest request, CancellationToken cancellationToken = default)
         {
             Calls++;
             await Task.Delay(20, cancellationToken);
-            if (Fail || Calls == FailCall) throw new HttpRequestException("test failure");
+            if (Fail || Calls == FailCall)
+            {
+                if (InvalidFinishReason) throw new ArgumentOutOfRangeException("value", "Unknown ChatFinishReason value: error");
+                throw new HttpRequestException("test failure");
+            }
             return new(5, "Supported.", "{\"rating\":5,\"rationale\":\"Supported.\"}", request.Model,
                 TimeSpan.FromSeconds(2), DateTimeOffset.UtcNow, 20, 10);
         }

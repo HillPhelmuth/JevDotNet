@@ -6,7 +6,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>Registers one Decisions provider behind <see cref="IDecisionsClient"/>.</summary>
 public static class ServiceCollectionsExtensions
 {
-    public static IHttpClientBuilder AddJevDecisionsClient(
+    public static IHttpClientBuilder AddJevSystemOneClient(
         this IServiceCollection services,
         string apiKey,
         JevClientOptions? options = null)
@@ -19,7 +19,7 @@ public static class ServiceCollectionsExtensions
             .AddTypedClient<IDecisionsClient>((httpClient, _) => new JevClient(apiKey, httpClient, options));
     }
 
-    public static IHttpClientBuilder AddJevDecisionsClient(
+    public static IHttpClientBuilder AddJevSystemOneClient(
         this IServiceCollection services,
         IConfiguration configuration,
         JevClientOptions? options = null)
@@ -29,7 +29,7 @@ public static class ServiceCollectionsExtensions
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new InvalidOperationException("Configure TypeSafe:ApiKey before registering the TypeSafe Decisions client.");
 
-        return services.AddJevDecisionsClient(apiKey, options);
+        return services.AddJevSystemOneClient(apiKey, options);
     }
 
     public static IHttpClientBuilder AddOpenRouterDecisionsClient(

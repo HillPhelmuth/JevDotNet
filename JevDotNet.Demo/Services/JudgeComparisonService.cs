@@ -48,7 +48,7 @@ public sealed class JudgeComparisonService(JudgeService judge, LunaJudgeCache ca
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
                 catch (Exception error) when (error is HttpRequestException or System.ClientModel.ClientResultException or
-                    System.Text.Json.JsonException or InvalidOperationException or IOException or UnauthorizedAccessException or OperationCanceledException)
+                    System.Text.Json.JsonException or InvalidOperationException or ArgumentException or IOException or UnauthorizedAccessException or OperationCanceledException)
                 { attempt = new(example, null, error.Message); }
                 cancellationToken.ThrowIfCancellationRequested();
                 run.Luna.Add(attempt);

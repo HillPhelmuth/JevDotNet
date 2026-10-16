@@ -1,0 +1,39 @@
+@page "/pick-a-lane"
+@using JevDotNet.Demo.Components.Lanes
+@using JevDotNet.Demo.Services
+@implements IAsyncDisposable
+
+<PageTitle>Pick a lane · JevDotNet Demo</PageTitle>
+<div class="lane-page @(Started ? "lane-playing" : "")">
+<div class="page-heading chase-page-heading">
+    <div><a class="back-link" href="/">← All demos</a><div class="eyebrow">WATCH A DECISION MODEL DRIVE</div>
+        <h1>Pick a lane<span class="title-period">.</span></h1><p>Which lane should the car choose? Only the model steers. The road keeps moving while it decides.</p></div>
+    <div class="chase-toolbar">
+        @if (Running) { <button class="button button-primary" @onclick="PauseAsync">Pause</button> }
+        else { <button class="button button-primary" @onclick="StartAsync" disabled="@(Starting || !Ready || !Evaluation.HasApiKey || Complete || !DemoDecisionModels.IsSupported(Model))">@(Started ? "Resume" : "Start driving") ↗</button> }
+        <button class="button chase-reset" @onclick="ResetAsync" disabled="@(!Ready)">Reset</button>
+    </div>
+</div>
+@if (!Evaluation.HasApiKey) { <ApiKeyNotice /> }
+@if (Error is not null) { <div class="error-notice" role="alert"><strong>Driving paused.</strong> @Error</div> }
+<div class="lane-layout">
+    <section class="chase-board-panel">
+        <div class="chase-panel-heading"><h2>Road</h2><span>@(Complete ? "ROUND OVER" : Thinking ? "MODEL IS DECIDING" : Running ? "DRIVING" : Started ? "PAUSED" : "READY")</span></div>
+        @if (!Started)
+        {
+        <div class="lane-settings">
+            <label>Decision model <select class="model-select" @bind="Model" disabled="@Started">@foreach (var model in DemoDecisionModels.All) { <option value="@model.Id">@model.Name</option> }</select></label>
+            <label>Speed <select class="model-select" @bind="Seconds" disabled="@Started"><option value="5">Relaxed · 5 seconds</option><option value="3">Normal · 3 seconds</option><option value="2">Fast · 2 seconds</option></select></label>
+        </div>
+        }
+        else
+        {
+            <p class="lane-session-summary">@DemoDecisionModels.All.FirstOrDefault(model => model.Id == Model)?.Name · @(Seconds == 5 ? "Relaxed" : Seconds == 2 ? "Fast" : "Normal") · @Seconds s</p>
+        }
+        <LaneRoad @ref="Road" Ready="RoadReady" RoadEvent="HandleRoadEventAsync" />
+        <p class="chase-status" role="status">@Status</p>
+        <p class="chase-help">Blue car: model · Striped barriers: avoid · No manual steering</p>
+    </section>
+    <LaneDashboard Compact="Started" Running="Running" Response="Response" Request="Request" Decisions="Decisions" Requests="Requests" Passed="Snapshot.Passed" ElapsedMs="Snapshot.ElapsedMs" LatencyMs="LatencyMs" InputTokens="InputTokens" OutputTokens="OutputTokens" Cost="Cost" />
+</div>
+</div>

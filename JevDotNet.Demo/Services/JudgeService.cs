@@ -46,8 +46,10 @@ public sealed class JudgeService(DemoEvaluationService evaluation, IWebHostEnvir
         var request = JudgeCatalog.BuildRequest(type, input, model);
         cancellationToken.ThrowIfCancellationRequested();
         var stopwatch = Stopwatch.StartNew();
+        Console.WriteLine($"Jev Request: {JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true })}");
         var response = await evaluation.EvaluateAsync(request, cancellationToken);
         stopwatch.Stop();
+        Console.WriteLine($"Jev Response: {JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true })}");
         cancellationToken.ThrowIfCancellationRequested();
         return JudgeCatalog.ReadResult(response, stopwatch.Elapsed);
     }

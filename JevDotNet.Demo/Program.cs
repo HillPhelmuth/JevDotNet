@@ -6,6 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddHttpClient(DecisionModelsRefreshService.HttpClientName, client =>
+    client.Timeout = TimeSpan.FromSeconds(30));
+builder.Services.AddHostedService<DecisionModelsRefreshService>();
 if (!string.IsNullOrWhiteSpace(builder.Configuration["OpenRouter:ApiKey"]))
 {
     builder.Services.AddOpenRouterDecisionsClient(builder.Configuration);
@@ -26,6 +29,10 @@ var app = builder.Build();
 
 if (builder.Configuration.GetValue<bool>("Judge:RunComparison"))
 {
+    // This command exits before the web host (and its hosted services) starts.
+    using var modelsClient = app.Services.GetRequiredService<IHttpClientFactory>()
+        .CreateClient(DecisionModelsRefreshService.HttpClientName);
+    await DemoDecisionModels.RefreshAsync(modelsClient);
     using var scope = app.Services.CreateScope();
     await JudgeComparisonReport.RunAsync(scope.ServiceProvider.GetRequiredService<JudgeService>(),
         scope.ServiceProvider.GetRequiredService<JudgeComparisonService>(),

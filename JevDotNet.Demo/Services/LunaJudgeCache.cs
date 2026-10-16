@@ -25,29 +25,23 @@ public sealed class LunaJudgeCache(string directory)
                 ?? throw new JsonException("The stored Luna judgment is empty; it will not be requested again automatically.");
             if (entry.Key != key || entry.Request != request)
                 throw new JsonException("The stored Luna judgment does not match this request; no LLM request was sent.");
-            if (entry.Result is null)
-                throw new InvalidOperationException(entry.Error ?? "This Luna request was already started but has no stored result. It will not be sent again automatically.");
-            ValidateResult(entry.Result);
-            return new(entry.Result, true);
+            if (entry.Result is not null)
+            {
+                ValidateResult(entry.Result);
+                return new(entry.Result, true);
+            }
+            // Older versions stored failed/pending attempts. Discard them under the request lock.
+            File.Delete(path);
         }
         if (client is null) throw new InvalidOperationException("Configure OpenRouter:ApiKey before creating a new Luna judgment.");
 
-        var pending = new LunaJudgeCacheEntry(key, request, DateTimeOffset.UtcNow);
-        // Persist the attempt before sending. Interrupted/failed calls are never automatically resubmitted.
-        await SaveAsync(path, pending);
-        try
-        {
-            var result = await client.EvaluateAsync(request, cancellationToken);
-            ValidateResult(result);
-            // Once a response arrives, persist it even if the viewer just cancelled or navigated away.
-            await SaveAsync(path, pending with { Result = result });
-            return new(result, false);
-        }
-        catch (Exception error)
-        {
-            await SaveAsync(path, pending with { Error = "The previous Luna attempt failed or was interrupted: " + error.Message + " No identical request will be sent automatically." });
-            throw;
-        }
+        var startedAt = DateTimeOffset.UtcNow;
+        var result = await client.EvaluateAsync(request, cancellationToken);
+        ValidateResult(result);
+        // Only valid judgments are stored. Failures/cancellation remain retryable on a later run.
+        // Once a response arrives, persist it even if the viewer just cancelled or navigated away.
+        await SaveAsync(path, new LunaJudgeCacheEntry(key, request, startedAt, result));
+        return new(result, false);
     }
 
     private static void ValidateResult(LunaJudgeResult result)

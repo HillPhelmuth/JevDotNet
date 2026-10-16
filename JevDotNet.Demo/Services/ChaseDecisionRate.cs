@@ -3,7 +3,7 @@ namespace JevDotNet.Demo.Services;
 /// <summary>Average completed decisions per paced chaser turn, excluding paused time.</summary>
 public sealed class ChaseDecisionRate
 {
-    public static readonly TimeSpan TurnInterval = TimeSpan.FromMilliseconds(400);
+    public static readonly TimeSpan TurnInterval = TimeSpan.FromMilliseconds(50);
 
     private double _pacedSeconds;
 

@@ -12,15 +12,15 @@ internal static class JudgeChecks
     public static async Task RunAsync()
     {
         var examples = JudgeCatalog.Load(Path.Combine("JevDotNet.Demo", "Data", "judge-data.json"));
-        Check(examples.Count == 80, "80 quality examples");
+        Check(examples.Count == 100, "100 quality examples");
         foreach (var evaluator in JudgeCatalog.All)
         {
             var group = examples.Where(example => example.Type == evaluator.Key).ToArray();
-            Check(group.Length == 20 && Enumerable.Range(1, 5).All(score => group.Count(item => item.ExpectedScore == score) == 4), "Balanced " + evaluator.Name);
+            Check(group.Length == 25 && Enumerable.Range(1, 5).All(score => group.Count(item => item.ExpectedScore == score) == 5), "Balanced " + evaluator.Name);
             var families = group.GroupBy(item => item.Id[..item.Id.LastIndexOf('-')]).ToArray();
-            Check(families.Length == 4 && families.All(family => family.Select(item => item.ExpectedScore).Order().SequenceEqual(Enumerable.Range(1, 5))),
-                "Four scenario families spanning the rubric");
-            Check(group.Select(item => item.Input.Response).Distinct().Count() == 20, "Distinct authored responses");
+            Check(families.Length == 5 && families.All(family => family.Select(item => item.ExpectedScore).Order().SequenceEqual(Enumerable.Range(1, 5))),
+                "Five scenario families spanning the rubric");
+            Check(group.Select(item => item.Input.Response).Distinct().Count() == 25, "Distinct authored responses");
             foreach (var example in group)
             {
                 var request = JudgeCatalog.BuildRequest(example.Type, example.Input);
@@ -89,12 +89,12 @@ internal static class JudgeChecks
         var environment = new JudgeEnvironment();
         var fake = new FakeDecisions();
         var service = new JudgeService(new DemoEvaluationService(configuration, fake), environment);
-        Check(service.LoadExamples().Count == 80 && service.HasApiKey, "Judge service configuration");
+        Check(service.LoadExamples().Count == 100 && service.HasApiKey, "Judge service configuration");
         var groupExamples = examples.Where(item => item.Type == "relevance").ToArray();
         var run = new JudgeRun(groupExamples, DemoDecisionModels.DefaultModelId);
         var updates = 0;
         await service.RunAsync(run, () => { updates++; return Task.CompletedTask; });
-        Check(run.Complete && run.Attempts.Count == 20 && updates == 20, "Twenty sequential progress updates");
+        Check(run.Complete && run.Attempts.Count == 25 && updates == 25, "Twenty-five sequential progress updates");
         Check(fake.Queries.SequenceEqual(groupExamples.Select(item => item.Input.Response)) && fake.MaxConcurrent == 1, "Original ordered sequential inputs");
         await ExpectAsync<InvalidOperationException>(() => service.RunAsync(run));
 
@@ -102,8 +102,8 @@ internal static class JudgeChecks
         service = new JudgeService(new DemoEvaluationService(configuration, fake), environment);
         var partial = new JudgeRun(groupExamples, DemoDecisionModels.DefaultModelId);
         await service.RunAsync(partial);
-        Check(partial.Complete && partial.Attempts.Count == 20 && partial.Attempts[1].Error is not null &&
-            partial.Attempts[0].Result is not null && partial.Attempts[19].Result is not null, "Continue after failure");
+        Check(partial.Complete && partial.Attempts.Count == 25 && partial.Attempts[1].Error is not null &&
+            partial.Attempts[0].Result is not null && partial.Attempts[24].Result is not null, "Continue after failure");
 
         using var cancellation = new CancellationTokenSource();
         var cancelled = new JudgeRun(groupExamples, DemoDecisionModels.DefaultModelId);
@@ -132,7 +132,7 @@ internal static class JudgeChecks
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var noKey = scope.ServiceProvider.GetRequiredService<JudgeService>();
-        Check(!noKey.HasApiKey && noKey.LoadExamples().Count == 80, "Missing key still loads dataset");
+        Check(!noKey.HasApiKey && noKey.LoadExamples().Count == 100, "Missing key still loads dataset");
         await ExpectAsync<InvalidOperationException>(() => noKey.EvaluateAsync("relevance", sample.Input));
         await ExpectAsync<InvalidOperationException>(() => noKey.RunAsync(new JudgeRun(groupExamples, DemoDecisionModels.DefaultModelId)));
     }
