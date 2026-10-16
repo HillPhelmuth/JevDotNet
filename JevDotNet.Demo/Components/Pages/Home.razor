@@ -54,20 +54,11 @@
     @foreach (var scenario in DemoScenarioCatalog.All)
     {
         <a class="scenario-card" href="@($"examples/{scenario.Slug}")">
-            <span class="card-number">@scenario.Number / 03</span>
-            <span class="card-icon" aria-hidden="true">@Icon(scenario.Slug)</span>
+            <span class="card-number">DECISION WORKFLOW</span>
+            <span class="card-icon" aria-hidden="true">@scenario.Icon</span>
             <h3>@scenario.Title</h3>
             <p>@scenario.Summary</p>
             <span class="card-footer"><span>@scenario.Pattern</span><span aria-hidden="true">↗</span></span>
         </a>
     }
 </div>
-
-@code {
-    private static string Icon(string slug) => slug switch
-    {
-        "support" => "◎",
-        "content" => "◇",
-        _ => "↗"
-    };
-}

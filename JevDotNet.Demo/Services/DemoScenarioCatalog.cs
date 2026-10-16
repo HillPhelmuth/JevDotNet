@@ -4,7 +4,7 @@ namespace JevDotNet.Demo.Services;
 
 public sealed record DemoScenario(
     string Slug,
-    string Number,
+    string Icon,
     string Title,
     string Summary,
     string InputLabel,
@@ -19,17 +19,17 @@ public static class DemoScenarioCatalog
 
     public static IReadOnlyList<DemoScenario> All { get; } =
     [
-        new("support", "01", "Support triage",
+        new("support", "◎", "Support triage",
             "Route a customer message, spot urgency, and gauge frustration in one call.",
             "Customer message",
             "My card was charged twice and I still can't access my account. Can someone fix this today?",
             "Choice + Noul + Score"),
-        new("content", "02", "Content review",
+        new("content", "◇", "Content review",
             "Compare a post with simple community rules and suggest a human review priority.",
             "Community post",
             "You've posted the same promotional link in every thread today. Please stop spamming the forum.",
             "Policy check + category + severity"),
-        new("leads", "03", "Lead qualification",
+        new("leads", "↗", "Lead qualification",
             "Identify inquiry intent, estimate customer fit, and spot demo interest.",
             "Inbound inquiry",
             "I'm the operations lead at a 120-person SaaS company. We're comparing workflow tools and would like a demo next week.",
