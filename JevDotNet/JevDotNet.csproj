@@ -9,7 +9,7 @@
   <PropertyGroup>
     <PackageId>DecisionsDotNet</PackageId>
     <PackageVersion>0.1.0-preview</PackageVersion>
-    <Title>JevDotNet - TypeSafe AI and OpenRouter Decisions SDK</Title>
+    <Title>DecisionsDotNet - TypeSafe AI SystemOne and OpenRouter Decisions SDK</Title>
     <Authors>Adam Holm</Authors>
     <Description>Type-safe .NET client for TypeSafe AI Jev models and the OpenRouter Decisions API, with typed decision questions and responses, dependency injection, cancellation, and bounded HTTP retries.</Description>
     <PackageTags>Jev;TypeSafe;OpenRouter;AI;decisions;SDK;dotnet</PackageTags>
