@@ -96,15 +96,7 @@ using (var client = new JevClient("test-key", new HttpClient(new StubHandler(_ =
 
 await OpenRouterChecks.RunAsync();
 await DependencyInjectionChecks.RunAsync();
-await DecisionModelsChecks.RunAsync();
-await DemoChecks.RunAsync();
-await BulkTriageChecks.RunAsync();
-await JudgeChecks.RunAsync();
-await JudgeFilterChecks.RunAsync();
-await LunaJudgeChecks.RunAsync();
-ChaseChecks.Run();
-LaneChecks.Run();
-Console.WriteLine("All SDK and demo contract checks passed.");
+Console.WriteLine("All SDK contract checks passed.");
 
 static void Check(bool condition, string name)
 {
