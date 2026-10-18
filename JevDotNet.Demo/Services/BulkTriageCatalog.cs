@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
-using JevDotNet;
+using DecisionsDotNet;
 
 namespace JevDotNet.Demo.Services;
 
@@ -82,7 +82,7 @@ public static class BulkTriageCatalog
         if (messages.Count == 0)
             throw new ArgumentException("Select at least one message.", nameof(messages));
         modelId = DemoDecisionModels.RequireSupported(modelId);
-        var questions = new Dictionary<string, JevQuestion>();
+        var questions = new Dictionary<string, DecisionsQuestion>();
         foreach (var message in messages)
         foreach (var category in Categories)
             questions[QuestionId(message.Id, category.Key)] = new NoulQuestion(
@@ -90,14 +90,14 @@ public static class BulkTriageCatalog
                 new NoulCriteria(category.Yes, category.No));
 
         // Only IDs and message text enter either model request; reference scores stay in the UI.
-        var state = JevValue.FromObject(new
+        var state = DecisionsValue.FromObject(new
         {
             messages = messages.Select(message => new { id = message.Id, text = message.Text }).ToArray()
         });
         return new DecisionsRequest(state, questions, modelId);
     }
 
-    public static TriageScores ReadJevScores(JevResponse response, string id)
+    public static TriageScores ReadJevScores(DecisionsResponse response, string id)
     {
         var values = Categories.ToDictionary(category => category.Key,
             category => response.GetAnswer<NoulAnswer>(QuestionId(id, category.Key)).Noul);

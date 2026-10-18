@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\JevDotNet\JevDotNet.csproj" />
+    <ProjectReference Include="..\JevDotNet.Demo\JevDotNet.Demo.csproj" />
   </ItemGroup>
 </Project>

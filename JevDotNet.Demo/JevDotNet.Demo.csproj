@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Images\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\JevDotNet\JevDotNet.csproj" />
     <PackageReference Include="Microsoft.Agents.AI" Version="1.22.0" />
     <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.22.0" />

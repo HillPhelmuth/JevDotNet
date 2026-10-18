@@ -1,4 +1,4 @@
-using JevDotNet;
+using DecisionsDotNet;
 
 namespace JevDotNet.Demo.Services;
 
@@ -51,11 +51,11 @@ public static class DemoScenarioCatalog
         return slug.ToLowerInvariant() switch
         {
             "support" => new DecisionsRequest(
-                JevValue.FromObject(new { ticket = input }),
-                new Dictionary<string, JevQuestion>
+                DecisionsValue.FromObject(new { ticket = input }),
+                new Dictionary<string, DecisionsQuestion>
                 {
                     ["team"] = new ChoiceQuestion("Which team should handle this customer message?",
-                        new Dictionary<string, JevValue?>
+                        new Dictionary<string, DecisionsValue?>
                         {
                             ["billing"] = "Payments, invoices, and refunds",
                             ["technical"] = "Product bugs, outages, or access failures",
@@ -65,10 +65,10 @@ public static class DemoScenarioCatalog
                     ["urgent"] = new NoulQuestion("Does this customer message need a prompt response?",
                         new NoulCriteria("Explicitly time-sensitive or blocking the customer", "Can wait for the normal queue")),
                     ["frustration"] = new ScoreQuestion("How frustrated does the customer sound?",
-                        new JevValue[] { "Calm", "Frustrated but civil", "Very upset" })
+                        new DecisionsValue[] { "Calm", "Frustrated but civil", "Very upset" })
                 }, modelId),
             "content" => new DecisionsRequest(
-                JevValue.FromObject(new
+                DecisionsValue.FromObject(new
                 {
                     post = input,
                     community_rules = new[]
@@ -77,12 +77,12 @@ public static class DemoScenarioCatalog
                         "No insults, threats, or targeted harassment."
                     }
                 }),
-                new Dictionary<string, JevQuestion>
+                new Dictionary<string, DecisionsQuestion>
                 {
                     ["possible_violation"] = new NoulQuestion("Does the post itself potentially violate a community rule?",
                         new NoulCriteria("The post contains a potential violation", "The post does not contain a potential violation")),
                     ["category"] = new ChoiceQuestion("Which category best describes the post itself?",
-                        new Dictionary<string, JevValue?>
+                        new Dictionary<string, DecisionsValue?>
                         {
                             ["spam"] = "Repeated unsolicited promotion or links",
                             ["harassment"] = "Insults, threats, or targeted abuse",
@@ -90,18 +90,18 @@ public static class DemoScenarioCatalog
                             ["other"] = "Does not clearly fit the other categories"
                         }),
                     ["severity"] = new ScoreQuestion("How much attention might this post need from a moderator?",
-                        new JevValue[] { "Routine", "Needs review", "Urgent human review" })
+                        new DecisionsValue[] { "Routine", "Needs review", "Urgent human review" })
                 }, modelId),
             "leads" => new DecisionsRequest(
-                JevValue.FromObject(new
+                DecisionsValue.FromObject(new
                 {
                     inquiry = input,
                     ideal_customer_profile = "Business teams evaluating workflow software for a company with at least 50 employees."
                 }),
-                new Dictionary<string, JevQuestion>
+                new Dictionary<string, DecisionsQuestion>
                 {
                     ["intent"] = new ChoiceQuestion("What is the primary intent of this inquiry?",
-                        new Dictionary<string, JevValue?>
+                        new Dictionary<string, DecisionsValue?>
                         {
                             ["buying"] = "Evaluating or purchasing workflow software",
                             ["research"] = "General information gathering",
@@ -110,13 +110,13 @@ public static class DemoScenarioCatalog
                         }),
                     ["demo_interest"] = new NoulQuestion("Does the sender explicitly ask for a product demo?"),
                     ["fit"] = new ScoreQuestion("How closely does this inquiry match the ideal customer profile?",
-                        new JevValue[] { "Little evidence of fit", "Some evidence of fit", "Strong evidence of fit" })
+                        new DecisionsValue[] { "Little evidence of fit", "Some evidence of fit", "Strong evidence of fit" })
                 }, modelId),
             _ => throw new ArgumentException("Unknown demo scenario.", nameof(slug))
         };
     }
 
-    public static DemoRecommendation Recommend(string slug, JevResponse response)
+    public static DemoRecommendation Recommend(string slug, DecisionsResponse response)
         => slug.ToLowerInvariant() switch
         {
             "support" => RecommendSupport(response),
@@ -125,7 +125,7 @@ public static class DemoScenarioCatalog
             _ => throw new ArgumentException("Unknown demo scenario.", nameof(slug))
         };
 
-    private static DemoRecommendation RecommendSupport(JevResponse response)
+    private static DemoRecommendation RecommendSupport(DecisionsResponse response)
     {
         var team = response.GetAnswer<ChoiceAnswer>("team");
         var urgency = response.GetAnswer<NoulAnswer>("urgent");
@@ -137,7 +137,7 @@ public static class DemoScenarioCatalog
             "Demo logic: urgency of at least 0.70 or frustration of at least 1.5 raises priority.");
     }
 
-    private static DemoRecommendation RecommendContent(JevResponse response)
+    private static DemoRecommendation RecommendContent(DecisionsResponse response)
     {
         var violation = response.GetAnswer<NoulAnswer>("possible_violation");
         var category = response.GetAnswer<ChoiceAnswer>("category");
@@ -151,7 +151,7 @@ public static class DemoScenarioCatalog
         return new("Low review priority", "Demo logic: possible violation is below 0.40. No enforcement action is taken.");
     }
 
-    private static DemoRecommendation RecommendLead(JevResponse response)
+    private static DemoRecommendation RecommendLead(DecisionsResponse response)
     {
         var intent = response.GetAnswer<ChoiceAnswer>("intent");
         var interest = response.GetAnswer<NoulAnswer>("demo_interest");

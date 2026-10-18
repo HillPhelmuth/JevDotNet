@@ -1,0 +1,8 @@
+.image-workspace { display: grid; grid-template-columns: minmax(250px, .75fr) minmax(0, 1.5fr); align-items: start; gap: 18px; }
+.image-input-column, .image-output-column { display: grid; gap: 18px; min-width: 0; }
+.image-notes h2 { font-size: 18px; }
+.image-notes p { font-size: 13px; line-height: 1.7; color: #52725e; }
+.image-notes a { font-size: 13px; font-weight: 700; }
+.overlay-toggle { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; font-weight: 700; }
+.overlay-toggle input { accent-color: #277758; }
+@media (max-width: 950px) { .image-workspace { grid-template-columns: 1fr; } }

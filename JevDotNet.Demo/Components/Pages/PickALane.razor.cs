@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
+using DecisionsDotNet;
 using JevDotNet.Demo.Components.Lanes;
 using JevDotNet.Demo.Services;
 using Microsoft.AspNetCore.Components;
@@ -22,7 +23,7 @@ public partial class PickALane
     private string? Error;
     private LaneSnapshot Snapshot = new(0, false, false, 2, 0, 0, []);
     private DecisionsRequest? Request;
-    private JevResponse? Response;
+    private DecisionsResponse? Response;
     private CancellationTokenSource? Session;
     private readonly List<Task> Loops = [];
     private void RoadReady() => Ready = true;

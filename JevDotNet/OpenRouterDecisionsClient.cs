@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
-namespace JevDotNet;
+namespace DecisionsDotNet;
 
 public sealed class OpenRouterDecisionsClientOptions
 {
@@ -10,6 +10,9 @@ public sealed class OpenRouterDecisionsClientOptions
     public int MaxAttempts { get; init; } = 3;
     public TimeSpan InitialRetryDelay { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan MaxRetryDelay { get; init; } = TimeSpan.FromSeconds(30);
+    /// <summary>Input modalities keyed by exact model ID. Overrides bypass catalog discovery for that model.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> ModelInputModalitiesOverrides { get; init; }
+        = new Dictionary<string, IReadOnlyList<string>>();
 }
 
 /// <summary>HTTP client for OpenRouter's Decisions API.</summary>
@@ -20,6 +23,7 @@ public sealed class OpenRouterDecisionsClient : IDecisionsClient, IDisposable
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
     private readonly OpenRouterDecisionsClientOptions _options;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _modalityOverrides;
 
     public OpenRouterDecisionsClient(
         string apiKey,
@@ -29,6 +33,7 @@ public sealed class OpenRouterDecisionsClient : IDecisionsClient, IDisposable
         _apiKey = !string.IsNullOrWhiteSpace(apiKey)
             ? apiKey : throw new ArgumentException("An OpenRouter API key is required.", nameof(apiKey));
         _options = options ?? new OpenRouterDecisionsClientOptions();
+        _modalityOverrides = ModelInputModalities.Snapshot(_options.ModelInputModalitiesOverrides);
         if (_options.BaseUri is null || !_options.BaseUri.IsAbsoluteUri || _options.BaseUri.Scheme != Uri.UriSchemeHttps)
             throw new ArgumentException("BaseUri must be an absolute HTTPS URI.", nameof(options));
         if (_options.MaxAttempts < 1 || _options.InitialRetryDelay < TimeSpan.Zero ||
@@ -44,18 +49,22 @@ public sealed class OpenRouterDecisionsClient : IDecisionsClient, IDisposable
         => new(Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
             ?? throw new InvalidOperationException("OPENROUTER_API_KEY is not set."), httpClient, options);
 
-    public async Task<JevResponse> EvaluateAsync(
+    public async Task<DecisionsResponse> EvaluateAsync(
         DecisionsRequest request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var state = request.State.ToJsonElement();
-        var stateText = state.ValueKind == JsonValueKind.String
-            ? state.GetString()!
-            : JsonSerializer.Serialize(state, JsonOptions);
+        cancellationToken.ThrowIfCancellationRequested();
+        var (state, hasImages) = ImageInput.ValidateRequest(request);
+        var modalities = _modalityOverrides.TryGetValue(request.Model, out var configured)
+            ? configured
+            : await OpenRouterModelCatalog.Shared.ResolveAsync(_httpClient, _options.BaseUri,
+                request.Model, cancellationToken).ConfigureAwait(false);
+        if (hasImages) ImageInput.RequireImageSupport(modalities, request.Model);
+        object wireState = ImageInput.IsMultimodal(modalities) ? state : ImageInput.AsJsonText(state);
         var body = JsonSerializer.Serialize(new
         {
-            state = stateText,
+            state = wireState,
             model = request.Model,
             questions = request.Questions
         }, JsonOptions);

@@ -1,0 +1,23 @@
+@using System.Globalization
+@using DecisionsDotNet
+@using JevDotNet.Demo.Services
+
+<figure class="image-preview">
+    <div class="image-surface">
+        <img src="@Image.PreviewUrl" alt="@Image.Alt" />
+        @if (Box is { } box)
+        {
+            <svg class="box-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img" aria-label="Returned bounding box">
+                <rect x="@Coordinate(box.Left)" y="@Coordinate(box.Top)"
+                      width="@Coordinate(box.Right - box.Left)" height="@Coordinate(box.Bottom - box.Top)" />
+            </svg>
+        }
+    </div>
+    <figcaption>@Image.Title @if (Box is not null) { <span>· Green outline: returned Box answer</span> }</figcaption>
+</figure>
+
+@code {
+    [Parameter, EditorRequired] public ImageDemoAsset Image { get; set; } = default!;
+    [Parameter] public BoundingBox? Box { get; set; }
+    private static string Coordinate(double value) => (value * 1000).ToString("0.######", CultureInfo.InvariantCulture);
+}

@@ -1,25 +1,25 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using JevDotNet;
+using DecisionsDotNet;
 
 internal static class OpenRouterChecks
 {
     public static async Task RunAsync()
     {
         var calls = 0;
-        var questions = new Dictionary<string, JevQuestion>
+        var questions = new Dictionary<string, DecisionsQuestion>
         {
-            ["urgent"] = new NoulQuestion(JevValue.FromObject(new { prompt = "Is this urgent?" }),
-                new NoulCriteria(True: JevValue.FromObject(new { description = "Time-sensitive" }))),
-            ["team"] = new ChoiceQuestion("Which team?", new Dictionary<string, JevValue?>
+            ["urgent"] = new NoulQuestion(DecisionsValue.FromObject(new { prompt = "Is this urgent?" }),
+                new NoulCriteria(True: DecisionsValue.FromObject(new { description = "Time-sensitive" }))),
+            ["team"] = new ChoiceQuestion("Which team?", new Dictionary<string, DecisionsValue?>
             {
-                ["billing"] = JevValue.FromObject(new { description = "Payments" }),
-                ["technical"] = JevValue.FromArray(new[] { "Bugs" })
+                ["billing"] = DecisionsValue.FromObject(new { description = "Payments" }),
+                ["technical"] = DecisionsValue.FromArray(new[] { "Bugs" })
             }),
-            ["severity"] = new ScoreQuestion("How severe?", new JevValue[] { "Low", "High" })
+            ["severity"] = new ScoreQuestion("How severe?", new DecisionsValue[] { "Low", "High" })
         };
-        var request = new DecisionsRequest(JevValue.FromObject(new { message = "Help" }), questions, "typesafe/jev-1.13");
+        var request = new DecisionsRequest(DecisionsValue.FromObject(new { message = "Help" }), questions, "typesafe/jev-1.13");
         using (var client = new OpenRouterDecisionsClient("router-key", new HttpClient(new StubHandler(message =>
         {
             calls++;
@@ -61,10 +61,10 @@ internal static class OpenRouterChecks
 
         var states = new[]
         {
-            JevValue.FromArray(new object[] { "Help", new { nested = new[] { 1, 2 } }, true, 3 }),
-            JevValue.Text("Help"), JevValue.Text(""),
-            JevValue.Text("Quotes: \"help\"; path: C:\\temp\\file\nNext line\r\nUnicode: café 日本語 😀"),
-            JevValue.Text("{\"message\":\"Help\"}")
+            DecisionsValue.FromArray(new object[] { "Help", new { nested = new[] { 1, 2 } }, true, 3 }),
+            DecisionsValue.Text("Help"), DecisionsValue.Text(""),
+            DecisionsValue.Text("Quotes: \"help\"; path: C:\\temp\\file\nNext line\r\nUnicode: café 日本語 😀"),
+            DecisionsValue.Text("{\"message\":\"Help\"}")
         };
         foreach (var input in states)
         {
@@ -169,7 +169,7 @@ internal static class OpenRouterChecks
         {
             try
             {
-                await client.EvaluateAsync(new DecisionsRequest("test", new Dictionary<string, JevQuestion>
+                await client.EvaluateAsync(new DecisionsRequest("test", new Dictionary<string, DecisionsQuestion>
                 {
                     ["urgent"] = new NoulQuestion("Urgent?")
                 }, "typesafe/jev-1.13"));
@@ -194,6 +194,10 @@ internal static class OpenRouterChecks
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(respond(request));
+            => Task.FromResult(request.Method == HttpMethod.Get
+                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""
+                    {"data":[{"id":"typesafe/jev-1.13","architecture":{"input_modalities":["text"]}}]}
+                    """) }
+                : respond(request));
     }
 }

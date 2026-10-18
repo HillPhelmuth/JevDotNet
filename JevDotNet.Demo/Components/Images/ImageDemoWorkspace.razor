@@ -1,0 +1,65 @@
+@using DecisionsDotNet
+@using JevDotNet.Demo.Services
+@implements IAsyncDisposable
+@inject DemoEvaluationService Evaluation
+@inject ILogger<ImageDemoWorkspace> Logger
+
+<PageTitle>@Title · JevDotNet Demo</PageTitle>
+<div class="page-heading">
+    <div>
+        <a class="back-link" href="/">← All demos</a>
+        <div class="eyebrow">IMAGE DECISIONS</div>
+        <h1>@Title<span class="title-period">.</span></h1>
+        <p>@(Locate ? "Name a target and see the model draw its location on the image." : "Ask about an image and explore typed answers, probabilities, and scores.")</p>
+    </div>
+</div>
+@if (!Evaluation.HasApiKey) { <ApiKeyNotice /> }
+
+<div class="image-workspace">
+    <div class="image-input-column">
+        <ImageDemoControls Locate="Locate" Busy="Busy" Enabled="Evaluation.HasApiKey" Models="Models"
+                           ImageId="@ImageId" ImageIdChanged="ChangeImage" ModelId="@ModelId" ModelIdChanged="ChangeModel"
+                           Prompt="@Prompt" PromptChanged="ChangePrompt" Error="@Error" Evaluate="EvaluateAsync" Cancel="CancelAsync" />
+        @if (Models.Count == 0)
+        {
+            <div class="empty-state">No compatible models are currently listed. Try again after the model catalog refreshes.</div>
+        }
+        <div class="workspace-panel image-notes">
+            @if (Locate)
+            {
+                <h2>Locate, then inspect</h2>
+                <p>The green outline comes directly from the returned Box answer. It follows the image as the page resizes.</p>
+                <p>A Box always returns a rectangle, even if the target is absent. Check the companion visibility probability and inspect the image.</p>
+                <a class="text-link" href="image-decisions">Try image decisions →</a>
+            }
+            else
+            {
+                <h2>Three answers, one image</h2>
+                <p>Noul answers your yes/no question. Choice identifies the scene, while Score rates its visual activity on a 0–2 scale.</p>
+                <a class="text-link" href="image-box">Try finding an object →</a>
+            }
+        </div>
+    </div>
+    <div class="image-output-column">
+        <section class="workspace-panel">
+            <div class="panel-heading"><h2>@(Locate ? "Image & bounding box" : "Source image")</h2><span class="panel-aside">@Image.Title</span></div>
+            <ImagePreview Image="Image" Box="@(ShowBox ? Response?.Answers.Values.OfType<BoxAnswer>().FirstOrDefault()?.Box : null)" />
+            @if (Locate && Response is not null)
+            {
+                <label class="overlay-toggle"><input type="checkbox" @bind="ShowBox" /> Show returned bounding box</label>
+            }
+        </section>
+        @if (Response is not null && Request is not null)
+        {
+            <ImageDecisionResults Response="Response" Questions="Request.Questions" Elapsed="Elapsed" />
+        }
+        else
+        {
+            <section class="workspace-panel output-placeholder" aria-live="polite">
+                <span aria-hidden="true">@(Locate ? "▣" : "◇")</span>
+                <strong>@(Busy ? "Reading the image…" : "Ready when you are")</strong>
+                <p>@(Busy ? "Waiting for the selected model. You can cancel this request." : "Choose an image and model, then evaluate to see a live result.")</p>
+            </section>
+        }
+    </div>
+</div>

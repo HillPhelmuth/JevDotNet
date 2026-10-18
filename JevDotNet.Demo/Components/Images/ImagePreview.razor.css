@@ -1,0 +1,7 @@
+.image-preview { margin: 0; }
+.image-surface { position: relative; overflow: hidden; border-radius: 10px; background: #122b23; }
+.image-surface img { display: block; width: 100%; height: auto; }
+.box-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.box-overlay rect { fill: #6aff921c; stroke: #7dffab; stroke-width: 3; vector-effect: non-scaling-stroke; }
+figcaption { padding-top: 10px; font-size: 12px; line-height: 1.5; color: #52725e; }
+figcaption span { color: #277758; }

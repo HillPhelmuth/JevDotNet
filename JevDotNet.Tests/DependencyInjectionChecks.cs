@@ -1,5 +1,5 @@
 using System.Net;
-using JevDotNet;
+using DecisionsDotNet;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,8 +10,19 @@ internal static class DependencyInjectionChecks
         foreach (var useConfiguration in new[] { false, true })
         {
             await CheckProviderAsync(useConfiguration, openRouter: false);
+            await CheckProviderAsync(useConfiguration, openRouter: false,
+                options: new JevClientOptions { BaseUri = new Uri("http://localhost:1234/") });
             await CheckProviderAsync(useConfiguration, openRouter: true);
         }
+
+        await CheckProviderAsync(useConfiguration: false, openRouter: false,
+            options: new JevClientOptions { BaseUri = new Uri("http://localhost:1234/") }, localRegistration: true);
+        await CheckProviderAsync(useConfiguration: false, openRouter: false,
+            options: new JevClientOptions { BaseUri = new Uri("http://jev:1234/") }, localRegistration: true,
+            localApiKey: "custom-local-key");
+        ExpectArgument(() => new ServiceCollection().AddLocalJevSystemOneClient(null!), "Local null base URI");
+        ExpectArgument(() => new ServiceCollection().AddLocalJevSystemOneClient(new Uri("http://localhost:1234/"), " "),
+            "Local empty key");
 
         ExpectArgument(() => new ServiceCollection().AddJevSystemOneClient(" "), "Direct empty key");
         ExpectArgument(() => new ServiceCollection().AddOpenRouterDecisionsClient(" "), "OpenRouter empty key");
@@ -21,13 +32,14 @@ internal static class DependencyInjectionChecks
             "OpenRouter:ApiKey");
     }
 
-    private static async Task CheckProviderAsync(bool useConfiguration, bool openRouter)
+    private static async Task CheckProviderAsync(bool useConfiguration, bool openRouter, JevClientOptions? options = null,
+        bool localRegistration = false, string? localApiKey = null)
     {
         var services = new ServiceCollection();
-        var expectedKey = openRouter ? "router-key" : "direct-key";
+        var expectedKey = localRegistration ? localApiKey ?? "local-key" : openRouter ? "router-key" : "direct-key";
         var expectedUrl = openRouter
             ? "https://openrouter.ai/api/alpha/decisions"
-            : "https://api.typesafe.ai/v1/systemone";
+            : new Uri(options?.BaseUri ?? new Uri("https://api.typesafe.ai/"), "v1/systemone").ToString();
         var model = openRouter ? "typesafe/jev-1.13" : "jev-latest";
         var calls = 0;
 
@@ -36,18 +48,26 @@ internal static class DependencyInjectionChecks
             {
                 [openRouter ? "OpenRouter:ApiKey" : "TypeSafe:ApiKey"] = expectedKey
             }).Build();
-        var builder = openRouter
+        var builder = localRegistration
+            ? localApiKey is null
+                ? services.AddLocalJevSystemOneClient(options!.BaseUri)
+                : services.AddLocalJevSystemOneClient(options!.BaseUri, localApiKey)
+            : openRouter
             ? useConfiguration
                 ? services.AddOpenRouterDecisionsClient(configuration)
                 : services.AddOpenRouterDecisionsClient(expectedKey)
             : useConfiguration
-                ? services.AddJevSystemOneClient(configuration)
-                : services.AddJevSystemOneClient(expectedKey);
+                ? services.AddJevSystemOneClient(configuration, options)
+                : services.AddJevSystemOneClient(expectedKey, options);
         if (useConfiguration)
             configuration[openRouter ? "OpenRouter:ApiKey" : "TypeSafe:ApiKey"] = "changed-after-registration";
 
         builder.ConfigurePrimaryHttpMessageHandler(() => new StubHandler(message =>
         {
+            if (message.Method == HttpMethod.Get)
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""
+                    {"data":[{"id":"typesafe/jev-1.13","architecture":{"input_modalities":["text"]}}]}
+                    """) };
             calls++;
             Check(message.Method == HttpMethod.Post, "DI evaluation method");
             Check(message.RequestUri?.ToString() == expectedUrl, "DI provider endpoint");
@@ -66,9 +86,9 @@ internal static class DependencyInjectionChecks
         using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<IDecisionsClient>();
         Check(openRouter ? client is OpenRouterDecisionsClient : client is JevClient, "DI provider selection");
-        var request = new DecisionsRequest("A chase", new Dictionary<string, JevQuestion>
+        var request = new DecisionsRequest("A chase", new Dictionary<string, DecisionsQuestion>
         {
-            ["move"] = new ChoiceQuestion("Which move?", new Dictionary<string, JevValue?>
+            ["move"] = new ChoiceQuestion("Which move?", new Dictionary<string, DecisionsValue?>
             {
                 ["right"] = "Closer", ["down"] = "Farther"
             })

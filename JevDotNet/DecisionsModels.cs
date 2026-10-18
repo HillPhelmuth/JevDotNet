@@ -1,31 +1,31 @@
 using System.Text.Json.Serialization;
 
-namespace JevDotNet;
+namespace DecisionsDotNet;
 
 /// <summary>A typed Jev decisions request accepted by both direct TypeSafe and OpenRouter clients.</summary>
 public sealed record DecisionsRequest
 {
-    public DecisionsRequest(JevValue state, IReadOnlyDictionary<string, JevQuestion> questions, string model = "jev-latest")
+    public DecisionsRequest(DecisionsValue state, IReadOnlyDictionary<string, DecisionsQuestion> questions, string model = "jev-latest")
     {
         State = state ?? throw new ArgumentNullException(nameof(state));
         ArgumentNullException.ThrowIfNull(questions);
         if (questions.Count == 0 || questions.Any(pair => string.IsNullOrWhiteSpace(pair.Key) || pair.Value is null))
             throw new ArgumentException("At least one named question is required.", nameof(questions));
-        Questions = new Dictionary<string, JevQuestion>(questions);
+        Questions = new Dictionary<string, DecisionsQuestion>(questions);
         Model = !string.IsNullOrWhiteSpace(model) ? model : throw new ArgumentException("A model is required.", nameof(model));
     }
 
     [JsonPropertyName("state")]
-    public JevValue State { get; }
+    public DecisionsValue State { get; }
 
     [JsonPropertyName("model")]
     public string Model { get; }
 
     [JsonPropertyName("questions")]
-    public IReadOnlyDictionary<string, JevQuestion> Questions { get; }
+    public IReadOnlyDictionary<string, DecisionsQuestion> Questions { get; }
 }
 
-public sealed record JevResponse
+public sealed record DecisionsResponse
 {
     [JsonPropertyName("id")]
     public string? Id { get; init; }
@@ -40,7 +40,7 @@ public sealed record JevResponse
     public required IReadOnlyDictionary<string, JevAnswer> Answers { get; init; }
 
     [JsonPropertyName("usage")]
-    public required JevUsage Usage { get; init; }
+    public required DecisionsUsage Usage { get; init; }
 
     public TAnswer GetAnswer<TAnswer>(string questionId) where TAnswer : JevAnswer
     {
@@ -51,7 +51,7 @@ public sealed record JevResponse
     }
 }
 
-public sealed record JevUsage
+public sealed record DecisionsUsage
 {
     [JsonPropertyName("cost")]
     public decimal? Cost { get; init; }
@@ -67,7 +67,34 @@ public sealed record JevUsage
 [JsonDerivedType(typeof(NoulAnswer), "noul")]
 [JsonDerivedType(typeof(ChoiceAnswer), "choice")]
 [JsonDerivedType(typeof(ScoreAnswer), "score")]
+[JsonDerivedType(typeof(BoxAnswer), "box")]
 public abstract record JevAnswer;
+
+/// <summary>A single bounding box with confidence from zero to one.</summary>
+public sealed record BoxAnswer : JevAnswer
+{
+    [JsonPropertyName("box")]
+    public required BoundingBox Box { get; init; }
+
+    [JsonPropertyName("confidence")]
+    public required double Confidence { get; init; }
+}
+
+/// <summary>Image edges as fractions from zero to one, measured from the top-left corner.</summary>
+public sealed record BoundingBox
+{
+    [JsonPropertyName("top")]
+    public required double Top { get; init; }
+
+    [JsonPropertyName("bottom")]
+    public required double Bottom { get; init; }
+
+    [JsonPropertyName("left")]
+    public required double Left { get; init; }
+
+    [JsonPropertyName("right")]
+    public required double Right { get; init; }
+}
 
 public sealed record NoulAnswer : JevAnswer
 {

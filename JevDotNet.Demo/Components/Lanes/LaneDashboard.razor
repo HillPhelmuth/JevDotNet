@@ -1,6 +1,6 @@
 @using System.Globalization
 @using System.Text.Json
-@using JevDotNet
+@using DecisionsDotNet
 @using JevDotNet.Demo.Services
 
 <aside class="chase-info-card chase-dashboard @(Compact ? "lane-dashboard-compact" : "")">
@@ -43,7 +43,7 @@
 @code {
     [Parameter] public bool Compact { get; set; }
     [Parameter] public bool Running { get; set; }
-    [Parameter] public JevResponse? Response { get; set; }
+    [Parameter] public DecisionsResponse? Response { get; set; }
     [Parameter] public DecisionsRequest? Request { get; set; }
     [Parameter] public int Decisions { get; set; }
     [Parameter] public int Requests { get; set; }

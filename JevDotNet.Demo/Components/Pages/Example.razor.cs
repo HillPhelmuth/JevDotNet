@@ -1,3 +1,4 @@
+using DecisionsDotNet;
 using JevDotNet.Demo.Services;
 using Microsoft.AspNetCore.Components;
 using System.Net;
@@ -17,13 +18,13 @@ namespace JevDotNet.Demo.Components.Pages
         private string? ErrorMessage;
         private bool IsBusy;
         private DecisionsRequest? Request;
-        private JevResponse? Response;
+        private DecisionsResponse? Response;
         private DemoRecommendation? Recommendation;
         private CancellationTokenSource? Cancellation;
         private static readonly JsonSerializerOptions PrettyJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-        private IReadOnlyDictionary<string, JevQuestion> Questions
-            => Scenario is null ? new Dictionary<string, JevQuestion>() : DemoScenarioCatalog.BuildRequest(Scenario.Slug, "Preview").Questions;
+        private IReadOnlyDictionary<string, DecisionsQuestion> Questions
+            => Scenario is null ? new Dictionary<string, DecisionsQuestion>() : DemoScenarioCatalog.BuildRequest(Scenario.Slug, "Preview").Questions;
         private string? RequestJson => Request is null ? null : JsonSerializer.Serialize(Request, PrettyJson);
         private string? ResponseJson => Response is null ? null : JsonSerializer.Serialize(Response, PrettyJson);
 
@@ -118,8 +119,8 @@ namespace JevDotNet.Demo.Components.Pages
 
         private static string DisplayName(string value) => string.Join(' ', value.Split('_').Select(part =>
             part.Length == 0 ? part : char.ToUpperInvariant(part[0]) + part[1..]));
-        private static string QuestionType(JevQuestion question) => question switch { ChoiceQuestion => "CHOICE", ScoreQuestion => "SCORE", _ => "NOUL" };
-        private static string QuestionClass(JevQuestion question) => question switch { ChoiceQuestion => "choice", ScoreQuestion => "score", _ => "noul" };
+        private static string QuestionType(DecisionsQuestion question) => question switch { ChoiceQuestion => "CHOICE", ScoreQuestion => "SCORE", _ => "NOUL" };
+        private static string QuestionClass(DecisionsQuestion question) => question switch { ChoiceQuestion => "choice", ScoreQuestion => "score", _ => "noul" };
         private static string AnswerType(JevAnswer answer) => answer switch { ChoiceAnswer => "CHOICE", ScoreAnswer => "SCORE", _ => "NOUL" };
         private static string AnswerClass(JevAnswer answer) => answer switch { ChoiceAnswer => "choice", ScoreAnswer => "score", _ => "noul" };
         private static int Percent(double value) => (int)Math.Round(Math.Clamp(value, 0, 1) * 100);

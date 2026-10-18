@@ -1,0 +1,50 @@
+@using JevDotNet.Demo.Services
+
+<section class="workspace-panel image-controls">
+    <div class="panel-heading"><h2>Choose the input</h2><span class="panel-aside">One request per click</span></div>
+    <fieldset disabled="@Busy">
+        <label for="image-asset">Sample image</label>
+        <select id="image-asset" class="model-select" value="@ImageId" @onchange="e => ImageIdChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty)">
+            @foreach (var image in ImageDemoCatalog.All)
+            {
+                <option @key="image.Id" value="@image.Id">@image.Title</option>
+            }
+        </select>
+        <label for="image-model">@(Locate ? "Box model" : "Image decision model")</label>
+        <select id="image-model" class="model-select" value="@ModelId" @onchange="e => ModelIdChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty)">
+            @if (Models.Count == 0) { <option value="">No compatible models available</option> }
+            @foreach (var model in Models)
+            {
+                <option @key="model.Id" value="@model.Id">@model.Name</option>
+            }
+        </select>
+        <label for="image-prompt">@(Locate ? "What should the model find?" : "Ask a yes/no question")</label>
+        <textarea id="image-prompt" rows="3" value="@Prompt" maxlength="@ImageDemoCatalog.MaxPromptLength"
+                  @oninput="e => PromptChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty)"></textarea>
+    </fieldset>
+    @if (Locate) { <p class="answer-note">Jev 1.14 supports Box. Choose one target and identify where it appears.</p> }
+    else { <p class="answer-note">The model also classifies the scene and scores its visual activity.</p> }
+    @if (Error is not null) { <p class="field-error" role="alert">@Error</p> }
+    <div class="image-actions">
+        <button class="button button-primary" @onclick="Evaluate" disabled="@(Busy || !Enabled || Models.Count == 0 || string.IsNullOrWhiteSpace(Prompt))">
+            @(Busy ? "Evaluating…" : Locate ? "Find target" : "Evaluate image") <span aria-hidden="true">↗</span>
+        </button>
+        @if (Busy) { <button class="button button-secondary" @onclick="Cancel">Cancel</button> }
+    </div>
+</section>
+
+@code {
+    [Parameter] public bool Locate { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Enabled { get; set; }
+    [Parameter] public string ImageId { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ImageIdChanged { get; set; }
+    [Parameter] public string ModelId { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ModelIdChanged { get; set; }
+    [Parameter] public string Prompt { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> PromptChanged { get; set; }
+    [Parameter, EditorRequired] public IReadOnlyList<DemoDecisionModel> Models { get; set; } = [];
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public EventCallback Evaluate { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+}

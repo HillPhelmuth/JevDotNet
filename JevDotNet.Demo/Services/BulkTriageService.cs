@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using JevDotNet;
+using DecisionsDotNet;
 
 namespace JevDotNet.Demo.Services;
 

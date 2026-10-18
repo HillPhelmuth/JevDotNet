@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using JevDotNet;
+using DecisionsDotNet;
 
 var calls = 0;
 var handler = new StubHandler(request =>
@@ -31,15 +31,15 @@ var handler = new StubHandler(request =>
 using (var client = new JevClient("test-key", new HttpClient(handler)))
 {
     var request = new DecisionsRequest(
-        JevValue.FromObject(new { message = "Help" }),
-        new Dictionary<string, JevQuestion>
+        DecisionsValue.FromObject(new { message = "Help" }),
+        new Dictionary<string, DecisionsQuestion>
         {
             ["urgent"] = new NoulQuestion("Is this urgent?", new NoulCriteria("Time-sensitive", "Not urgent")),
-            ["route"] = new ChoiceQuestion("Which team?", new Dictionary<string, JevValue?>
+            ["route"] = new ChoiceQuestion("Which team?", new Dictionary<string, DecisionsValue?>
             {
                 ["billing"] = "Payment questions", ["other"] = null
             }),
-            ["severity"] = new ScoreQuestion("How severe?", new JevValue[] { "Calm", "Angry" })
+            ["severity"] = new ScoreQuestion("How severe?", new DecisionsValue[] { "Calm", "Angry" })
         });
     var result = await client.EvaluateAsync(request);
     Check(result.Model == "jev-1.13.0", "Resolved model");
@@ -85,7 +85,7 @@ using (var client = new JevClient("test-key", new HttpClient(new StubHandler(_ =
 {
     try
     {
-        await client.EvaluateAsync(new DecisionsRequest("test", new Dictionary<string, JevQuestion>
+        await client.EvaluateAsync(new DecisionsRequest("test", new Dictionary<string, DecisionsQuestion>
         {
             ["urgent"] = new NoulQuestion("Urgent?")
         }));
@@ -94,8 +94,12 @@ using (var client = new JevClient("test-key", new HttpClient(new StubHandler(_ =
     catch (JsonException) { }
 }
 
+await JevEndpointChecks.RunAsync();
 await OpenRouterChecks.RunAsync();
 await DependencyInjectionChecks.RunAsync();
+await ImageChecks.RunAsync();
+await BoxChecks.RunAsync();
+await ImageDemoChecks.RunAsync();
 Console.WriteLine("All SDK contract checks passed.");
 
 static void Check(bool condition, string name)

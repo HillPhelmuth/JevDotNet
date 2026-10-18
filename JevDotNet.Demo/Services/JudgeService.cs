@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
-using JevDotNet;
+using DecisionsDotNet;
 
 namespace JevDotNet.Demo.Services;
 

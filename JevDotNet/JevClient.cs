@@ -3,14 +3,18 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
-namespace JevDotNet;
+namespace DecisionsDotNet;
 
 public sealed class JevClientOptions
 {
+    /// <summary>Absolute HTTP or HTTPS service root. Endpoint paths such as v1/systemone are appended to this URI.</summary>
     public Uri BaseUri { get; init; } = new("https://api.typesafe.ai/");
     public int MaxAttempts { get; init; } = 3;
     public TimeSpan InitialRetryDelay { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan MaxRetryDelay { get; init; } = TimeSpan.FromSeconds(30);
+    /// <summary>Input modalities keyed by exact model ID. Overrides take precedence over known Jev capabilities.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> ModelInputModalitiesOverrides { get; init; }
+        = new Dictionary<string, IReadOnlyList<string>>();
 }
 
 public sealed class JevApiException : Exception
@@ -36,13 +40,16 @@ public sealed class JevClient : IDecisionsClient, IDisposable
     private readonly bool _ownsHttpClient;
     private readonly string _apiKey;
     private readonly JevClientOptions _options;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _modalityOverrides;
 
     public JevClient(string apiKey, HttpClient? httpClient = null, JevClientOptions? options = null)
     {
         _apiKey = !string.IsNullOrWhiteSpace(apiKey) ? apiKey : throw new ArgumentException("An API key is required.", nameof(apiKey));
         _options = options ?? new JevClientOptions();
-        if (_options.BaseUri is null || !_options.BaseUri.IsAbsoluteUri || _options.BaseUri.Scheme != Uri.UriSchemeHttps)
-            throw new ArgumentException("BaseUri must be an absolute HTTPS URI.", nameof(options));
+        _modalityOverrides = ModelInputModalities.Snapshot(_options.ModelInputModalitiesOverrides);
+        if (_options.BaseUri is null || !_options.BaseUri.IsAbsoluteUri ||
+            (_options.BaseUri.Scheme != Uri.UriSchemeHttps && _options.BaseUri.Scheme != Uri.UriSchemeHttp))
+            throw new ArgumentException("BaseUri must be an absolute HTTP or HTTPS URI.", nameof(options));
         if (_options.MaxAttempts < 1 || _options.InitialRetryDelay < TimeSpan.Zero ||
             _options.MaxRetryDelay < _options.InitialRetryDelay)
             throw new ArgumentException("Invalid retry settings.", nameof(options));
@@ -54,11 +61,44 @@ public sealed class JevClient : IDecisionsClient, IDisposable
         => new(Environment.GetEnvironmentVariable("TYPESAFE_API_KEY")
             ?? throw new InvalidOperationException("TYPESAFE_API_KEY is not set."), httpClient, options);
 
-    public async Task<JevResponse> EvaluateAsync(DecisionsRequest request, CancellationToken cancellationToken = default)
+    public async Task<DecisionsResponse> EvaluateAsync(DecisionsRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var body = JsonSerializer.Serialize(request, JsonOptions);
-        var response = await SendAsync(HttpMethod.Post, "v1/systemone", body, cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+        var (state, hasImages) = ImageInput.ValidateRequest(request);
+        var modalities = _modalityOverrides.TryGetValue(request.Model, out var configured)
+            ? configured
+            : request.Model is "jev-1.13.0" or "jev-1.14.0" or "jev-latest" or "jev-preview"
+                ? new[] { "text", "image" } : null;
+        string body;
+        if (hasImages)
+        {
+            ImageInput.RequireImageSupport(modalities, request.Model);
+            var assets = new Dictionary<string, object>(StringComparer.Ordinal);
+            var wireParts = new List<object>();
+            var original = JsonSerializer.Serialize(request, JsonOptions);
+            foreach (var part in state.EnumerateArray())
+            {
+                if (!ImageInput.IsImage(part)) { wireParts.Add(part); continue; }
+                var (mediaType, base64) = ImageInput.ReadImage(part);
+                if (mediaType == "image/webp")
+                    throw new NotSupportedException("Direct TypeSafe image requests support PNG and JPEG only. Convert WebP before sending.");
+                string reference;
+                do { reference = Guid.NewGuid().ToString(); }
+                while (original.Contains(reference, StringComparison.Ordinal) || assets.ContainsKey(reference));
+                assets.Add(reference, new { type = "image", format = mediaType == "image/png" ? "png" : "jpg", data_base64 = base64 });
+                wireParts.Add(reference);
+            }
+            body = JsonSerializer.Serialize(new { state = wireParts, model = request.Model, questions = request.Questions, assets }, JsonOptions);
+        }
+        else
+        {
+            object wireState = modalities is null || ImageInput.IsMultimodal(modalities)
+                ? state : ImageInput.AsJsonText(state);
+            body = JsonSerializer.Serialize(new { state = wireState, model = request.Model, questions = request.Questions }, JsonOptions);
+        }
+        var enableImages = hasImages || request.Questions.Values.Any(question => question is BoxQuestion);
+        var response = await SendAsync(HttpMethod.Post, "v1/systemone", body, cancellationToken, enableImages).ConfigureAwait(false);
         return JevResponseValidator.DeserializeAndValidate(response, request.Questions);
     }
 
@@ -72,12 +112,14 @@ public sealed class JevClient : IDecisionsClient, IDisposable
         return result;
     }
 
-    private async Task<string> SendAsync(HttpMethod method, string path, string? body, CancellationToken cancellationToken)
+    private async Task<string> SendAsync(HttpMethod method, string path, string? body, CancellationToken cancellationToken,
+        bool enableImages = false)
     {
         for (var attempt = 1; ; attempt++)
         {
             using var message = new HttpRequestMessage(method, new Uri(_options.BaseUri, path));
             message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+            if (enableImages) message.Headers.Add("TypeSafe-Danger-Zone-Images", "true");
             if (body is not null)
                 message.Content = new StringContent(body, Encoding.UTF8, "application/json");
 

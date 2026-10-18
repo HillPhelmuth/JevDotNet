@@ -39,6 +39,41 @@ Plain text implicitly converts to `JevValue`. For structured state, instructions
 
 The client retries HTTP 429 and 529 by default, honoring `Retry-After` up to the configured maximum delay. Configure `JevClientOptions` to change the base URI, number of attempts, or delays. Other HTTP failures throw `JevApiException` with `StatusCode` and `ResponseBody`. Cancellation is supported on both client methods. An injected `HttpClient` remains owned by the caller.
 
+### Local or custom endpoints
+
+Set `JevClientOptions.BaseUri` to an absolute HTTP or HTTPS service root:
+
+```csharp
+using DecisionsDotNet;
+
+var options = new JevClientOptions
+{
+    BaseUri = new Uri("http://localhost:1234/")
+};
+
+using var client = new JevClient("local-key", options: options);
+```
+
+Evaluation requests go to `http://localhost:1234/v1/systemone`, and `ListModelsAsync()` uses `http://localhost:1234/v1/models`. Supply the service root, not the full evaluation URL; include a trailing slash when the root contains a path prefix. HTTP also supports LAN addresses and container hostnames. The default remains `https://api.typesafe.ai/`.
+
+For dependency injection, pass the same options to either registration overload:
+
+```csharp
+builder.Services.AddJevSystemOneClient("local-key", options);
+// Or: builder.Services.AddJevSystemOneClient(builder.Configuration, options);
+```
+
+For a local server with default client settings, use the convenience registration:
+
+```csharp
+builder.Services.AddLocalJevSystemOneClient(new Uri("http://localhost:1234/"));
+// Supply apiKey: "your-key" if the server requires authentication.
+```
+
+This registers `IDecisionsClient` and returns `IHttpClientBuilder` for HTTP pipeline configuration. It sends `local-key` as the default bearer key. Use `AddJevSystemOneClient` with options when you also need custom retry settings or model capability overrides.
+
+`JevClient.FromEnvironment(options: options)` also accepts the override. API keys remain required and are sent as bearer authorization; use a nonempty placeholder such as `local-key` if your local server does not require authentication. The server must implement the existing Jev request and response contract.
+
 ## Verify
 
 ```powershell
@@ -69,9 +104,83 @@ Console.WriteLine(response.GetAnswer<NoulAnswer>("refund").Noul);
 Console.WriteLine($"{response.Model}: {response.Usage.InputTokens} input tokens");
 ```
 
-The OpenRouter client always sends `state` as a string for compatibility with models that require text input. Plain text is preserved; object and array states are serialized to JSON text inside that string. The original `DecisionsRequest` and the direct TypeSafe client's structured-state behavior remain unchanged.
+The OpenRouter client chooses the `state` wire format from the selected model's `architecture.input_modalities`. Models advertising a non-text input modality receive native objects and arrays; text-only models receive objects and arrays serialized as JSON text. Plain strings are always preserved exactly, and the original request is never modified. This changes the previous behavior that serialized all structured OpenRouter state to text.
+
+On first use, the SDK fetches the public [Decisions catalog](https://openrouter.ai/api/v1/models?output_modalities=decisions). Snapshots are shared across client instances with the same base URI for 15 minutes. Concurrent lookups share one fetch. Failed refreshes retain the last successful snapshot and defer another attempt for 15 minutes. Unknown models or unavailable capabilities fall back to JSON text for structured state, and image requests fail locally with `NotSupportedException`. Caller cancellation propagates rather than triggering fallback.
 
 OpenRouter responses can also expose `Id`, `Provider`, and `Usage.Cost`; these are nullable because direct TypeSafe responses do not include them. The OpenRouter client retries HTTP 429, 502, 503, and 529 with bounded backoff. It surfaces other errors as `JevApiException` with `Service` set to `OpenRouter`. See the [OpenRouter Decisions reference](https://openrouter.ai/docs/api/api-reference/alphadecisions/submit-a-decisions-questions-and-answers-request).
+
+## Image inputs
+
+Use `ImageFromBytes` with in-memory image bytes and a media type, or `ImageFromDataUrl` with an existing base64 data URL. `FromParts` combines text, structured context, and images in order:
+
+```csharp
+var photo = JevValue.ImageFromBytes(await File.ReadAllBytesAsync("listing.png"), "image/png");
+// Alternatively: JevValue.ImageFromDataUrl("data:image/png;base64,...");
+var state = JevValue.FromParts("Listing title: Red square sticker", photo);
+var questions = new Dictionary<string, JevQuestion>
+{
+    ["matches_title"] = new NoulQuestion("Does the photo show the item in the title?")
+};
+
+using var router = OpenRouterDecisionsClient.FromEnvironment();
+var result = await router.EvaluateAsync(new DecisionsRequest(state, questions, "cloudflare/clef-flash"));
+
+using var direct = JevClient.FromEnvironment();
+var directResult = await direct.EvaluateAsync(new DecisionsRequest(state, questions, "jev-1.14.0"));
+```
+
+A standalone image value is normalized into a one-item state array. Images created through `FromObject`, `FromArray`, or `FromJson` with the same `image_url` shape are also recognized and validated. This release supports image parts directly in the top-level state array. Nested images and images in question instructions or criteria throw `NotSupportedException`. Text items are strings, not `{ "type": "text" }` parts.
+
+OpenRouter receives base64 `image_url` parts in `state`. Direct TypeSafe receives image references in state and a top-level `assets` map, and the SDK adds `TypeSafe-Danger-Zone-Images: true` to evaluations containing images or Box questions. PNG and JPEG work with both clients; WebP is accepted only through OpenRouter, subject to the selected provider's support. Remote image URLs, empty data, unsupported media types, and malformed base64 are rejected locally. See [OpenRouter's multimodal guide](https://openrouter.ai/docs/guides/community/multimodal-decisions) and [TypeSafe's image contract](https://docs.typesafe.ai/images).
+
+Prepare image dimensions, orientation, and compression before calling the SDK. It does not decode, resize, rotate, or fetch images. Image counts, dimensions, and request-size limits differ by provider and are validated by the server. Provider errors retain their status code and response body in `JevApiException`. Direct TypeSafe's image feature is experimental; using image input opts the request into its required header.
+
+### Model capability overrides
+
+Both client options expose `ModelInputModalitiesOverrides`, keyed by exact model ID. Overrides take precedence over discovery or built-in defaults and are copied when the client is constructed. For OpenRouter, configuring a model skips discovery for that model:
+
+```csharp
+var options = new OpenRouterDecisionsClientOptions
+{
+    ModelInputModalitiesOverrides = new Dictionary<string, IReadOnlyList<string>>
+    {
+        ["custom/image-model"] = new[] { "text", "image" },
+        ["custom/text-model"] = new[] { "text" }
+    }
+};
+using var client = OpenRouterDecisionsClient.FromEnvironment(options: options);
+```
+
+Use the same property on `JevClientOptions` for direct models. The direct client recognizes image support for `jev-1.13.0`, `jev-1.14.0`, `jev-latest`, and `jev-preview`. Other IDs require an override before sending images. Direct requests without images retain native structured state for unresolved models; an explicit text-only override serializes structured state to JSON text. Overrides describe capabilities; they cannot add image support to a provider that lacks it.
+
+### Box questions and answers
+
+`BoxQuestion` locates one target in an image. It takes instructions without criteria and returns a `BoxAnswer` containing a `BoundingBox` and `Confidence`:
+
+```csharp
+var photo = JevValue.ImageFromBytes(await File.ReadAllBytesAsync("kitchen.jpg"), "image/jpeg");
+var request = new DecisionsRequest(
+    JevValue.FromParts("Kitchen photo", photo),
+    new Dictionary<string, JevQuestion>
+    {
+        ["mug"] = new BoxQuestion("Find the coffee mug in the photo."),
+        ["visible"] = new NoulQuestion("Is a coffee mug visible in the photo?")
+    },
+    "jev-1.14.0");
+
+using var client = JevClient.FromEnvironment();
+var response = await client.EvaluateAsync(request);
+BoxAnswer mug = response.GetAnswer<BoxAnswer>("mug");
+double leftPixel = mug.Box.Left * imageWidth;
+double topPixel = mug.Box.Top * imageHeight;
+double rightPixel = mug.Box.Right * imageWidth;
+double bottomPixel = mug.Box.Bottom * imageHeight;
+```
+
+Here `imageWidth` and `imageHeight` are the dimensions of the image you sent. Edges are fractions from zero to one measured from the top-left corner. The SDK validates that all edges and confidence are finite and within that range, with `Left < Right` and `Top < Bottom`. Missing coordinates, confidence, or a box object cause a `JsonException` when reading the API response.
+
+Box requires an image and a model supporting Box questions: use `jev-1.14.0` or `jev-preview` directly, or `typesafe/jev-1.14` through OpenRouter with the same request structure. Image capability alone does not imply Box support; model-specific question support is validated by the provider. Box always returns a rectangle, including when the target is absent. Use a companion Noul question to assess presence before acting on the box. See the [TypeSafe Box documentation](https://docs.typesafe.ai/primitives/box).
 
 ## Dependency injection
 
@@ -95,9 +204,16 @@ The registration returns `IHttpClientBuilder` for HTTP pipeline configuration. S
 
 ## Blazor demo
 
+Two image demos use the embedded PNGs in `JevDotNet.Demo/Images/`, loaded through `FileHelper`:
+
+- **Image decisions** (`/image-decisions`) lets you select an image-capable model, edit a yes/no question, and evaluate Noul, Choice, and Score questions together.
+- **Find it in the image** (`/image-box`) lets you describe a target, then draws the returned `BoxAnswer` over the original image using a responsive SVG overlay. A companion Noul answer reports target visibility; you can toggle the box and inspect its coordinates and confidence.
+
+Both pages support switching between the breakfast and alien-invasion images, cancellation, response JSON, elapsed time, token usage, and reported cost. Changing an input clears the previous result. Requests run only on **Evaluate image** or **Find target**. The image selector uses `DemoDecisionModel.ModelSupportsImageInput()`; the Box page further limits its models to known Jev 1.14 entries because image support alone does not establish Box support. `FileHelper.ExtractImageBytesFromAssembly` removes bytes appended after the PNG `IEND` marker before previewing or encoding the image; the PNG chunks and pixels remain unchanged. Strict provider decoders can reject that appended data even when a browser displays the image. Providers with smaller upload limits may still reject an image; the page displays a retryable error.
+
 The **Pick a lane** demo at `/pick-a-lane` lets the selected model drive alone on an animated three-lane road. Start, pause/resume, or reset; there are no steering controls. Relaxed, Normal, and Fast give barriers 5, 3, and 2 seconds to reach the car. Driving continues during requests, with one request in flight and at most two starts per second. A collision or 100 applied decisions ends the round. The dashboard shows lane probabilities, barriers passed, latency, tokens, and reported cost. Hiding the tab pauses the game.
 
-`JevDotNet.Demo` is an Interactive Server showcase with support triage, content review, lead qualification, bulk support triage, Jev as Judge, and a live chase game. It injects `IDecisionsClient` configured for OpenRouter. Model selectors and validation use the IDs and names returned by [OpenRouter's Decisions model catalog](https://openrouter.ai/api/v1/models?output_modalities=decisions), with Jev 1.13 as the default selection. The catalog loads at startup without an API key and refreshes every 15 minutes. Startup requires a successful catalog fetch; later fetch failures are logged and retain the last successful catalog. Those pages start with editable sample input and call the selected model only when you click **Evaluate**. In the game, clicking **Start chase** begins a bounded round of up to 100 chaser moves, with one live Decisions request per move. Pause or leave the page to stop the requests.
+`JevDotNet.Demo` is an Interactive Server showcase with support triage, content review, lead qualification, image decisions, image localization, bulk support triage, Jev as Judge, and a live chase game. It injects `IDecisionsClient` configured for OpenRouter. Model selectors and validation use the IDs and names returned by [OpenRouter's Decisions model catalog](https://openrouter.ai/api/v1/models?output_modalities=decisions), with Jev 1.14 as the default selection. The catalog loads at startup without an API key and refreshes every 15 minutes. Startup requires a successful catalog fetch; later fetch failures are logged and retain the last successful catalog. Those pages start with editable sample input and call the selected model only when you click **Evaluate**. In the game, clicking **Start chase** begins a bounded round of up to 100 chaser moves, with one live Decisions request per move. Pause or leave the page to stop the requests.
 
 The **Bulk triage** page uses 95 bundled support messages. Select a Decisions model, then choose a batch size from 2 to 95 messages per request, or evaluate one message per request. Each message adds five questions, and the final batch may be smaller than the chosen size. A Microsoft Agent Framework agent sends the same five questions to `openai/gpt-6-luna` one message at a time with JSON-schema structured output. The three tabs show each model's scores and request times, then yes/no agreement at 50% and the average absolute score gap. Percentages from the bundled JSON appear as reference values only; they are never sent to either model or counted in the agreement metrics. Cancel stops future requests, and a rejected Decisions batch is reported without changing modes automatically.
 

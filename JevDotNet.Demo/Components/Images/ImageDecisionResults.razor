@@ -1,0 +1,77 @@
+@using System.Globalization
+@using System.Text.Json
+@using DecisionsDotNet
+
+<section class="workspace-panel image-results" aria-live="polite">
+    <div class="panel-heading"><h2>Decision output</h2><span class="live-badge"><span></span> LIVE RESULT</span></div>
+    <div class="answer-grid">
+        @foreach (var entry in Response.Answers)
+        {
+            <div class="answer-card" @key="entry.Key">
+                <div class="answer-top"><strong>@Label(entry.Key)</strong></div>
+                @switch (entry.Value)
+                {
+                    case NoulAnswer noul:
+                        <div class="answer-value">@Percent(noul.Noul) <small>yes probability</small></div>
+                        <progress max="1" value="@Number(noul.Noul)"></progress>
+                        break;
+                    case ChoiceAnswer choice:
+                        <div class="answer-value">@Label(choice.Choice)</div>
+                        <p class="answer-note">Confidence @Percent(choice.Confidence)</p>
+                        @foreach (var probability in choice.Probabilities.OrderByDescending(pair => pair.Value))
+                        {
+                            <div class="probability-row" @key="probability.Key"><span>@Label(probability.Key)</span><strong>@Percent(probability.Value)</strong></div>
+                            <progress max="1" value="@Number(probability.Value)"></progress>
+                        }
+                        break;
+                    case ScoreAnswer score:
+                        <div class="answer-value">@Number(score.Score) <small>/ @(score.Legend.Count - 1)</small></div>
+                        <p class="answer-note">Confidence @Percent(score.Confidence)</p>
+                        @foreach (var probability in score.Probabilities.OrderBy(pair => pair.Key, StringComparer.Ordinal))
+                        {
+                            <div class="probability-row" @key="probability.Key"><span>@score.Legend.GetValueOrDefault(probability.Key, probability.Key)</span><strong>@Percent(probability.Value)</strong></div>
+                            <progress max="1" value="@Number(probability.Value)"></progress>
+                        }
+                        break;
+  
+                    case BoxAnswer box:
+                        <div class="answer-value">@Percent(box.Confidence) <small>confidence</small></div>
+                        <dl class="box-edges">
+                            <div><dt>Left</dt><dd>@Percent(box.Box.Left)</dd></div>
+                            <div><dt>Top</dt><dd>@Percent(box.Box.Top)</dd></div>
+                            <div><dt>Right</dt><dd>@Percent(box.Box.Right)</dd></div>
+                            <div><dt>Bottom</dt><dd>@Percent(box.Box.Bottom)</dd></div>
+                        </dl>
+                        <p class="answer-note">Edges are measured from the image’s top-left corner.</p>
+                        break;
+                }
+            </div>
+        }
+    </div>
+    <div class="response-meta">
+        <span>Model <strong>@Response.Model</strong></span>
+        @if (Response.Provider is { } provider) { <span>Provider <strong>@provider</strong></span> }
+        <span>Elapsed <strong>@Elapsed.TotalSeconds.ToString("0.00", CultureInfo.InvariantCulture)s</strong></span>
+        <span>Input tokens <strong>@Response.Usage.InputTokens</strong></span>
+        <span>Output tokens <strong>@Response.Usage.OutputTokens</strong></span>
+        @if (Response.Usage.Cost is { } cost) { <span>Cost <strong>$@cost.ToString("0.#########", CultureInfo.InvariantCulture)</strong></span> }
+    </div>
+    <div class="wire-details">
+        <details><summary>View questions</summary><pre>@JsonSerializer.Serialize(Questions, PrettyJson)</pre></details>
+        <details><summary>View response JSON</summary><pre>@JsonSerializer.Serialize(Response, PrettyJson)</pre></details>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public DecisionsResponse Response { get; set; } = default!;
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, DecisionsQuestion> Questions { get; set; } = default!;
+    [Parameter] public TimeSpan Elapsed { get; set; }
+    private static readonly JsonSerializerOptions PrettyJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private static string Number(double value) => value.ToString("0.00", CultureInfo.InvariantCulture);
+    private static string Percent(double value) => value.ToString("P1", CultureInfo.InvariantCulture);
+    private static string Label(string key) => key switch
+    {
+        "question" => "Your question · Noul", "scene" => "Scene · Choice", "activity" => "Visual activity · Score",
+        "target" => "Target · Box", "visible" => "Target visible · Noul", "meal" => "Meal", "city" => "City", "other" => "Other", _ => key
+    };
+}

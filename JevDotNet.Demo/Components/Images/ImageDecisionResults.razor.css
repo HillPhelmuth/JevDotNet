@@ -1,0 +1,5 @@
+progress { width: 100%; height: 9px; accent-color: #277758; }
+.box-edges { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+.box-edges div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+dd { margin: 0; font-variant-numeric: tabular-nums; }
+.answer-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }

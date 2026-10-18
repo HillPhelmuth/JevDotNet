@@ -1,4 +1,4 @@
-using JevDotNet;
+using DecisionsDotNet;
 
 namespace JevDotNet.Demo.Services;
 
@@ -54,7 +54,7 @@ public sealed class ChaseGame
             $"Walls at: {wallLocations}. " +
             "The chaser wants to catch the runner as fast as possible.";
 
-        var criteria = new Dictionary<string, JevValue?>();
+        var criteria = new Dictionary<string, DecisionsValue?>();
         foreach (var direction in Directions.Keys)
         {
             if (!TryStep(Chaser, direction, out var next)) continue;
@@ -64,7 +64,7 @@ public sealed class ChaseGame
         }
 
         return new DecisionsRequest(state,
-            new Dictionary<string, JevQuestion>
+            new Dictionary<string, DecisionsQuestion>
             {
                 ["move"] = new ChoiceQuestion("Which move brings the chaser closest to the runner?", criteria)
             }, modelId);

@@ -1,3 +1,4 @@
+using DecisionsDotNet;
 using JevDotNet;
 using JevDotNet.Demo.Components;
 using JevDotNet.Demo.Services;
@@ -51,6 +52,9 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapGet("/demo-images/{id}", (string id) => ImageDemoCatalog.Find(id) is { } image
+    ? Results.File(image.Bytes.ToArray(), "image/png")
+    : Results.NotFound());
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

@@ -1,3 +1,4 @@
+using DecisionsDotNet;
 using JevDotNet.Demo.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -26,7 +27,7 @@ namespace JevDotNet.Demo.Components.Pages
         private string StatusMessage = "Ready. Start the chase to make the first live decision.";
         private string? ErrorMessage;
         private DecisionsRequest? LastRequest;
-        private JevResponse? LastResponse;
+        private DecisionsResponse? LastResponse;
 
         private async Task StartAsync()
         {

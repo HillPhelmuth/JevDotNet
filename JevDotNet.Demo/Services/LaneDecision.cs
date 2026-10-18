@@ -1,4 +1,4 @@
-using JevDotNet;
+using DecisionsDotNet;
 
 namespace JevDotNet.Demo.Services;
 
@@ -25,13 +25,13 @@ public static class LaneDecision
             $"""
             Current lane: {snapshot.CarLane}
             Lanes: Lane 1 is left, lane 2 is center, lane 3 is right. You can cross intermediate lanes.
-            Obstacles:\n {string.Join("\n- ", snapshot.Obstacles.Select(o => $"(lane {o.Lane}, time to collision {Math.Round(o.TimeToCollisionMs)} ms)"))}
+            Obstacles:\n {string.Join("\n- ", snapshot.Obstacles.Select(o => $"(lane {o.Lane}, time to collision {Math.Round(o.TimeToCollisionMs) + 20} ms)"))}
 
             Goal: Avoid collisions with obstacles. Prefer staying in the current lane when it has no obstacles. The road keeps moving while you decide.
             """;
-        return new(JevValue.Text(stateAsMarkdown), new Dictionary<string, JevQuestion>
+        return new(DecisionsValue.Text(stateAsMarkdown), new Dictionary<string, DecisionsQuestion>
         {
-            ["lane"] = new ChoiceQuestion("Which lane should the car choose?", new Dictionary<string, JevValue?>
+            ["lane"] = new ChoiceQuestion("Which lane should the car choose?", new Dictionary<string, DecisionsValue?>
             {
                 ["lane_1"] = "Drive in the left lane.",
                 ["lane_2"] = "Drive in the center lane.",

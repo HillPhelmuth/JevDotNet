@@ -1,11 +1,24 @@
-using JevDotNet;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace DecisionsDotNet;
 
 /// <summary>Registers one Decisions provider behind <see cref="IDecisionsClient"/>.</summary>
 public static class ServiceCollectionsExtensions
 {
+    /// <summary>Registers a Jev client using an HTTP or HTTPS service root, such as http://localhost:1234/.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="baseUri">The service root. The client appends v1/systemone and v1/models.</param>
+    /// <param name="apiKey">The bearer API key, or a placeholder for servers without authentication.</param>
+    public static IHttpClientBuilder AddLocalJevSystemOneClient(
+        this IServiceCollection services,
+        Uri baseUri,
+        string apiKey = "local-key")
+    {
+        ArgumentNullException.ThrowIfNull(baseUri);
+        return services.AddJevSystemOneClient(apiKey, new JevClientOptions { BaseUri = baseUri });
+    }
+
     public static IHttpClientBuilder AddJevSystemOneClient(
         this IServiceCollection services,
         string apiKey,
