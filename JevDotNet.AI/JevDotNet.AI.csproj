@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DecisionsDotNet.AI</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>DecisionsDotNet.AI</PackageId>
+    <PackageVersion>0.2.0-preview</PackageVersion>
+    <Title>DecisionsDotNet.AI - Decisions as Microsoft.Extensions.AI tools</Title>
+    <Authors>Adam Holm</Authors>
+    <Description>Exposes any DecisionsDotNet IDecisionsClient (TypeSafe Jev, OpenRouter, or OpenAI Decisions) as a Microsoft.Extensions.AI AIFunction, so chat clients and Microsoft Agent Framework agents can call it as a tool.</Description>
+    <PackageTags>Jev;TypeSafe;OpenRouter;OpenAI;AI;decisions;tools;agents;Microsoft.Extensions.AI</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageOutputPath Condition="'$(Configuration)' == 'Debug'">C:\Users\adamh\source\LocalPackages</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/HillPhelmuth/JevDotNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HillPhelmuth/JevDotNet</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JevDotNet\JevDotNet.csproj" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.0" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

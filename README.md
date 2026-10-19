@@ -272,6 +272,10 @@ await foreach (var batch in client.EvaluateBatchesAsync(tickets, options, cancel
 
 Requests run one after another. By default a failed request is reported through `Error` and later batches still run; set `ContinueOnError = false` to throw instead. Cancellation always stops the run. Item IDs must be unique. Providers limit questions per request, so choose `ItemsPerRequest` with the number of questions per item in mind.
 
+## Agents and chat tools
+
+The companion package `DecisionsDotNet.AI` (in `JevDotNet.AI/`) exposes any `IDecisionsClient` as a Microsoft.Extensions.AI `AIFunction`, so a chat client or Microsoft Agent Framework agent can call Jev, OpenRouter, or OpenAI Decisions as a tool. `AsAIFunction` asks a fixed set of questions about text the model supplies; `AsOpenDecisionsAIFunction` lets the model write its own yes/no, choice, and score questions. See [its README](JevDotNet.AI/README.md).
+
 ## Dependency injection
 
 Register one provider, then inject `IDecisionsClient` into your service. Registration accepts either a key string or `IConfiguration`; the configuration overload reads `OpenRouter:ApiKey` or `TypeSafe:ApiKey` at startup and rejects a missing key. Keep these values in server-side configuration, such as ASP.NET Core user secrets.

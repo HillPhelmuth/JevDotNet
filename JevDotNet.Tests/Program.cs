@@ -102,6 +102,7 @@ await ModelListingChecks.RunAsync();
 await BuilderChecks.RunAsync();
 await BatchChecks.RunAsync();
 await OpenAIChecks.RunAsync();
+await AIFunctionChecks.RunAsync();
 await ImageChecks.RunAsync();
 await BoxChecks.RunAsync();
 await ImageDemoChecks.RunAsync();

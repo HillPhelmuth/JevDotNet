@@ -53,6 +53,8 @@ jobs:
 
       - name: Pack JevDotNet
         run: dotnet pack JevDotNet/JevDotNet.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
+      - name: Pack DecisionsDotNet.AI
+        run: dotnet pack JevDotNet.AI/JevDotNet.AI.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
       - name: Publish packages and symbols to nuget.org
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
