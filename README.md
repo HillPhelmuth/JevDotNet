@@ -1,6 +1,6 @@
 # DecisionsDotNet
 
-A type-safe C# client for TypeSafe AI's Jev models, through either TypeSafe's direct API or OpenRouter's Decisions API. Targets .NET 10 and uses `System.Text.Json`, `HttpClient`, and Microsoft.Extensions.Http for dependency injection.
+A type-safe C# client for TypeSafe AI's Jev models, through TypeSafe's direct API, OpenRouter's Decisions API, or OpenAI's Decisions API. Targets .NET 10 and uses `System.Text.Json`, `HttpClient`, and Microsoft.Extensions.Http for dependency injection.
 
 ```powershell
 dotnet add package DecisionsDotNet --prerelease
@@ -146,6 +146,31 @@ foreach (var model in models.Where(model => model.SupportsImageInput))
 Each `OpenRouterDecisionsModel` carries `Id`, `CanonicalSlug`, `Name`, `Description`, `Created`, and `InputModalities`. Listing retries like evaluation does and reports HTTP failures as `JevApiException`.
 
 OpenRouter responses can also expose `Id`, `Provider`, and `Usage.Cost`; these are nullable because direct TypeSafe responses do not include them. The OpenRouter client retries HTTP 429, 502, 503, and 529 with bounded backoff. It surfaces other errors as `JevApiException` with `Service` set to `OpenRouter`. See the [OpenRouter Decisions reference](https://openrouter.ai/docs/api/api-reference/alphadecisions/submit-a-decisions-questions-and-answers-request).
+
+## OpenAI Decisions API
+
+`OpenAIDecisionsClient` sends the same `DecisionsRequest` to OpenAI's [Decisions API](https://developers.openai.com/api/docs/guides/decisions) at `POST /v1/decisions`. Set `OPENAI_API_KEY`, then pass `OpenAIDecisionsClient.DefaultModel` (`gpt-6-luna`, the only model the API supports today):
+
+```csharp
+using var client = OpenAIDecisionsClient.FromEnvironment();
+var request = DecisionsRequest.Create("My card was charged twice.")
+    .Noul("refund", "Does this customer want money back?", out var refund)
+    .Build(OpenAIDecisionsClient.DefaultModel);
+var response = await client.EvaluateAsync(request);
+Console.WriteLine(response.Get(refund).Noul);
+```
+
+The client translates the request to OpenAI's shape and the answers back to the shared types:
+
+| SDK | OpenAI |
+| --- | --- |
+| `NoulQuestion` / `NoulAnswer.Noul` | `predicate` / `probability`. Noul criteria are appended to the instructions as "True when" and "False when" lines, because predicates take instructions only. |
+| `ChoiceQuestion` / `ChoiceAnswer` | `choice` with `choices[{value, description}]`. An option without a description uses its name as the description. |
+| `ScoreQuestion` / `ScoreAnswer` | `score` with `levels[{label, description}]`, lowest first. `Legend` and `Probabilities` are keyed by the zero-based level index, as with Jev. |
+| `BoxQuestion` | Not supported; throws `NotSupportedException`. |
+| (none) | `refusal` answers become `RefusalAnswer`. Reading one with `GetAnswer<NoulAnswer>` throws, so use `TryGetAnswer` when refusals are possible. |
+
+Text state is sent as the `input` string, and structured state as JSON text. State containing images becomes one user message with `input_text` and `input_image` parts in the original order. Like the other clients, images must be inline base64 data URLs. Set `OpenAIDecisionsClientOptions.Organization` or `Project` to send the matching headers. The client retries HTTP 429, 500, 502, 503, and 504 and reports other failures as `JevApiException` with `Service` set to `OpenAI`. Register it with `AddOpenAIDecisionsClient` (reads `OpenAI:ApiKey`) or `AddKeyedOpenAIDecisionsClient`.
 
 ## Image inputs
 

@@ -81,7 +81,11 @@ public sealed record DecisionsUsage
 [JsonDerivedType(typeof(ChoiceAnswer), "choice")]
 [JsonDerivedType(typeof(ScoreAnswer), "score")]
 [JsonDerivedType(typeof(BoxAnswer), "box")]
+[JsonDerivedType(typeof(RefusalAnswer), "refusal")]
 public abstract record JevAnswer;
+
+/// <summary>The model declined to answer this question. Only the OpenAI Decisions API returns refusals; other answers in the response can still be present.</summary>
+public sealed record RefusalAnswer : JevAnswer;
 
 /// <summary>A single bounding box with confidence from zero to one.</summary>
 public sealed record BoxAnswer : JevAnswer

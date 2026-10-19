@@ -134,4 +134,56 @@ public static class ServiceCollectionsExtensions
 
         return services.AddKeyedOpenRouterDecisionsClient(serviceKey, apiKey, options);
     }
+
+    public static IHttpClientBuilder AddOpenAIDecisionsClient(
+        this IServiceCollection services,
+        string apiKey,
+        OpenAIDecisionsClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new ArgumentException("An OpenAI API key is required.", nameof(apiKey));
+
+        return services.AddHttpClient("JevDotNet.OpenAI")
+            .AddTypedClient<IDecisionsClient>((httpClient, _) => new OpenAIDecisionsClient(apiKey, httpClient, options));
+    }
+
+    public static IHttpClientBuilder AddOpenAIDecisionsClient(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        OpenAIDecisionsClientOptions? options = null)
+        => services.AddOpenAIDecisionsClient(OpenAIKey(configuration), options);
+
+    /// <summary>Registers an OpenAI client as a keyed <see cref="IDecisionsClient"/>, so it can sit beside other providers.</summary>
+    public static IHttpClientBuilder AddKeyedOpenAIDecisionsClient(
+        this IServiceCollection services,
+        object serviceKey,
+        string apiKey,
+        OpenAIDecisionsClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(serviceKey);
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new ArgumentException("An OpenAI API key is required.", nameof(apiKey));
+
+        var name = $"JevDotNet.OpenAI.{serviceKey}";
+        services.AddKeyedTransient<IDecisionsClient>(serviceKey, (provider, _) =>
+            new OpenAIDecisionsClient(apiKey, provider.GetRequiredService<IHttpClientFactory>().CreateClient(name), options));
+        return services.AddHttpClient(name);
+    }
+
+    public static IHttpClientBuilder AddKeyedOpenAIDecisionsClient(
+        this IServiceCollection services,
+        object serviceKey,
+        IConfiguration configuration,
+        OpenAIDecisionsClientOptions? options = null)
+        => services.AddKeyedOpenAIDecisionsClient(serviceKey, OpenAIKey(configuration), options);
+
+    private static string OpenAIKey(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var apiKey = configuration["OpenAI:ApiKey"];
+        return !string.IsNullOrWhiteSpace(apiKey) ? apiKey
+            : throw new InvalidOperationException("Configure OpenAI:ApiKey before registering the OpenAI Decisions client.");
+    }
 }
