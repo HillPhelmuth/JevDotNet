@@ -1,3 +1,4 @@
+using DecisionsDotNet;
 using System.Text.Json;
 
 namespace JevDotNet.Demo.Services;
@@ -24,7 +25,7 @@ public sealed class DecisionModelsRefreshService(
             {
                 try { await RefreshAsync(stoppingToken); }
                 catch (Exception error) when (!stoppingToken.IsCancellationRequested &&
-                    error is HttpRequestException or JsonException or OperationCanceledException)
+                    error is JevApiException or HttpRequestException or JsonException or OperationCanceledException)
                 {
                     logger.LogWarning(error, "Could not refresh Decisions models; retaining the previous catalog.");
                 }

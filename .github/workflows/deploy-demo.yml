@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'JevDotNet/**'
+      - 'JevDotNet.AI/**'
       - 'JevDotNet.Demo/**'
       - 'JevDotNet.Tests/**'
       - 'JevDotNet.slnx'

@@ -75,39 +75,31 @@ public static class BulkTriageCatalog
         return messages;
     }
 
-    public static DecisionsRequest BuildJevRequest(
-        IReadOnlyList<BulkTriageMessage> messages,
-        string modelId = DemoDecisionModels.DefaultModelId)
+    public static DecisionsBatchOptions<BulkTriageMessage> JevBatchOptions(
+        int messagesPerRequest, string modelId = DemoDecisionModels.DefaultModelId) => new()
     {
-        if (messages.Count == 0)
-            throw new ArgumentException("Select at least one message.", nameof(messages));
-        modelId = DemoDecisionModels.RequireSupported(modelId);
-        var questions = new Dictionary<string, DecisionsQuestion>();
-        foreach (var message in messages)
-        foreach (var category in Categories)
-            questions[QuestionId(message.Id, category.Key)] = new NoulQuestion(
-                $"{category.Question} (message {message.Id})",
-                new NoulCriteria(category.Yes, category.No));
-
+        ItemId = message => message.Id,
         // Only IDs and message text enter either model request; reference scores stay in the UI.
-        var state = DecisionsValue.FromObject(new
+        State = messages => DecisionsValue.FromObject(new
         {
             messages = messages.Select(message => new { id = message.Id, text = message.Text }).ToArray()
-        });
-        return new DecisionsRequest(state, questions, modelId);
-    }
+        }),
+        Questions = message => Categories.ToDictionary(category => category.Key,
+            category => (DecisionsQuestion)new NoulQuestion($"{category.Question} (message {message.Id})",
+                new NoulCriteria(category.Yes, category.No))),
+        Model = DemoDecisionModels.RequireSupported(modelId),
+        ItemsPerRequest = messagesPerRequest
+    };
 
-    public static TriageScores ReadJevScores(DecisionsResponse response, string id)
+    public static TriageScores ReadJevScores(DecisionsBatchResult<BulkTriageMessage> result, BulkTriageMessage message)
     {
         var values = Categories.ToDictionary(category => category.Key,
-            category => response.GetAnswer<NoulAnswer>(QuestionId(id, category.Key)).Noul);
+            category => result.GetAnswer<NoulAnswer>(message, category.Key).Noul);
         var scores = new TriageScores(values["cancel"], values["refund"], values["angry"],
             values["bug"], values["human"]);
         scores.Validate();
         return scores;
     }
-
-    public static string QuestionId(string messageId, string categoryKey) => $"{messageId}_{categoryKey}";
 
     private static double ParsePercentage(JsonElement row, string name)
     {

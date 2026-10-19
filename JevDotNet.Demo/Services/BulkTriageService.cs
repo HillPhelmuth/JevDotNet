@@ -56,41 +56,39 @@ public sealed class BulkTriageService(
             throw new ArgumentException("The run needs messages.", nameof(run));
 
         var messagesPerRequest = run.Mode == JevBulkMode.Batched ? run.BatchSize : 1;
-        foreach (var batch in run.Messages.Chunk(messagesPerRequest))
+        var options = BulkTriageCatalog.JevBatchOptions(messagesPerRequest, run.JevModel);
+        await foreach (var batch in decisionsClient!.EvaluateBatchesAsync(run.Messages, options, cancellationToken))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var requestNumber = run.JevRequests.Count + 1;
-            var stopwatch = Stopwatch.StartNew();
-            try
+            var first = batch.Items[0].Id;
+            var last = batch.Items[^1].Id;
+            var error = batch.Error?.Message;
+            if (batch.Succeeded)
             {
-                var response = await decisionsClient!.EvaluateAsync(
-                    BulkTriageCatalog.BuildJevRequest(batch, run.JevModel), cancellationToken);
-                stopwatch.Stop();
-                var scores = batch.Select(message => (message.Id,
-                    Scores: BulkTriageCatalog.ReadJevScores(response, message.Id))).ToArray();
-                foreach (var answer in scores)
-                    run.Jev[answer.Id] = new(answer.Scores, stopwatch.Elapsed, RequestNumber: requestNumber);
-                run.JevRequests.Add(new(requestNumber, batch[0].Id, batch[^1].Id,
-                    batch.Length, stopwatch.Elapsed));
+                try
+                {
+                    var scores = batch.Items.Select(message => (message.Id,
+                        Scores: BulkTriageCatalog.ReadJevScores(batch, message))).ToArray();
+                    foreach (var answer in scores)
+                        run.Jev[answer.Id] = new(answer.Scores, batch.Elapsed, RequestNumber: batch.Number);
+                }
+                catch (Exception readError) when (readError is System.Text.Json.JsonException or InvalidOperationException or
+                    KeyNotFoundException)
+                {
+                    error = readError.Message;
+                }
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-            catch (Exception error) when (error is JevApiException or HttpRequestException or
-                System.Text.Json.JsonException or InvalidOperationException or TaskCanceledException)
+            run.JevRequests.Add(new(batch.Number, first, last, batch.Items.Count, batch.Elapsed, error));
+            run.JevTotal += batch.Elapsed;
+            if (error is not null)
             {
-                stopwatch.Stop();
-                run.JevRequests.Add(new(requestNumber, batch[0].Id, batch[^1].Id,
-                    batch.Length, stopwatch.Elapsed, error.Message));
                 if (run.Mode == JevBulkMode.Batched)
                 {
-                    run.JevTotal += stopwatch.Elapsed;
-                    run.JevError = $"Decisions request {requestNumber} ({batch[0].Id}–{batch[^1].Id}) failed: {error.Message}";
+                    run.JevError = $"Decisions request {batch.Number} ({first}–{last}) failed: {error}";
                     if (onProgress is not null) await onProgress();
                     return;
                 }
-                run.Jev[batch[0].Id] = new(null, stopwatch.Elapsed, error.Message,
-                    RequestNumber: requestNumber);
+                run.Jev[first] = new(null, batch.Elapsed, error, RequestNumber: batch.Number);
             }
-            run.JevTotal += stopwatch.Elapsed;
             if (onProgress is not null) await onProgress();
         }
         var messageSets = run.Messages.Chunk(20);

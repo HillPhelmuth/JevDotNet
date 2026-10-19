@@ -70,4 +70,123 @@ public static class ServiceCollectionsExtensions
 
         return services.AddOpenRouterDecisionsClient(apiKey, options);
     }
+
+    /// <summary>Registers a direct TypeSafe client as a keyed <see cref="IDecisionsClient"/>, so it can sit beside other providers.</summary>
+    public static IHttpClientBuilder AddKeyedJevSystemOneClient(
+        this IServiceCollection services,
+        object serviceKey,
+        string apiKey,
+        JevClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(serviceKey);
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new ArgumentException("A TypeSafe API key is required.", nameof(apiKey));
+
+        // A unique name per registration keeps keys with equal ToString() values on separate HTTP pipelines.
+        var name = $"JevDotNet.TypeSafe.{Guid.NewGuid():N}";
+        services.AddKeyedTransient<IDecisionsClient>(serviceKey, (provider, _) =>
+            new JevClient(apiKey, provider.GetRequiredService<IHttpClientFactory>().CreateClient(name), options));
+        return services.AddHttpClient(name);
+    }
+
+    public static IHttpClientBuilder AddKeyedJevSystemOneClient(
+        this IServiceCollection services,
+        object serviceKey,
+        IConfiguration configuration,
+        JevClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var apiKey = configuration["TypeSafe:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("Configure TypeSafe:ApiKey before registering the TypeSafe Decisions client.");
+
+        return services.AddKeyedJevSystemOneClient(serviceKey, apiKey, options);
+    }
+
+    /// <summary>Registers an OpenRouter client as a keyed <see cref="IDecisionsClient"/>, so it can sit beside other providers.</summary>
+    public static IHttpClientBuilder AddKeyedOpenRouterDecisionsClient(
+        this IServiceCollection services,
+        object serviceKey,
+        string apiKey,
+        OpenRouterDecisionsClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(serviceKey);
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new ArgumentException("An OpenRouter API key is required.", nameof(apiKey));
+
+        // A unique name per registration keeps keys with equal ToString() values on separate HTTP pipelines.
+        var name = $"JevDotNet.OpenRouter.{Guid.NewGuid():N}";
+        services.AddKeyedTransient<IDecisionsClient>(serviceKey, (provider, _) =>
+            new OpenRouterDecisionsClient(apiKey, provider.GetRequiredService<IHttpClientFactory>().CreateClient(name), options));
+        return services.AddHttpClient(name);
+    }
+
+    public static IHttpClientBuilder AddKeyedOpenRouterDecisionsClient(
+        this IServiceCollection services,
+        object serviceKey,
+        IConfiguration configuration,
+        OpenRouterDecisionsClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var apiKey = configuration["OpenRouter:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("Configure OpenRouter:ApiKey before registering the OpenRouter Decisions client.");
+
+        return services.AddKeyedOpenRouterDecisionsClient(serviceKey, apiKey, options);
+    }
+
+    public static IHttpClientBuilder AddOpenAIDecisionsClient(
+        this IServiceCollection services,
+        string apiKey,
+        OpenAIDecisionsClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new ArgumentException("An OpenAI API key is required.", nameof(apiKey));
+
+        return services.AddHttpClient("JevDotNet.OpenAI")
+            .AddTypedClient<IDecisionsClient>((httpClient, _) => new OpenAIDecisionsClient(apiKey, httpClient, options));
+    }
+
+    public static IHttpClientBuilder AddOpenAIDecisionsClient(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        OpenAIDecisionsClientOptions? options = null)
+        => services.AddOpenAIDecisionsClient(OpenAIKey(configuration), options);
+
+    /// <summary>Registers an OpenAI client as a keyed <see cref="IDecisionsClient"/>, so it can sit beside other providers.</summary>
+    public static IHttpClientBuilder AddKeyedOpenAIDecisionsClient(
+        this IServiceCollection services,
+        object serviceKey,
+        string apiKey,
+        OpenAIDecisionsClientOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(serviceKey);
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new ArgumentException("An OpenAI API key is required.", nameof(apiKey));
+
+        // A unique name per registration keeps keys with equal ToString() values on separate HTTP pipelines.
+        var name = $"JevDotNet.OpenAI.{Guid.NewGuid():N}";
+        services.AddKeyedTransient<IDecisionsClient>(serviceKey, (provider, _) =>
+            new OpenAIDecisionsClient(apiKey, provider.GetRequiredService<IHttpClientFactory>().CreateClient(name), options));
+        return services.AddHttpClient(name);
+    }
+
+    public static IHttpClientBuilder AddKeyedOpenAIDecisionsClient(
+        this IServiceCollection services,
+        object serviceKey,
+        IConfiguration configuration,
+        OpenAIDecisionsClientOptions? options = null)
+        => services.AddKeyedOpenAIDecisionsClient(serviceKey, OpenAIKey(configuration), options);
+
+    private static string OpenAIKey(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var apiKey = configuration["OpenAI:ApiKey"];
+        return !string.IsNullOrWhiteSpace(apiKey) ? apiKey
+            : throw new InvalidOperationException("Configure OpenAI:ApiKey before registering the OpenAI Decisions client.");
+    }
 }

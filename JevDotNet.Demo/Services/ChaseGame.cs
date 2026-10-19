@@ -54,20 +54,18 @@ public sealed class ChaseGame
             $"Walls at: {wallLocations}. " +
             "The chaser wants to catch the runner as fast as possible.";
 
-        var criteria = new Dictionary<string, DecisionsValue?>();
+        var moves = new List<(string, DecisionsValue?)>();
         foreach (var direction in Directions.Keys)
         {
             if (!TryStep(Chaser, direction, out var next)) continue;
             var remaining = ShortestDistance(next, Runner);
-            criteria[direction] = $"Chaser moves {direction} to {PositionText(next)}. " +
-                $"The runner is then {remaining} steps away around the walls.";
+            moves.Add((direction, $"Chaser moves {direction} to {PositionText(next)}. " +
+                $"The runner is then {remaining} steps away around the walls."));
         }
 
-        return new DecisionsRequest(state,
-            new Dictionary<string, DecisionsQuestion>
-            {
-                ["move"] = new ChoiceQuestion("Which move brings the chaser closest to the runner?", criteria)
-            }, modelId);
+        return DecisionsRequest.Create(state)
+            .Choice("move", "Which move brings the chaser closest to the runner?", moves.ToArray())
+            .Build(modelId);
     }
 
     public void ApplyChaserMove(string direction)

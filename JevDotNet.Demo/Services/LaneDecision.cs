@@ -29,15 +29,12 @@ public static class LaneDecision
 
             Goal: Avoid collisions with obstacles. Prefer staying in the current lane when it has no obstacles. The road keeps moving while you decide.
             """;
-        return new(DecisionsValue.Text(stateAsMarkdown), new Dictionary<string, DecisionsQuestion>
-        {
-            ["lane"] = new ChoiceQuestion("Which lane should the car choose?", new Dictionary<string, DecisionsValue?>
-            {
-                ["lane_1"] = "Drive in the left lane.",
-                ["lane_2"] = "Drive in the center lane.",
-                ["lane_3"] = "Drive in the right lane."
-            })
-        }, DemoDecisionModels.RequireSupported(model));
+        return DecisionsRequest.Create(stateAsMarkdown)
+            .Choice("lane", "Which lane should the car choose?",
+                ("lane_1", "Drive in the left lane."),
+                ("lane_2", "Drive in the center lane."),
+                ("lane_3", "Drive in the right lane."))
+            .Build(DemoDecisionModels.RequireSupported(model));
     }
 
     public static int Validate(ChoiceAnswer answer)

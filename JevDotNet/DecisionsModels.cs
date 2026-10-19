@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace DecisionsDotNet;
@@ -23,6 +24,9 @@ public sealed record DecisionsRequest
 
     [JsonPropertyName("questions")]
     public IReadOnlyDictionary<string, DecisionsQuestion> Questions { get; }
+
+    /// <summary>Starts a request with fluent question methods.</summary>
+    public static DecisionsRequestBuilder Create(DecisionsValue state) => new(state);
 }
 
 public sealed record DecisionsResponse
@@ -49,6 +53,15 @@ public sealed record DecisionsResponse
         return answer as TAnswer ?? throw new InvalidOperationException(
             $"Answer '{questionId}' is {answer.GetType().Name}, not {typeof(TAnswer).Name}.");
     }
+
+    /// <summary>Reads the answer for a key returned by <see cref="DecisionsRequestBuilder"/>.</summary>
+    public TAnswer Get<TAnswer>(DecisionKey<TAnswer> key) where TAnswer : JevAnswer => GetAnswer<TAnswer>(key.Id);
+
+    public bool TryGetAnswer<TAnswer>(string questionId, [NotNullWhen(true)] out TAnswer? answer) where TAnswer : JevAnswer
+    {
+        answer = Answers.TryGetValue(questionId, out var value) ? value as TAnswer : null;
+        return answer is not null;
+    }
 }
 
 public sealed record DecisionsUsage
@@ -68,7 +81,11 @@ public sealed record DecisionsUsage
 [JsonDerivedType(typeof(ChoiceAnswer), "choice")]
 [JsonDerivedType(typeof(ScoreAnswer), "score")]
 [JsonDerivedType(typeof(BoxAnswer), "box")]
+[JsonDerivedType(typeof(RefusalAnswer), "refusal")]
 public abstract record JevAnswer;
+
+/// <summary>The model declined to answer this question. Only the OpenAI Decisions API returns refusals; other answers in the response can still be present.</summary>
+public sealed record RefusalAnswer : JevAnswer;
 
 /// <summary>A single bounding box with confidence from zero to one.</summary>
 public sealed record BoxAnswer : JevAnswer
@@ -145,4 +162,19 @@ public sealed record JevModel
 
     [JsonPropertyName("release_date")]
     public required string ReleaseDate { get; init; }
+}
+
+/// <summary>A model from OpenRouter's public Decisions catalog.</summary>
+public sealed record OpenRouterDecisionsModel
+{
+    public required string Id { get; init; }
+    public string? CanonicalSlug { get; init; }
+    public string? Name { get; init; }
+    public string? Description { get; init; }
+    public DateTimeOffset? Created { get; init; }
+
+    /// <summary>Advertised input modalities, such as text and image. Empty when the catalog omits them.</summary>
+    public IReadOnlyList<string> InputModalities { get; init; } = [];
+
+    public bool SupportsImageInput => InputModalities.Contains("image", StringComparer.Ordinal);
 }
