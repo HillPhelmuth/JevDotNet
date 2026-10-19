@@ -1,29 +1,35 @@
-# JevDotNet
+# DecisionsDotNet
 
 A type-safe C# client for TypeSafe AI's Jev models, through either TypeSafe's direct API or OpenRouter's Decisions API. Targets .NET 10 and uses `System.Text.Json`, `HttpClient`, and Microsoft.Extensions.Http for dependency injection.
+
+```powershell
+dotnet add package DecisionsDotNet --prerelease
+```
+
+The package ID and namespace are `DecisionsDotNet`. The repository and project folders keep their original `JevDotNet` names.
 
 ## Direct TypeSafe quick start
 
 Set `TYPESAFE_API_KEY` in your environment, then:
 
 ```csharp
-using JevDotNet;
+using DecisionsDotNet;
 
 using var client = JevClient.FromEnvironment();
 
 var request = new DecisionsRequest(
-    JevValue.FromObject(new { message = "My card was charged twice." }),
-    new Dictionary<string, JevQuestion>
+    DecisionsValue.FromObject(new { message = "My card was charged twice." }),
+    new Dictionary<string, DecisionsQuestion>
     {
         ["urgent"] = new NoulQuestion("Does this need immediate attention?"),
         ["team"] = new ChoiceQuestion("Which team should handle this?",
-            new Dictionary<string, JevValue?>
+            new Dictionary<string, DecisionsValue?>
             {
                 ["billing"] = "Payments and refunds",
                 ["technical"] = "Bugs and outages"
             }),
         ["frustration"] = new ScoreQuestion("How frustrated is the customer?",
-            new JevValue[] { "Calm", "Frustrated", "Very angry" })
+            new DecisionsValue[] { "Calm", "Frustrated", "Very angry" })
     });
 
 var response = await client.EvaluateAsync(request);
@@ -33,7 +39,7 @@ double frustration = response.GetAnswer<ScoreAnswer>("frustration").Score;
 Console.WriteLine($"{response.Model}: {team}, urgency {urgency}, frustration {frustration}");
 ```
 
-Plain text implicitly converts to `JevValue`. For structured state, instructions, or criteria, use `JevValue.FromObject(...)` or `JevValue.FromArray(...)`. You can pass custom `JsonSerializerOptions` to those methods. Choice criteria may be `null` when an option needs no description.
+Plain text implicitly converts to `DecisionsValue`. For structured state, instructions, or criteria, use `DecisionsValue.FromObject(...)` or `DecisionsValue.FromArray(...)`. You can pass custom `JsonSerializerOptions` to those methods. Choice criteria may be `null` when an option needs no description.
 
 `DecisionsRequest` is shared by both clients. It defaults to `jev-latest` for the direct TypeSafe API; pass a model ID as its third argument to pin a version or to use OpenRouter. Use `ListModelsAsync()` to fetch direct model aliases available to your account. The response's `Model` property contains the model that answered.
 
@@ -88,12 +94,12 @@ The contract checks use fake HTTP handlers and need no API key. The direct clien
 Set `OPENROUTER_API_KEY` in your environment, then use the same `DecisionsRequest` and typed questions with `OpenRouterDecisionsClient`:
 
 ```csharp
-using JevDotNet;
+using DecisionsDotNet;
 
 using var client = OpenRouterDecisionsClient.FromEnvironment();
 var request = new DecisionsRequest(
     "My card was charged twice.",
-    new Dictionary<string, JevQuestion>
+    new Dictionary<string, DecisionsQuestion>
     {
         ["refund"] = new NoulQuestion("Does this customer request a refund?")
     },
@@ -115,10 +121,10 @@ OpenRouter responses can also expose `Id`, `Provider`, and `Usage.Cost`; these a
 Use `ImageFromBytes` with in-memory image bytes and a media type, or `ImageFromDataUrl` with an existing base64 data URL. `FromParts` combines text, structured context, and images in order:
 
 ```csharp
-var photo = JevValue.ImageFromBytes(await File.ReadAllBytesAsync("listing.png"), "image/png");
-// Alternatively: JevValue.ImageFromDataUrl("data:image/png;base64,...");
-var state = JevValue.FromParts("Listing title: Red square sticker", photo);
-var questions = new Dictionary<string, JevQuestion>
+var photo = DecisionsValue.ImageFromBytes(await File.ReadAllBytesAsync("listing.png"), "image/png");
+// Alternatively: DecisionsValue.ImageFromDataUrl("data:image/png;base64,...");
+var state = DecisionsValue.FromParts("Listing title: Red square sticker", photo);
+var questions = new Dictionary<string, DecisionsQuestion>
 {
     ["matches_title"] = new NoulQuestion("Does the photo show the item in the title?")
 };
@@ -159,10 +165,10 @@ Use the same property on `JevClientOptions` for direct models. The direct client
 `BoxQuestion` locates one target in an image. It takes instructions without criteria and returns a `BoxAnswer` containing a `BoundingBox` and `Confidence`:
 
 ```csharp
-var photo = JevValue.ImageFromBytes(await File.ReadAllBytesAsync("kitchen.jpg"), "image/jpeg");
+var photo = DecisionsValue.ImageFromBytes(await File.ReadAllBytesAsync("kitchen.jpg"), "image/jpeg");
 var request = new DecisionsRequest(
-    JevValue.FromParts("Kitchen photo", photo),
-    new Dictionary<string, JevQuestion>
+    DecisionsValue.FromParts("Kitchen photo", photo),
+    new Dictionary<string, DecisionsQuestion>
     {
         ["mug"] = new BoxQuestion("Find the coffee mug in the photo."),
         ["visible"] = new NoulQuestion("Is a coffee mug visible in the photo?")
@@ -187,15 +193,15 @@ Box requires an image and a model supporting Box questions: use `jev-1.14.0` or 
 Register one provider, then inject `IDecisionsClient` into your service. Registration accepts either a key string or `IConfiguration`; the configuration overload reads `OpenRouter:ApiKey` or `TypeSafe:ApiKey` at startup and rejects a missing key. Keep these values in server-side configuration, such as ASP.NET Core user secrets.
 
 ```csharp
-using JevDotNet;
+using DecisionsDotNet;
 
 builder.Services.AddOpenRouterDecisionsClient(builder.Configuration);
-// Or: builder.Services.AddJevDecisionsClient(builder.Configuration);
+// Or: builder.Services.AddJevSystemOneClient(builder.Configuration);
 // Both also accept a key string and optional provider-specific client options.
 
 public sealed class DecisionService(IDecisionsClient client)
 {
-    public Task<JevResponse> EvaluateAsync(DecisionsRequest request, CancellationToken cancellationToken = default)
+    public Task<DecisionsResponse> EvaluateAsync(DecisionsRequest request, CancellationToken cancellationToken = default)
         => client.EvaluateAsync(request, cancellationToken);
 }
 ```
