@@ -39,6 +39,26 @@ double frustration = response.GetAnswer<ScoreAnswer>("frustration").Score;
 Console.WriteLine($"{response.Model}: {team}, urgency {urgency}, frustration {frustration}");
 ```
 
+### Fluent requests
+
+`DecisionsRequest.Create` builds the same request one question at a time. Each method has an overload with an `out` key that remembers the answer type, so reading answers needs no casts or repeated strings:
+
+```csharp
+var request = DecisionsRequest.Create(DecisionsValue.FromObject(new { message = "My card was charged twice." }))
+    .Noul("urgent", "Does this need immediate attention?", out var urgent)
+    .Choice("team", "Which team should handle this?", out var team,
+        ("billing", "Payments and refunds"),
+        ("technical", "Bugs and outages"))
+    .Score("frustration", "How frustrated is the customer?", out var frustration,
+        "Calm", "Frustrated", "Very angry")
+    .Build();
+
+var response = await client.EvaluateAsync(request);
+Console.WriteLine($"{response.Get(team).Choice}, urgency {response.Get(urgent).Noul}, frustration {response.Get(frustration).Score}");
+```
+
+`Noul` takes optional `whenTrue` and `whenFalse` criteria, `Choice` takes plain option names or `(option, description)` pairs, `Score` takes levels lowest first, and `Box` takes instructions only. Duplicate question IDs throw. `Build(model)` defaults to `jev-latest`. Use `response.TryGetAnswer<T>(id, out var answer)` when an answer may be absent or of another type.
+
 Plain text implicitly converts to `DecisionsValue`. For structured state, instructions, or criteria, use `DecisionsValue.FromObject(...)` or `DecisionsValue.FromArray(...)`. You can pass custom `JsonSerializerOptions` to those methods. Choice criteria may be `null` when an option needs no description.
 
 `DecisionsRequest` is shared by both clients. It defaults to `jev-latest` for the direct TypeSafe API; pass a model ID as its third argument to pin a version or to use OpenRouter. Use `ListModelsAsync()` to fetch direct model aliases available to your account. The response's `Model` property contains the model that answered.
@@ -198,6 +218,34 @@ double bottomPixel = mug.Box.Bottom * imageHeight;
 Here `imageWidth` and `imageHeight` are the dimensions of the image you sent. Edges are fractions from zero to one measured from the top-left corner. The SDK validates that all edges and confidence are finite and within that range, with `Left < Right` and `Top < Bottom`. Missing coordinates, confidence, or a box object cause a `JsonException` when reading the API response.
 
 Box requires an image and a model supporting Box questions: use `jev-1.14.0` or `jev-preview` directly, or `typesafe/jev-1.14` through OpenRouter with the same request structure. Image capability alone does not imply Box support; model-specific question support is validated by the provider. Box always returns a rectangle, including when the target is absent. Use a companion Noul question to assess presence before acting on the box. See the [TypeSafe Box documentation](https://docs.typesafe.ai/primitives/box).
+
+## Batching many items
+
+Asking the same questions about many items, such as support messages, is cheaper in a few large requests than in many small ones. `EvaluateBatchesAsync` packs items into requests of `ItemsPerRequest`, names each question `{itemId}_{questionKey}`, and yields one result per request as it completes:
+
+```csharp
+var options = new DecisionsBatchOptions<Ticket>
+{
+    ItemId = ticket => ticket.Id,
+    State = tickets => DecisionsValue.FromObject(new { tickets = tickets.Select(t => new { id = t.Id, text = t.Text }) }),
+    Questions = ticket => new Dictionary<string, DecisionsQuestion>
+    {
+        ["refund"] = new NoulQuestion($"Does ticket {ticket.Id} ask for money back?"),
+        ["angry"] = new NoulQuestion($"Is the customer in ticket {ticket.Id} angry?")
+    },
+    Model = "typesafe/jev-1.14",
+    ItemsPerRequest = 20
+};
+
+await foreach (var batch in client.EvaluateBatchesAsync(tickets, options, cancellationToken))
+{
+    if (!batch.Succeeded) { Console.WriteLine($"Request {batch.Number} failed: {batch.Error!.Message}"); continue; }
+    foreach (var ticket in batch.Items)
+        Console.WriteLine($"{ticket.Id}: refund {batch.GetAnswer<NoulAnswer>(ticket, "refund").Noul:P0}");
+}
+```
+
+Requests run one after another. By default a failed request is reported through `Error` and later batches still run; set `ContinueOnError = false` to throw instead. Cancellation always stops the run. Item IDs must be unique. Providers limit questions per request, so choose `ItemsPerRequest` with the number of questions per item in mind.
 
 ## Dependency injection
 

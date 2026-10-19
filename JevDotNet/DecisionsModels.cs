@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace DecisionsDotNet;
@@ -23,6 +24,9 @@ public sealed record DecisionsRequest
 
     [JsonPropertyName("questions")]
     public IReadOnlyDictionary<string, DecisionsQuestion> Questions { get; }
+
+    /// <summary>Starts a request with fluent question methods.</summary>
+    public static DecisionsRequestBuilder Create(DecisionsValue state) => new(state);
 }
 
 public sealed record DecisionsResponse
@@ -48,6 +52,15 @@ public sealed record DecisionsResponse
             throw new KeyNotFoundException($"No answer was returned for question '{questionId}'.");
         return answer as TAnswer ?? throw new InvalidOperationException(
             $"Answer '{questionId}' is {answer.GetType().Name}, not {typeof(TAnswer).Name}.");
+    }
+
+    /// <summary>Reads the answer for a key returned by <see cref="DecisionsRequestBuilder"/>.</summary>
+    public TAnswer Get<TAnswer>(DecisionKey<TAnswer> key) where TAnswer : JevAnswer => GetAnswer<TAnswer>(key.Id);
+
+    public bool TryGetAnswer<TAnswer>(string questionId, [NotNullWhen(true)] out TAnswer? answer) where TAnswer : JevAnswer
+    {
+        answer = Answers.TryGetValue(questionId, out var value) ? value as TAnswer : null;
+        return answer is not null;
     }
 }
 

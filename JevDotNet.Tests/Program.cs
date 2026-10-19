@@ -99,6 +99,8 @@ await OpenRouterChecks.RunAsync();
 await DependencyInjectionChecks.RunAsync();
 await KeyedRegistrationChecks.RunAsync();
 await ModelListingChecks.RunAsync();
+await BuilderChecks.RunAsync();
+await BatchChecks.RunAsync();
 await ImageChecks.RunAsync();
 await BoxChecks.RunAsync();
 await ImageDemoChecks.RunAsync();

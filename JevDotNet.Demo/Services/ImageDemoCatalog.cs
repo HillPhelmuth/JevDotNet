@@ -42,27 +42,20 @@ public static class ImageDemoCatalog
         if (string.IsNullOrWhiteSpace(prompt) || prompt.Length > MaxPromptLength)
             throw new ArgumentException($"Enter {(locate ? "a target" : "a question")} of 1 to {MaxPromptLength} characters.", nameof(prompt));
 
-        var questions = locate
-            ? new Dictionary<string, DecisionsQuestion>
-            {
-                ["target"] = new BoxQuestion($"Locate {prompt.Trim()} in the supplied image."),
-                ["visible"] = new NoulQuestion($"Is {prompt.Trim()} visible in the supplied image?")
-            }
-            : new Dictionary<string, DecisionsQuestion>
-            {
-                ["question"] = new NoulQuestion(prompt.Trim()),
-                ["scene"] = new ChoiceQuestion("Which description best matches the supplied image?",
-                    new Dictionary<string, DecisionsValue?>
-                    {
-                        ["meal"] = "A meal, food, or a dining table.",
-                        ["city"] = "A city scene or skyline.",
-                        ["other"] = "Neither a meal nor a city scene."
-                    }),
-                ["activity"] = new ScoreQuestion("How visually busy is the supplied image?",
-                    new DecisionsValue[] { "Sparse: a few isolated objects.", "Moderate: several objects with clear separation.",
-                        "Busy: many overlapping objects or events." })
-            };
-        return new DecisionsRequest(DecisionsValue.FromParts(locate ? image.Title : prompt.Trim(),
-            DecisionsValue.ImageFromBytes(image.Bytes, "image/png")), questions, modelId);
+        var request = DecisionsRequest.Create(DecisionsValue.FromParts(locate ? image.Title : prompt.Trim(),
+            DecisionsValue.ImageFromBytes(image.Bytes, "image/png")));
+        return (locate
+            ? request
+                .Box("target", $"Locate {prompt.Trim()} in the supplied image.")
+                .Noul("visible", $"Is {prompt.Trim()} visible in the supplied image?")
+            : request
+                .Noul("question", prompt.Trim())
+                .Choice("scene", "Which description best matches the supplied image?",
+                    ("meal", "A meal, food, or a dining table."),
+                    ("city", "A city scene or skyline."),
+                    ("other", "Neither a meal nor a city scene."))
+                .Score("activity", "How visually busy is the supplied image?",
+                    "Sparse: a few isolated objects.", "Moderate: several objects with clear separation.",
+                    "Busy: many overlapping objects or events.")).Build(modelId);
     }
 }
