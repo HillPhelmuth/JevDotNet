@@ -78,6 +78,21 @@ internal static class BatchChecks
         }
         catch (OperationCanceledException) { }
         Check(seen == 1, "Cancellation stops further batches");
+
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        var enumerated = 0;
+        IEnumerable<Message> Lazy() { enumerated++; yield return messages[0]; }
+        foreach (var source in new[] { Array.Empty<Message>(), Lazy() })
+        {
+            try
+            {
+                await foreach (var _ in client.EvaluateBatchesAsync(source, options, cancelled.Token)) { }
+                throw new Exception("Expected pre-cancelled batching to throw");
+            }
+            catch (OperationCanceledException) { }
+        }
+        Check(enumerated == 0, "Pre-cancelled batching does not enumerate items");
     }
 
     private static DecisionsResponse Answer(IEnumerable<string> ids) => new()

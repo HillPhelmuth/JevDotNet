@@ -76,10 +76,13 @@ public static class DecisionsBatch
         if (options.ItemsPerRequest < 1)
             throw new ArgumentOutOfRangeException(nameof(options), "ItemsPerRequest must be at least 1.");
 
-        var all = items.ToArray();
+        cancellationToken.ThrowIfCancellationRequested();
+        var all = new List<TItem>();
         var ids = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var item in all)
+        foreach (var item in items)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            all.Add(item);
             var id = options.ItemId(item);
             if (string.IsNullOrWhiteSpace(id) || !ids.Add(id))
                 throw new ArgumentException("Every item needs a unique, nonblank ID.", nameof(items));

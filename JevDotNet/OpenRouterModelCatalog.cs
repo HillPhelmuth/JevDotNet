@@ -68,8 +68,7 @@ internal sealed class OpenRouterModelCatalog(TimeProvider clock)
                 CanonicalSlug = OptionalString(model, "canonical_slug"),
                 Name = OptionalString(model, "name"),
                 Description = OptionalString(model, "description"),
-                Created = model.TryGetProperty("created", out var created) && created.TryGetInt64(out var seconds)
-                    ? DateTimeOffset.FromUnixTimeSeconds(seconds) : null,
+                Created = OptionalTimestamp(model),
                 InputModalities = inputs
             });
         }
@@ -88,6 +87,15 @@ internal sealed class OpenRouterModelCatalog(TimeProvider clock)
         }
         return snapshot;
     }
+
+    // Optional metadata that is null, non-numeric, or out of range is treated as absent.
+    private static DateTimeOffset? OptionalTimestamp(JsonElement model)
+        => model.TryGetProperty("created", out var created) && created.ValueKind == JsonValueKind.Number &&
+           created.TryGetInt64(out var seconds) && seconds >= MinUnixSeconds && seconds <= MaxUnixSeconds
+            ? DateTimeOffset.FromUnixTimeSeconds(seconds) : null;
+
+    private static readonly long MinUnixSeconds = DateTimeOffset.MinValue.ToUnixTimeSeconds();
+    private static readonly long MaxUnixSeconds = DateTimeOffset.MaxValue.ToUnixTimeSeconds();
 
     private static string? OptionalString(JsonElement model, string name)
         => model.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;

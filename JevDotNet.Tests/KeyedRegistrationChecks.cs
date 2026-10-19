@@ -46,6 +46,25 @@ internal static class KeyedRegistrationChecks
             "http://jev:1234/v1/systemone Bearer local-key"
         }), "Keyed clients keep separate keys and endpoints");
 
+        // Keys with equal ToString() values keep separate HTTP pipelines.
+        var twins = new ServiceCollection();
+        var hits = new List<string>();
+        HttpMessageHandler Tagged(string tag) => new StubHandler(_ =>
+        {
+            hits.Add(tag);
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""
+                {"model":"jev-1.13.0","answers":{"ok":{"type":"noul","noul":0.9}},"usage":{"input_tokens":1,"output_tokens":1}}
+                """) };
+        });
+        twins.AddKeyedJevSystemOneClient(1, "int-key").ConfigurePrimaryHttpMessageHandler(() => Tagged("int"));
+        twins.AddKeyedJevSystemOneClient("1", "string-key").ConfigurePrimaryHttpMessageHandler(() => Tagged("string"));
+        using (var twinProvider = twins.BuildServiceProvider())
+        {
+            await twinProvider.GetRequiredKeyedService<IDecisionsClient>(1).EvaluateAsync(new DecisionsRequest("x", questions));
+            await twinProvider.GetRequiredKeyedService<IDecisionsClient>("1").EvaluateAsync(new DecisionsRequest("x", questions));
+        }
+        Check(hits.SequenceEqual(new[] { "int", "string" }), "Keys with the same string form use separate pipelines");
+
         ExpectArgument(() => new ServiceCollection().AddKeyedOpenRouterDecisionsClient("k", " "), "Keyed empty key");
         ExpectArgument(() => new ServiceCollection().AddKeyedJevSystemOneClient(null!, "key"), "Keyed null service key");
     }

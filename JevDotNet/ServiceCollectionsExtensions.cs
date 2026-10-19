@@ -83,7 +83,8 @@ public static class ServiceCollectionsExtensions
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new ArgumentException("A TypeSafe API key is required.", nameof(apiKey));
 
-        var name = $"JevDotNet.TypeSafe.{serviceKey}";
+        // A unique name per registration keeps keys with equal ToString() values on separate HTTP pipelines.
+        var name = $"JevDotNet.TypeSafe.{Guid.NewGuid():N}";
         services.AddKeyedTransient<IDecisionsClient>(serviceKey, (provider, _) =>
             new JevClient(apiKey, provider.GetRequiredService<IHttpClientFactory>().CreateClient(name), options));
         return services.AddHttpClient(name);
@@ -115,7 +116,8 @@ public static class ServiceCollectionsExtensions
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new ArgumentException("An OpenRouter API key is required.", nameof(apiKey));
 
-        var name = $"JevDotNet.OpenRouter.{serviceKey}";
+        // A unique name per registration keeps keys with equal ToString() values on separate HTTP pipelines.
+        var name = $"JevDotNet.OpenRouter.{Guid.NewGuid():N}";
         services.AddKeyedTransient<IDecisionsClient>(serviceKey, (provider, _) =>
             new OpenRouterDecisionsClient(apiKey, provider.GetRequiredService<IHttpClientFactory>().CreateClient(name), options));
         return services.AddHttpClient(name);
@@ -166,7 +168,8 @@ public static class ServiceCollectionsExtensions
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new ArgumentException("An OpenAI API key is required.", nameof(apiKey));
 
-        var name = $"JevDotNet.OpenAI.{serviceKey}";
+        // A unique name per registration keeps keys with equal ToString() values on separate HTTP pipelines.
+        var name = $"JevDotNet.OpenAI.{Guid.NewGuid():N}";
         services.AddKeyedTransient<IDecisionsClient>(serviceKey, (provider, _) =>
             new OpenAIDecisionsClient(apiKey, provider.GetRequiredService<IHttpClientFactory>().CreateClient(name), options));
         return services.AddHttpClient(name);
