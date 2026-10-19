@@ -9,7 +9,7 @@ public sealed record LaneEvent(int SessionId, string Reason, LaneSnapshot Snapsh
 public static class LaneDecision
 {
     public const int MaxDecisions = 1000;
-    public static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(30);
+    public static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(10);
 
     public static DecisionsRequest BuildRequest(LaneSnapshot snapshot, string model)
     {
