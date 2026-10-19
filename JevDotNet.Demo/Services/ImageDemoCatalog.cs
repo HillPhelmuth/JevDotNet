@@ -29,8 +29,8 @@ public static class ImageDemoCatalog
 
     public static ImageDemoAsset? Find(string id) => All.FirstOrDefault(image => image.Id == id);
 
-    public static IReadOnlyList<DemoDecisionModel> SupportedModels(bool locate)
-        => DemoDecisionModels.All.Where(model => model.ModelSupportsImageInput() &&
+    public static IReadOnlyList<OpenRouterDecisionsModel> SupportedModels(bool locate)
+        => DemoDecisionModels.All.Where(model => model.SupportsImageInput &&
             (!locate || model.Id == "typesafe/jev-1.14" ||
                 model.CanonicalSlug?.StartsWith("typesafe/jev-1.14-", StringComparison.Ordinal) == true)).ToArray();
 

@@ -1,3 +1,4 @@
+@using DecisionsDotNet
 @using JevDotNet.Demo.Services
 
 <section class="workspace-panel image-controls">
@@ -43,7 +44,7 @@
     [Parameter] public EventCallback<string> ModelIdChanged { get; set; }
     [Parameter] public string Prompt { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> PromptChanged { get; set; }
-    [Parameter, EditorRequired] public IReadOnlyList<DemoDecisionModel> Models { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<OpenRouterDecisionsModel> Models { get; set; } = [];
     [Parameter] public string? Error { get; set; }
     [Parameter] public EventCallback Evaluate { get; set; }
     [Parameter] public EventCallback Cancel { get; set; }

@@ -7,6 +7,7 @@ namespace DecisionsDotNet;
 internal sealed class OpenRouterModelCatalog(TimeProvider clock)
 {
     internal static OpenRouterModelCatalog Shared { get; } = new(TimeProvider.System);
+    internal const string Path = "api/v1/models?output_modalities=decisions";
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(15);
     private readonly ConcurrentDictionary<Uri, Entry> _entries = new();
 
@@ -21,13 +22,10 @@ internal sealed class OpenRouterModelCatalog(TimeProvider clock)
             {
                 try
                 {
-                    using var response = await client.GetAsync(new Uri(baseUri,
-                        "api/v1/models?output_modalities=decisions"), cancellationToken).ConfigureAwait(false);
+                    using var response = await client.GetAsync(new Uri(baseUri, Path), cancellationToken).ConfigureAwait(false);
                     response.EnsureSuccessStatusCode();
-                    using var document = JsonDocument.Parse(
-                        await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
-                    var snapshot = Parse(document.RootElement);
-                    entry.Models = snapshot;
+                    entry.Models = Snapshot(Parse(
+                        await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)));
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
                 catch (Exception error) when (error is HttpRequestException or JsonException or OperationCanceledException)
@@ -42,31 +40,57 @@ internal sealed class OpenRouterModelCatalog(TimeProvider clock)
         finally { entry.Gate.Release(); }
     }
 
-    private static Dictionary<string, IReadOnlyList<string>> Parse(JsonElement root)
+    internal static IReadOnlyList<OpenRouterDecisionsModel> Parse(string json)
     {
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("data", out var data) ||
             data.ValueKind != JsonValueKind.Array || data.GetArrayLength() == 0)
             throw new JsonException("OpenRouter returned an empty or invalid Decisions catalog.");
-        var models = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        var models = new List<OpenRouterDecisionsModel>();
         foreach (var model in data.EnumerateArray())
         {
             if (model.ValueKind != JsonValueKind.Object || !model.TryGetProperty("id", out var id) ||
                 id.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(id.GetString()))
                 throw new JsonException("OpenRouter returned an invalid model ID.");
-            if (!model.TryGetProperty("architecture", out var architecture) || architecture.ValueKind != JsonValueKind.Object ||
-                !architecture.TryGetProperty("input_modalities", out var modalities) ||
-                modalities.ValueKind != JsonValueKind.Array || modalities.GetArrayLength() == 0)
-                continue; // Missing capabilities are unresolved, not confirmed text-only.
-            var inputs = modalities.EnumerateArray().Select(value =>
-                value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(value.GetString())
-                    ? value.GetString()! : throw new JsonException("OpenRouter returned an invalid input modality.")).ToArray();
-            models[id.GetString()!] = Array.AsReadOnly(inputs);
-            if (model.TryGetProperty("canonical_slug", out var slug) && slug.ValueKind == JsonValueKind.String &&
-                !string.IsNullOrWhiteSpace(slug.GetString()))
-                models[slug.GetString()!] = Array.AsReadOnly(inputs);
+            IReadOnlyList<string> inputs = [];
+            if (model.TryGetProperty("architecture", out var architecture) && architecture.ValueKind == JsonValueKind.Object &&
+                architecture.TryGetProperty("input_modalities", out var modalities) &&
+                modalities.ValueKind == JsonValueKind.Array && modalities.GetArrayLength() > 0)
+            {
+                inputs = Array.AsReadOnly(modalities.EnumerateArray().Select(value =>
+                    value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(value.GetString())
+                        ? value.GetString()! : throw new JsonException("OpenRouter returned an invalid input modality.")).ToArray());
+            }
+            models.Add(new OpenRouterDecisionsModel
+            {
+                Id = id.GetString()!,
+                CanonicalSlug = OptionalString(model, "canonical_slug"),
+                Name = OptionalString(model, "name"),
+                Description = OptionalString(model, "description"),
+                Created = model.TryGetProperty("created", out var created) && created.TryGetInt64(out var seconds)
+                    ? DateTimeOffset.FromUnixTimeSeconds(seconds) : null,
+                InputModalities = inputs
+            });
         }
-        return models;
+        return models.AsReadOnly();
     }
+
+    private static Dictionary<string, IReadOnlyList<string>> Snapshot(IReadOnlyList<OpenRouterDecisionsModel> models)
+    {
+        var snapshot = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        // Missing capabilities are unresolved, not confirmed text-only.
+        foreach (var model in models.Where(model => model.InputModalities.Count > 0))
+        {
+            snapshot[model.Id] = model.InputModalities;
+            if (!string.IsNullOrWhiteSpace(model.CanonicalSlug))
+                snapshot[model.CanonicalSlug] = model.InputModalities;
+        }
+        return snapshot;
+    }
+
+    private static string? OptionalString(JsonElement model, string name)
+        => model.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
     private sealed class Entry
     {

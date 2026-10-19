@@ -41,6 +41,8 @@ public sealed class JevClient : IDecisionsClient, IDisposable
     private readonly string _apiKey;
     private readonly JevClientOptions _options;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _modalityOverrides;
+    private readonly RetryPolicy _retry;
+    private static readonly IReadOnlySet<int> RetryableStatusCodes = new HashSet<int> { 429, 529 };
 
     public JevClient(string apiKey, HttpClient? httpClient = null, JevClientOptions? options = null)
     {
@@ -50,9 +52,8 @@ public sealed class JevClient : IDecisionsClient, IDisposable
         if (_options.BaseUri is null || !_options.BaseUri.IsAbsoluteUri ||
             (_options.BaseUri.Scheme != Uri.UriSchemeHttps && _options.BaseUri.Scheme != Uri.UriSchemeHttp))
             throw new ArgumentException("BaseUri must be an absolute HTTP or HTTPS URI.", nameof(options));
-        if (_options.MaxAttempts < 1 || _options.InitialRetryDelay < TimeSpan.Zero ||
-            _options.MaxRetryDelay < _options.InitialRetryDelay)
-            throw new ArgumentException("Invalid retry settings.", nameof(options));
+        _retry = new RetryPolicy(_options.MaxAttempts, _options.InitialRetryDelay, _options.MaxRetryDelay, RetryableStatusCodes);
+        _retry.Validate(nameof(options));
         _httpClient = httpClient ?? new HttpClient();
         _ownsHttpClient = httpClient is null;
     }
@@ -112,37 +113,17 @@ public sealed class JevClient : IDecisionsClient, IDisposable
         return result;
     }
 
-    private async Task<string> SendAsync(HttpMethod method, string path, string? body, CancellationToken cancellationToken,
+    private Task<string> SendAsync(HttpMethod method, string path, string? body, CancellationToken cancellationToken,
         bool enableImages = false)
-    {
-        for (var attempt = 1; ; attempt++)
+        => DecisionsHttp.SendAsync(_httpClient, () =>
         {
-            using var message = new HttpRequestMessage(method, new Uri(_options.BaseUri, path));
+            var message = new HttpRequestMessage(method, new Uri(_options.BaseUri, path));
             message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             if (enableImages) message.Headers.Add("TypeSafe-Danger-Zone-Images", "true");
             if (body is not null)
                 message.Content = new StringContent(body, Encoding.UTF8, "application/json");
-
-            using var response = await _httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-                .ConfigureAwait(false);
-            var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            if (response.IsSuccessStatusCode)
-                return content;
-
-            if (attempt >= _options.MaxAttempts || (int)response.StatusCode is not (429 or 529))
-                throw new JevApiException(response.StatusCode, content);
-
-            var backoff = TimeSpan.FromMilliseconds(Math.Min(
-                _options.MaxRetryDelay.TotalMilliseconds,
-                _options.InitialRetryDelay.TotalMilliseconds * Math.Pow(2, attempt - 1)));
-            var retryAfter = response.Headers.RetryAfter;
-            var delay = retryAfter?.Delta ??
-                (retryAfter?.Date is { } date ? date - DateTimeOffset.UtcNow : backoff);
-            if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-            if (delay > _options.MaxRetryDelay) delay = _options.MaxRetryDelay;
-            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-        }
-    }
+            return message;
+        }, _retry, "TypeSafe", cancellationToken);
 
     private static T Deserialize<T>(string json)
         => JsonSerializer.Deserialize<T>(json, JsonOptions)

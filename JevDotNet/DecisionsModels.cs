@@ -146,3 +146,18 @@ public sealed record JevModel
     [JsonPropertyName("release_date")]
     public required string ReleaseDate { get; init; }
 }
+
+/// <summary>A model from OpenRouter's public Decisions catalog.</summary>
+public sealed record OpenRouterDecisionsModel
+{
+    public required string Id { get; init; }
+    public string? CanonicalSlug { get; init; }
+    public string? Name { get; init; }
+    public string? Description { get; init; }
+    public DateTimeOffset? Created { get; init; }
+
+    /// <summary>Advertised input modalities, such as text and image. Empty when the catalog omits them.</summary>
+    public IReadOnlyList<string> InputModalities { get; init; } = [];
+
+    public bool SupportsImageInput => InputModalities.Contains("image", StringComparer.Ordinal);
+}

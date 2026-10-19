@@ -11,7 +11,7 @@ public partial class ImageDemoWorkspace
 {
     [Parameter] public bool Locate { get; set; }
     private string Title => Locate ? "Find it in the image" : "Image decisions";
-    private IReadOnlyList<DemoDecisionModel> Models => ImageDemoCatalog.SupportedModels(Locate);
+    private IReadOnlyList<OpenRouterDecisionsModel> Models => ImageDemoCatalog.SupportedModels(Locate);
     private string ImageId = ImageDemoCatalog.All[0].Id;
     private ImageDemoAsset Image => ImageDemoCatalog.Find(ImageId)!;
     private string ModelId = string.Empty;

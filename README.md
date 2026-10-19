@@ -114,6 +114,17 @@ The OpenRouter client chooses the `state` wire format from the selected model's 
 
 On first use, the SDK fetches the public [Decisions catalog](https://openrouter.ai/api/v1/models?output_modalities=decisions). Snapshots are shared across client instances with the same base URI for 15 minutes. Concurrent lookups share one fetch. Failed refreshes retain the last successful snapshot and defer another attempt for 15 minutes. Unknown models or unavailable capabilities fall back to JSON text for structured state, and image requests fail locally with `NotSupportedException`. Caller cancellation propagates rather than triggering fallback.
 
+To read the catalog yourself, such as to fill a model picker, call `ListModelsAsync()` on a client, or the static overload when you have no API key yet. The catalog is public, so neither sends a key:
+
+```csharp
+using var http = new HttpClient();
+var models = await OpenRouterDecisionsClient.ListModelsAsync(http);
+foreach (var model in models.Where(model => model.SupportsImageInput))
+    Console.WriteLine($"{model.Id}: {model.Name}");
+```
+
+Each `OpenRouterDecisionsModel` carries `Id`, `CanonicalSlug`, `Name`, `Description`, `Created`, and `InputModalities`. Listing retries like evaluation does and reports HTTP failures as `JevApiException`.
+
 OpenRouter responses can also expose `Id`, `Provider`, and `Usage.Cost`; these are nullable because direct TypeSafe responses do not include them. The OpenRouter client retries HTTP 429, 502, 503, and 529 with bounded backoff. It surfaces other errors as `JevApiException` with `Service` set to `OpenRouter`. See the [OpenRouter Decisions reference](https://openrouter.ai/docs/api/api-reference/alphadecisions/submit-a-decisions-questions-and-answers-request).
 
 ## Image inputs
@@ -206,7 +217,24 @@ public sealed class DecisionService(IDecisionsClient client)
 }
 ```
 
-The registration returns `IHttpClientBuilder` for HTTP pipeline configuration. Set `DecisionsRequest.Model` to an OpenRouter Decisions model ID, such as `"typesafe/jev-1.13"` or `"jaredpalmer/kev-4b"`; the request default `jev-latest` is for the direct TypeSafe API. `JevClient.ListModelsAsync()` remains available on the concrete direct client.
+The registration returns `IHttpClientBuilder` for HTTP pipeline configuration. Set `DecisionsRequest.Model` to an OpenRouter Decisions model ID, such as `"typesafe/jev-1.13"` or `"jaredpalmer/kev-4b"`; the request default `jev-latest` is for the direct TypeSafe API. Both concrete clients expose `ListModelsAsync()`.
+
+### Several providers side by side
+
+The registrations above replace one another, because each one registers the single `IDecisionsClient`. To use more than one provider in an app, register each under a key and inject it with `[FromKeyedServices]`:
+
+```csharp
+builder.Services.AddKeyedJevSystemOneClient("typesafe", builder.Configuration);
+builder.Services.AddKeyedOpenRouterDecisionsClient("openrouter", builder.Configuration);
+builder.Services.AddKeyedJevSystemOneClient("local", "local-key",
+    new JevClientOptions { BaseUri = new Uri("http://localhost:1234/") });
+
+public sealed class Comparison(
+    [FromKeyedServices("typesafe")] IDecisionsClient direct,
+    [FromKeyedServices("openrouter")] IDecisionsClient router) { }
+```
+
+Each keyed registration gets its own named `HttpClient` and returns its `IHttpClientBuilder`. Keyed registrations do not add an unkeyed default.
 
 ## Blazor demo
 

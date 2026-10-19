@@ -24,6 +24,8 @@ public sealed class OpenRouterDecisionsClient : IDecisionsClient, IDisposable
     private readonly bool _ownsHttpClient;
     private readonly OpenRouterDecisionsClientOptions _options;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _modalityOverrides;
+    private readonly RetryPolicy _retry;
+    private static readonly IReadOnlySet<int> RetryableStatusCodes = new HashSet<int> { 429, 502, 503, 529 };
 
     public OpenRouterDecisionsClient(
         string apiKey,
@@ -36,9 +38,8 @@ public sealed class OpenRouterDecisionsClient : IDecisionsClient, IDisposable
         _modalityOverrides = ModelInputModalities.Snapshot(_options.ModelInputModalitiesOverrides);
         if (_options.BaseUri is null || !_options.BaseUri.IsAbsoluteUri || _options.BaseUri.Scheme != Uri.UriSchemeHttps)
             throw new ArgumentException("BaseUri must be an absolute HTTPS URI.", nameof(options));
-        if (_options.MaxAttempts < 1 || _options.InitialRetryDelay < TimeSpan.Zero ||
-            _options.MaxRetryDelay < _options.InitialRetryDelay)
-            throw new ArgumentException("Invalid retry settings.", nameof(options));
+        _retry = new RetryPolicy(_options.MaxAttempts, _options.InitialRetryDelay, _options.MaxRetryDelay, RetryableStatusCodes);
+        _retry.Validate(nameof(options));
         _httpClient = httpClient ?? new HttpClient();
         _ownsHttpClient = httpClient is null;
     }
@@ -69,32 +70,39 @@ public sealed class OpenRouterDecisionsClient : IDecisionsClient, IDisposable
             questions = request.Questions
         }, JsonOptions);
 
-        for (var attempt = 1; ; attempt++)
+        var content = await DecisionsHttp.SendAsync(_httpClient, () =>
         {
-            using var message = new HttpRequestMessage(HttpMethod.Post,
-                new Uri(_options.BaseUri, "api/alpha/decisions"));
+            var message = new HttpRequestMessage(HttpMethod.Post, new Uri(_options.BaseUri, "api/alpha/decisions"));
             message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             message.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            return message;
+        }, _retry, "OpenRouter", cancellationToken).ConfigureAwait(false);
+        return JevResponseValidator.DeserializeAndValidate(content, request.Questions);
+    }
 
-            using var response = await _httpClient.SendAsync(
-                message, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-            var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            if (response.IsSuccessStatusCode)
-                return JevResponseValidator.DeserializeAndValidate(content, request.Questions);
+    /// <summary>Lists OpenRouter's Decisions models with their input modalities. The catalog is public; no API key is sent.</summary>
+    public async Task<IReadOnlyList<OpenRouterDecisionsModel>> ListModelsAsync(CancellationToken cancellationToken = default)
+    {
+        var content = await DecisionsHttp.SendAsync(_httpClient,
+            () => new HttpRequestMessage(HttpMethod.Get, new Uri(_options.BaseUri, OpenRouterModelCatalog.Path)),
+            _retry, "OpenRouter", cancellationToken).ConfigureAwait(false);
+        return OpenRouterModelCatalog.Parse(content);
+    }
 
-            if (attempt >= _options.MaxAttempts || (int)response.StatusCode is not (429 or 502 or 503 or 529))
-                throw new JevApiException(response.StatusCode, content, "OpenRouter");
-
-            var backoff = TimeSpan.FromMilliseconds(Math.Min(
-                _options.MaxRetryDelay.TotalMilliseconds,
-                _options.InitialRetryDelay.TotalMilliseconds * Math.Pow(2, attempt - 1)));
-            var retryAfter = response.Headers.RetryAfter;
-            var delay = retryAfter?.Delta ??
-                (retryAfter?.Date is { } date ? date - DateTimeOffset.UtcNow : backoff);
-            if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-            if (delay > _options.MaxRetryDelay) delay = _options.MaxRetryDelay;
-            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-        }
+    /// <summary>Lists OpenRouter's Decisions models without constructing a client or supplying an API key.</summary>
+    public static async Task<IReadOnlyList<OpenRouterDecisionsModel>> ListModelsAsync(
+        HttpClient httpClient, Uri? baseUri = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        baseUri ??= new OpenRouterDecisionsClientOptions().BaseUri;
+        if (!baseUri.IsAbsoluteUri || baseUri.Scheme != Uri.UriSchemeHttps)
+            throw new ArgumentException("BaseUri must be an absolute HTTPS URI.", nameof(baseUri));
+        var defaults = new OpenRouterDecisionsClientOptions();
+        var content = await DecisionsHttp.SendAsync(httpClient,
+            () => new HttpRequestMessage(HttpMethod.Get, new Uri(baseUri, OpenRouterModelCatalog.Path)),
+            new RetryPolicy(defaults.MaxAttempts, defaults.InitialRetryDelay, defaults.MaxRetryDelay, RetryableStatusCodes),
+            "OpenRouter", cancellationToken).ConfigureAwait(false);
+        return OpenRouterModelCatalog.Parse(content);
     }
 
     public void Dispose()

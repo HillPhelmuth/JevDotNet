@@ -97,6 +97,8 @@ using (var client = new JevClient("test-key", new HttpClient(new StubHandler(_ =
 await JevEndpointChecks.RunAsync();
 await OpenRouterChecks.RunAsync();
 await DependencyInjectionChecks.RunAsync();
+await KeyedRegistrationChecks.RunAsync();
+await ModelListingChecks.RunAsync();
 await ImageChecks.RunAsync();
 await BoxChecks.RunAsync();
 await ImageDemoChecks.RunAsync();
