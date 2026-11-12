@@ -2,11 +2,12 @@ using System.Net;
 using System.Text.Json;
 using DecisionsDotNet;
 
-internal static class BatchChecks
+public sealed class BatchChecks
 {
     private sealed record Message(string Id, string Text);
 
-    public static async Task RunAsync()
+    [Fact]
+    public async Task BatchesPreserveItemMappingAndHandleFailuresAsync()
     {
         var messages = Enumerable.Range(1, 5).Select(i => new Message($"m{i}", $"Text {i}")).ToArray();
         var options = new DecisionsBatchOptions<Message>
@@ -34,15 +35,15 @@ internal static class BatchChecks
         await foreach (var result in client.EvaluateBatchesAsync(messages, options))
             results.Add(result);
 
-        Check(results.Select(result => result.Items.Count).SequenceEqual(new[] { 2, 2, 1 }), "Batch sizes");
-        Check(results.Select(result => result.Number).SequenceEqual(new[] { 1, 2, 3 }), "Batch numbers");
-        Check(bodies[0].GetProperty("questions").EnumerateObject().Select(p => p.Name)
+        Assert.True(results.Select(result => result.Items.Count).SequenceEqual(new[] { 2, 2, 1 }), "Batch sizes");
+        Assert.True(results.Select(result => result.Number).SequenceEqual(new[] { 1, 2, 3 }), "Batch numbers");
+        Assert.True(bodies[0].GetProperty("questions").EnumerateObject().Select(p => p.Name)
             .SequenceEqual(new[] { "m1_refund", "m1_angry", "m2_refund", "m2_angry" }), "Prefixed question IDs");
-        Check(bodies[0].GetProperty("state").GetProperty("messages").GetArrayLength() == 2 &&
+        Assert.True(bodies[0].GetProperty("state").GetProperty("messages").GetArrayLength() == 2 &&
             bodies[0].GetProperty("model").GetString() == "typesafe/jev-1.14", "Batch state and model");
-        Check(results[0].Succeeded && results[0].GetAnswer<NoulAnswer>(messages[1], "angry").Noul == 0.25, "Per-item answer");
-        Check(!results[1].Succeeded && results[1].Error is JevApiException, "Failed batch is reported");
-        Check(results[2].Succeeded, "Later batches continue after a failure");
+        Assert.True(results[0].Succeeded && results[0].GetAnswer<NoulAnswer>(messages[1], "angry").Noul == 0.25, "Per-item answer");
+        Assert.True(!results[1].Succeeded && results[1].Error is JevApiException, "Failed batch is reported");
+        Assert.True(results[2].Succeeded, "Later batches continue after a failure");
         try { results[1].GetAnswer<NoulAnswer>(messages[2], "refund"); throw new Exception("Expected failure"); }
         catch (InvalidOperationException error) when (error.InnerException is JevApiException) { }
 
@@ -77,7 +78,7 @@ internal static class BatchChecks
             throw new Exception("Expected cancellation");
         }
         catch (OperationCanceledException) { }
-        Check(seen == 1, "Cancellation stops further batches");
+        Assert.True(seen == 1, "Cancellation stops further batches");
 
         using var cancelled = new CancellationTokenSource();
         cancelled.Cancel();
@@ -92,7 +93,7 @@ internal static class BatchChecks
             }
             catch (OperationCanceledException) { }
         }
-        Check(enumerated == 0, "Pre-cancelled batching does not enumerate items");
+        Assert.True(enumerated == 0, "Pre-cancelled batching does not enumerate items");
     }
 
     private static DecisionsResponse Answer(IEnumerable<string> ids) => new()
@@ -102,10 +103,6 @@ internal static class BatchChecks
         Usage = new DecisionsUsage { InputTokens = 1, OutputTokens = 1 }
     };
 
-    private static void Check(bool condition, string name)
-    {
-        if (!condition) throw new Exception($"Failed: {name}");
-    }
 
     private sealed class FakeClient(Func<DecisionsRequest, DecisionsResponse> respond) : IDecisionsClient
     {

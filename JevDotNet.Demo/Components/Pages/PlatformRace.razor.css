@@ -1,0 +1,37 @@
+.race-heading { margin-bottom: 1rem; }
+
+.race-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    align-items: end;
+    gap: .75rem;
+    max-width: 53rem;
+}
+
+.race-controls label { min-width: 0; font-size: .8rem; font-weight: 700; }
+.race-controls select { display: block; width: 100%; min-width: 0; margin: .3rem 0 0; }
+.race-actions { display: flex; gap: .5rem; }
+.race-status { min-height: 1.5em; margin: .9rem 0; font-weight: 700; }
+
+.race-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+    align-items: start;
+    gap: 1rem;
+}
+
+.race-explainer { margin: 1.25rem 0; max-width: 56rem; }
+.race-explainer h2 { font-size: 1.3rem; }
+.race-explainer p { max-width: 70ch; }
+.race-explainer summary { color: #277758; font-weight: 700; cursor: pointer; }
+.race-explainer pre { margin: .75rem 0 0; padding: 1rem; border-radius: .65rem; background: #172445; color: #eef3ff; }
+
+@media (max-width: 920px) {
+    .race-layout { grid-template-columns: minmax(0, 1fr); }
+    .race-layout ::deep .race-stage { width: min(100%, 400px); }
+}
+
+@media (max-width: 620px) {
+    .race-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .race-actions { grid-column: 1 / -1; }
+}

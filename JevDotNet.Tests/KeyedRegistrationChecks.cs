@@ -3,9 +3,10 @@ using DecisionsDotNet;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-internal static class KeyedRegistrationChecks
+public sealed class KeyedRegistrationChecks
 {
-    public static async Task RunAsync()
+    [Fact]
+    public async Task KeyedClientsResolveIndependentlyAsync()
     {
         var services = new ServiceCollection();
         var seen = new List<string>();
@@ -29,17 +30,17 @@ internal static class KeyedRegistrationChecks
             .ConfigurePrimaryHttpMessageHandler(Stub);
 
         using var provider = services.BuildServiceProvider();
-        Check(provider.GetService<IDecisionsClient>() is null, "Keyed registrations add no default client");
+        Assert.True(provider.GetService<IDecisionsClient>() is null, "Keyed registrations add no default client");
         var direct = provider.GetRequiredKeyedService<IDecisionsClient>("direct");
         var router = provider.GetRequiredKeyedService<IDecisionsClient>("router");
         var local = provider.GetRequiredKeyedService<IDecisionsClient>("local");
-        Check(direct is JevClient && router is OpenRouterDecisionsClient && local is JevClient, "Keyed provider types");
+        Assert.True(direct is JevClient && router is OpenRouterDecisionsClient && local is JevClient, "Keyed provider types");
 
         var questions = new Dictionary<string, DecisionsQuestion> { ["ok"] = new NoulQuestion("OK?") };
         await direct.EvaluateAsync(new DecisionsRequest("x", questions));
         await router.EvaluateAsync(new DecisionsRequest("x", questions, "typesafe/jev-1.13"));
         await local.EvaluateAsync(new DecisionsRequest("x", questions));
-        Check(seen.SequenceEqual(new[]
+        Assert.True(seen.SequenceEqual(new[]
         {
             "https://api.typesafe.ai/v1/systemone Bearer direct-key",
             "https://openrouter.ai/api/alpha/decisions Bearer router-key",
@@ -63,7 +64,7 @@ internal static class KeyedRegistrationChecks
             await twinProvider.GetRequiredKeyedService<IDecisionsClient>(1).EvaluateAsync(new DecisionsRequest("x", questions));
             await twinProvider.GetRequiredKeyedService<IDecisionsClient>("1").EvaluateAsync(new DecisionsRequest("x", questions));
         }
-        Check(hits.SequenceEqual(new[] { "int", "string" }), "Keys with the same string form use separate pipelines");
+        Assert.True(hits.SequenceEqual(new[] { "int", "string" }), "Keys with the same string form use separate pipelines");
 
         ExpectArgument(() => new ServiceCollection().AddKeyedOpenRouterDecisionsClient("k", " "), "Keyed empty key");
         ExpectArgument(() => new ServiceCollection().AddKeyedJevSystemOneClient(null!, "key"), "Keyed null service key");
@@ -75,10 +76,6 @@ internal static class KeyedRegistrationChecks
         catch (ArgumentException) { }
     }
 
-    private static void Check(bool condition, string name)
-    {
-        if (!condition) throw new Exception($"Failed: {name}");
-    }
 
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {

@@ -1,0 +1,63 @@
+@using JevDotNet.Demo.Services
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="race-stage">
+    <canvas @ref="canvas" width="400" height="570" role="img" aria-label="Two dogs bouncing up a tower of floating platforms"></canvas>
+    <div class="race-scores">
+        @for (var i = 0; i < Names.Count; i++)
+        {
+            var score = Progress?[i].Score ?? 0;
+            <div class="race-score">
+                <div><span class="race-dog-dot"></span><span class="race-dog-name" title="@Names[i]">@Names[i]</span></div>
+                <strong>@score <small>/ @PlatformRaceDecisions.Goal</small></strong>
+                <progress max="@PlatformRaceDecisions.Goal" value="@score" aria-label="@($"{(i == 0 ? "Left" : "Right")} dog score")"></progress>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<string> Names { get; set; } = [];
+    [Parameter] public IReadOnlyList<RaceProgress>? Progress { get; set; }
+    [Parameter] public EventCallback<bool> Ready { get; set; }
+    [Parameter] public EventCallback<RaceHop> Hop { get; set; }
+    [Parameter] public EventCallback<RaceUpdate> Update { get; set; }
+
+    private ElementReference canvas;
+    private DotNetObjectReference<RaceBoard>? reference;
+    private RaceBoardInterop? interop;
+    private bool disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        reference = DotNetObjectReference.Create(this);
+        interop = new(JS, canvas);
+        try
+        {
+            await interop.InitializeAsync(reference);
+            if (!disposed) await Ready.InvokeAsync(true);
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException)
+        {
+            if (!disposed) await Ready.InvokeAsync(false);
+        }
+    }
+
+    public ValueTask<bool> StartAsync(int run) => interop!.StartAsync(run);
+    public ValueTask StopAsync(int run) => interop!.StopAsync(run);
+    public ValueTask ResetAsync() => interop!.ResetAsync();
+    public ValueTask<bool> QueueAsync(RaceHop hop, int? target) => interop!.QueueAsync(hop, target);
+    [JSInvokable] public Task OnHop(RaceHop hop) => InvokeAsync(() => Hop.InvokeAsync(hop));
+    [JSInvokable] public Task OnRaceUpdate(RaceUpdate update) => InvokeAsync(() => Update.InvokeAsync(update));
+
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        if (interop is not null) await interop.DisposeAsync();
+        reference?.Dispose();
+    }
+}

@@ -13,12 +13,15 @@ builder.Services.AddHostedService<DecisionModelsRefreshService>();
 if (!string.IsNullOrWhiteSpace(builder.Configuration["OpenRouter:ApiKey"]))
 {
     builder.Services.AddOpenRouterDecisionsClient(builder.Configuration);
+    builder.Services.AddKeyedOpenRouterDecisionsClient(PlatformRaceDecisions.ClientKey, builder.Configuration,
+        new OpenRouterDecisionsClientOptions { MaxAttempts = 1 });
     builder.Services.AddScoped<ILunaTriageClient>(services =>
         new LunaTriageAgent(services.GetRequiredService<IConfiguration>()["OpenRouter:ApiKey"]!));
     builder.Services.AddScoped<ILunaJudgeClient>(services =>
         new LunaJudgeAgent(services.GetRequiredService<IConfiguration>()["OpenRouter:ApiKey"]!));
 }
 builder.Services.AddScoped<DemoEvaluationService>();
+builder.Services.AddScoped<PlatformRaceDecisions>();
 builder.Services.AddScoped<BulkTriageService>();
 builder.Services.AddScoped<JudgeService>();
 builder.Services.AddSingleton(services => new LunaJudgeCache(Path.Combine(

@@ -8,6 +8,8 @@ dotnet add package DecisionsDotNet --prerelease
 
 The package ID and namespace are `DecisionsDotNet`. The repository and project folders keep their original `JevDotNet` names.
 
+[ExtractionsDotNet](ExtractionsDotNet/README.md) is a standalone companion package for discovering OpenRouter extraction models and extracting typed fields from text, images, and PDFs.
+
 ## Direct TypeSafe quick start
 
 Set `TYPESAFE_API_KEY` in your environment, then:
@@ -103,11 +105,11 @@ This registers `IDecisionsClient` and returns `IHttpClientBuilder` for HTTP pipe
 ## Verify
 
 ```powershell
-dotnet run --project JevDotNet.Tests/JevDotNet.Tests.csproj
+dotnet test --project JevDotNet.Tests/JevDotNet.Tests.csproj
 dotnet pack JevDotNet/JevDotNet.csproj
 ```
 
-The contract checks use fake HTTP handlers and need no API key. The direct client follows the [TypeSafe AI API reference](https://docs.typesafe.ai/api) and [model listing reference](https://docs.typesafe.ai/models).
+The xUnit v3 contract tests use fake HTTP handlers and need no API key. The direct client follows the [TypeSafe AI API reference](https://docs.typesafe.ai/api) and [model listing reference](https://docs.typesafe.ai/models).
 
 ## OpenRouter Decisions API
 

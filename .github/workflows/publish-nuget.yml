@@ -48,13 +48,15 @@ jobs:
         # Disable the library's automatic packaging to its local Windows path.
         run: dotnet build JevDotNet.slnx --configuration Release --no-restore -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
 
-      - name: Run contract checks
-        run: dotnet run --project JevDotNet.Tests/JevDotNet.Tests.csproj --configuration Release --no-build
+      - name: Run tests
+        run: dotnet test --project JevDotNet.Tests/JevDotNet.Tests.csproj --configuration Release --no-build
 
       - name: Pack JevDotNet
         run: dotnet pack JevDotNet/JevDotNet.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
       - name: Pack DecisionsDotNet.AI
         run: dotnet pack JevDotNet.AI/JevDotNet.AI.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
+      - name: Pack ExtractionsDotNet
+        run: dotnet pack ExtractionsDotNet/ExtractionsDotNet.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
       - name: Publish packages and symbols to nuget.org
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

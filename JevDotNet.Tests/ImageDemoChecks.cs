@@ -11,35 +11,36 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DecisionsDotNet;
 
-internal static class ImageDemoChecks
+public sealed class ImageDemoChecks
 {
-    internal static async Task RunAsync()
+    [Fact]
+    public async Task ImageDemosBuildRequestsAndRenderResultsAsync()
     {
         using var http = new HttpClient(new CatalogHandler());
         await DemoDecisionModels.RefreshAsync(http);
-        Check(ImageDemoCatalog.SupportedModels(false).Select(model => model.Id).SequenceEqual(new[] { "vision/model", "typesafe/jev-1.14" }),
+        Assert.True(ImageDemoCatalog.SupportedModels(false).Select(model => model.Id).SequenceEqual(new[] { "vision/model", "typesafe/jev-1.14" }),
             "Image demos exclude text-only models");
-        Check(ImageDemoCatalog.SupportedModels(true).Select(model => model.Id).SequenceEqual(new[] { "typesafe/jev-1.14" }),
+        Assert.True(ImageDemoCatalog.SupportedModels(true).Select(model => model.Id).SequenceEqual(new[] { "typesafe/jev-1.14" }),
             "Box demo excludes image models without known Box support");
         foreach (var image in ImageDemoCatalog.All)
         {
-            Check(image.Bytes.Span.StartsWith(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }), "Embedded demo image bytes");
+            Assert.True(image.Bytes.Span.StartsWith(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }), "Embedded demo image bytes");
             var original = FileHelper.ExtractFileBytesFromAssembly(image.Id == "breakfast"
                 ? "Rustic Half-Eaten Breakfast Table.png" : "New York - Alien Invasion.png");
             var offset = 8;
             while (!original.AsSpan(offset + 4, 4).SequenceEqual("IEND"u8))
                 offset += (int)BinaryPrimitives.ReadUInt32BigEndian(original.AsSpan(offset, 4)) + 12;
             var pngEnd = offset + 12;
-            Check(image.Bytes.Length == pngEnd && image.Bytes.Span.SequenceEqual(original.AsSpan(0, pngEnd)),
+            Assert.True(image.Bytes.Length == pngEnd && image.Bytes.Span.SequenceEqual(original.AsSpan(0, pngEnd)),
                 "Demo removes trailing PNG data without changing any PNG chunks or pixels");
             var analysis = ImageDemoCatalog.BuildRequest(image.Id, "vision/model", image.Question, false);
-            Check(analysis.Questions["question"] is NoulQuestion && analysis.Questions["scene"] is ChoiceQuestion &&
+            Assert.True(analysis.Questions["question"] is NoulQuestion && analysis.Questions["scene"] is ChoiceQuestion &&
                 analysis.Questions["activity"] is ScoreQuestion, "Image analysis question types");
-            Check(analysis.State.ToJsonElement()[1].GetProperty("image_url").GetProperty("url").GetString()!
+            Assert.True(analysis.State.ToJsonElement()[1].GetProperty("image_url").GetProperty("url").GetString()!
                 .StartsWith("data:image/png;base64,", StringComparison.Ordinal), "Demo sends inline image parts");
-            Check(analysis.State.ToJsonElement()[0].GetString() == image.Question, "Image question is plain text state context");
+            Assert.True(analysis.State.ToJsonElement()[0].GetString() == image.Question, "Image question is plain text state context");
             var box = ImageDemoCatalog.BuildRequest(image.Id, "typesafe/jev-1.14", image.Target, true);
-            Check(box.Questions["target"] is BoxQuestion && box.Questions["visible"] is NoulQuestion,
+            Assert.True(box.Questions["target"] is BoxQuestion && box.Questions["visible"] is NoulQuestion,
                 "Localization asks Box and presence questions together");
             await CheckOutgoingRequestAsync(analysis, image);
             await CheckOutgoingRequestAsync(box, image);
@@ -65,21 +66,21 @@ internal static class ImageDemoChecks
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
             var overlay = await RenderAsync<ImagePreview>(renderer, new() { ["Image"] = imageAsset, ["Box"] = bounds });
-            Check(overlay.Contains("x=\"100\"") && overlay.Contains("y=\"200\"") && overlay.Contains("width=\"600\"") &&
+            Assert.True(overlay.Contains("x=\"100\"") && overlay.Contains("y=\"200\"") && overlay.Contains("width=\"600\"") &&
                 overlay.Contains("height=\"600\"") && overlay.Contains("preserveAspectRatio=\"none\""), "Overlay maps normalized coordinates independently of culture");
             var preview = await RenderAsync<ImagePreview>(renderer, new() { ["Image"] = imageAsset });
-            Check(!preview.Contains("<svg") && preview.Contains(imageAsset.PreviewUrl), "Preview has no box before evaluation");
+            Assert.True(!preview.Contains("<svg") && preview.Contains(imageAsset.PreviewUrl), "Preview has no box before evaluation");
         }
         finally { CultureInfo.CurrentCulture = culture; }
 
         foreach (var locate in new[] { false, true })
         {
             var html = await RenderAsync<ImageDemoWorkspace>(renderer, new() { ["Locate"] = locate });
-            Check(html.Contains("OpenRouter API key needed") && html.Contains("disabled"), "Image pages show missing-key setup and disable evaluation");
-            Check(html.Contains(locate ? "Find target" : "Evaluate image") && html.Contains("typesafe/jev-1.14") &&
+            Assert.True(html.Contains("OpenRouter API key needed") && html.Contains("disabled"), "Image pages show missing-key setup and disable evaluation");
+            Assert.True(html.Contains(locate ? "Find target" : "Evaluate image") && html.Contains("typesafe/jev-1.14") &&
                 !html.Contains("Text only"), "Image page uses compatible model list");
-            Check(!locate || !html.Contains("Other vision model"), "Box page only offers known Box models");
-            Check(html.Contains(locate ? imageAsset.Target : imageAsset.Question) && !html.Contains("field-error"),
+            Assert.True(!locate || !html.Contains("Other vision model"), "Box page only offers known Box models");
+            Assert.True(html.Contains(locate ? imageAsset.Target : imageAsset.Question) && !html.Contains("field-error"),
                 "Demo controls receive the default prompt and no initial error");
         }
 
@@ -97,12 +98,12 @@ internal static class ImageDemoChecks
             ["Questions"] = ImageDemoCatalog.BuildRequest(imageAsset.Id, "typesafe/jev-1.14", imageAsset.Target, true).Questions,
             ["Elapsed"] = TimeSpan.FromSeconds(1)
         });
-        Check(result.Contains("90.0") && result.Contains("10.0") && result.Contains("View response JSON"), "Box result shows confidence, coordinates, and JSON");
+        Assert.True(result.Contains("90.0") && result.Contains("10.0") && result.Contains("View response JSON"), "Box result shows confidence, coordinates, and JSON");
 
         using var textOnly = new HttpClient(new CatalogHandler(textOnly: true));
         await DemoDecisionModels.RefreshAsync(textOnly);
         var empty = await RenderAsync<ImageDemoWorkspace>(renderer, new() { ["Locate"] = true });
-        Check(empty.Contains("No compatible models available") && empty.Contains("disabled"), "Empty image-model catalog disables evaluation");
+        Assert.True(empty.Contains("No compatible models available") && empty.Contains("disabled"), "Empty image-model catalog disables evaluation");
     }
 
     private static async Task CheckOutgoingRequestAsync(DecisionsRequest request, ImageDemoAsset image)
@@ -133,30 +134,26 @@ internal static class ImageDemoChecks
         throw new Exception("Expected invalid demo input error");
     }
 
-    private static void Check(bool condition, string name)
-    {
-        if (!condition) throw new Exception($"Failed: {name}");
-    }
 
     private sealed class OutgoingImageHandler(DecisionsRequest expected, ImageDemoAsset image) : HttpMessageHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Check(request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/api/alpha/decisions", "Image demo API endpoint");
+            Assert.True(request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/api/alpha/decisions", "Image demo API endpoint");
             using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
             var root = body.RootElement;
-            Check(root.GetProperty("model").GetString() == expected.Model, "Image demo wire model");
+            Assert.True(root.GetProperty("model").GetString() == expected.Model, "Image demo wire model");
             var state = root.GetProperty("state");
-            Check(state.ValueKind == JsonValueKind.Array && state.GetArrayLength() == 2 && state[0].ValueKind == JsonValueKind.String,
+            Assert.True(state.ValueKind == JsonValueKind.Array && state.GetArrayLength() == 2 && state[0].ValueKind == JsonValueKind.String,
                 "Image demo wire state matches text-plus-image example");
             var part = state[1];
-            Check(part.GetProperty("type").GetString() == "image_url" && part.EnumerateObject().Count() == 2,
+            Assert.True(part.GetProperty("type").GetString() == "image_url" && part.EnumerateObject().Count() == 2,
                 "Image demo wire image_url part");
             var url = part.GetProperty("image_url").GetProperty("url").GetString()!;
-            Check(url.StartsWith("data:image/png;base64,", StringComparison.Ordinal) &&
+            Assert.True(url.StartsWith("data:image/png;base64,", StringComparison.Ordinal) &&
                 Convert.FromBase64String(url[22..]).AsSpan().SequenceEqual(image.Bytes.Span), "Wire base64 is the complete cleaned PNG");
-            Check(!root.TryGetProperty("images", out _) && !root.TryGetProperty("assets", out _), "No unsupported top-level media fields");
-            Check(JsonElement.DeepEquals(root.GetProperty("questions"), JsonSerializer.SerializeToElement(expected.Questions)),
+            Assert.True(!root.TryGetProperty("images", out _) && !root.TryGetProperty("assets", out _), "No unsupported top-level media fields");
+            Assert.True(JsonElement.DeepEquals(root.GetProperty("questions"), JsonSerializer.SerializeToElement(expected.Questions)),
                 "Image demo wire question discriminators and instructions");
             return new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("fixture") };
         }

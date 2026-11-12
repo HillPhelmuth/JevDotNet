@@ -3,9 +3,10 @@ using DecisionsDotNet;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-internal static class DependencyInjectionChecks
+public sealed class DependencyInjectionChecks
 {
-    public static async Task RunAsync()
+    [Fact]
+    public async Task RegistrationsConfigureProvidersAsync()
     {
         foreach (var useConfiguration in new[] { false, true })
         {
@@ -69,12 +70,12 @@ internal static class DependencyInjectionChecks
                     {"data":[{"id":"typesafe/jev-1.13","architecture":{"input_modalities":["text"]}}]}
                     """) };
             calls++;
-            Check(message.Method == HttpMethod.Post, "DI evaluation method");
-            Check(message.RequestUri?.ToString() == expectedUrl, "DI provider endpoint");
-            Check(message.Headers.Authorization?.ToString() == $"Bearer {expectedKey}", "DI bearer key");
+            Assert.True(message.Method == HttpMethod.Post, "DI evaluation method");
+            Assert.True(message.RequestUri?.ToString() == expectedUrl, "DI provider endpoint");
+            Assert.True(message.Headers.Authorization?.ToString() == $"Bearer {expectedKey}", "DI bearer key");
             var body = message.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
-            Check(body.Contains($"\"model\":\"{model}\""), "DI request model");
-            Check(body.Contains("\"type\":\"choice\""), "DI typed question");
+            Assert.True(body.Contains($"\"model\":\"{model}\""), "DI request model");
+            Assert.True(body.Contains("\"type\":\"choice\""), "DI typed question");
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("""
@@ -85,7 +86,7 @@ internal static class DependencyInjectionChecks
 
         using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<IDecisionsClient>();
-        Check(openRouter ? client is OpenRouterDecisionsClient : client is JevClient, "DI provider selection");
+        Assert.True(openRouter ? client is OpenRouterDecisionsClient : client is JevClient, "DI provider selection");
         var request = new DecisionsRequest("A chase", new Dictionary<string, DecisionsQuestion>
         {
             ["move"] = new ChoiceQuestion("Which move?", new Dictionary<string, DecisionsValue?>
@@ -94,8 +95,8 @@ internal static class DependencyInjectionChecks
             })
         }, model);
         var response = await client.EvaluateAsync(request);
-        Check(response.GetAnswer<ChoiceAnswer>("move").Choice == "right", "DI typed answer");
-        Check(response.Usage.InputTokens == 12 && calls == 1, "DI response and single call");
+        Assert.True(response.GetAnswer<ChoiceAnswer>("move").Choice == "right", "DI typed answer");
+        Assert.True(response.Usage.InputTokens == 12 && calls == 1, "DI response and single call");
     }
 
     private static void ExpectArgument(Action action, string name)
@@ -110,10 +111,6 @@ internal static class DependencyInjectionChecks
         catch (InvalidOperationException error) when (error.Message.Contains(setting)) { }
     }
 
-    private static void Check(bool condition, string name)
-    {
-        if (!condition) throw new Exception($"Failed: {name}");
-    }
 
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {

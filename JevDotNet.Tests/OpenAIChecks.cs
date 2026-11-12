@@ -4,20 +4,21 @@ using DecisionsDotNet;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-internal static class OpenAIChecks
+public sealed class OpenAIChecks
 {
     private const string Png = "iVBORw0KGgo=";
 
-    public static async Task RunAsync()
+    [Fact]
+    public async Task OpenAIRequestsAndResponsesFollowTheContractAsync()
     {
         JsonElement sent = default;
         var calls = 0;
         var handler = new StubHandler(message =>
         {
             calls++;
-            Check(message.Method == HttpMethod.Post && message.RequestUri?.ToString() == "https://api.openai.com/v1/decisions", "OpenAI URL");
-            Check(message.Headers.Authorization?.ToString() == "Bearer openai-key", "OpenAI bearer key");
-            Check(message.Headers.GetValues("OpenAI-Project").Single() == "proj_1", "OpenAI project header");
+            Assert.True(message.Method == HttpMethod.Post && message.RequestUri?.ToString() == "https://api.openai.com/v1/decisions", "OpenAI URL");
+            Assert.True(message.Headers.Authorization?.ToString() == "Bearer openai-key", "OpenAI bearer key");
+            Assert.True(message.Headers.GetValues("OpenAI-Project").Single() == "proj_1", "OpenAI project header");
             if (calls == 1) return new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent("oops") };
             sent = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
             return Ok("""
@@ -39,27 +40,27 @@ internal static class OpenAIChecks
             .Score("anger", "How angry?", out var anger, "Calm", "Upset", "Furious")
             .Build(OpenAIDecisionsClient.DefaultModel));
 
-        Check(calls == 2, "OpenAI retries 500");
-        Check(sent.GetProperty("model").GetString() == "gpt-6-luna", "OpenAI model");
-        Check(sent.GetProperty("input").GetString() == "{\"ticket\":\"Charged twice\"}", "Structured state becomes JSON text input");
+        Assert.True(calls == 2, "OpenAI retries 500");
+        Assert.True(sent.GetProperty("model").GetString() == "gpt-6-luna", "OpenAI model");
+        Assert.True(sent.GetProperty("input").GetString() == "{\"ticket\":\"Charged twice\"}", "Structured state becomes JSON text input");
         var questions = sent.GetProperty("questions").EnumerateArray().ToArray();
-        Check(questions[0].GetProperty("type").GetString() == "predicate" && questions[0].GetProperty("name").GetString() == "urgent" &&
+        Assert.True(questions[0].GetProperty("type").GetString() == "predicate" && questions[0].GetProperty("name").GetString() == "urgent" &&
             questions[0].GetProperty("instructions").GetString() == "Is this urgent?\nTrue when: Blocking the customer\nFalse when: Can wait",
             "Noul maps to predicate with criteria in instructions");
         var choices = questions[1].GetProperty("choices").EnumerateArray().ToArray();
-        Check(questions[1].GetProperty("type").GetString() == "choice" && choices[0].GetProperty("value").GetString() == "billing" &&
+        Assert.True(questions[1].GetProperty("type").GetString() == "choice" && choices[0].GetProperty("value").GetString() == "billing" &&
             choices[0].GetProperty("description").GetString() == "Payments" && choices[1].GetProperty("description").GetString() == "other",
             "Choice maps to choices");
         var levels = questions[2].GetProperty("levels").EnumerateArray().ToArray();
-        Check(questions[2].GetProperty("type").GetString() == "score" && levels.Length == 3 &&
+        Assert.True(questions[2].GetProperty("type").GetString() == "score" && levels.Length == 3 &&
             levels[2].GetProperty("label").GetString() == "Furious", "Score maps to levels");
 
-        Check(response.Provider == "OpenAI" && response.Id == "dec_1" && response.Model == "gpt-6-luna-2026-09-01", "OpenAI metadata");
-        Check(response.Get(urgent).Noul == 0.92, "Predicate answer");
-        Check(response.Get(team).Choice == "billing" && response.Get(team).Probabilities["other"] == 0.3, "Choice answer");
-        Check(response.Get(anger).Score == 1.4 && response.Get(anger).Probabilities["2"] == 0.5 &&
+        Assert.True(response.Provider == "OpenAI" && response.Id == "dec_1" && response.Model == "gpt-6-luna-2026-09-01", "OpenAI metadata");
+        Assert.True(response.Get(urgent).Noul == 0.92, "Predicate answer");
+        Assert.True(response.Get(team).Choice == "billing" && response.Get(team).Probabilities["other"] == 0.3, "Choice answer");
+        Assert.True(response.Get(anger).Score == 1.4 && response.Get(anger).Probabilities["2"] == 0.5 &&
             response.Get(anger).Legend["1"] == "Upset", "Score answer");
-        Check(response.Usage.InputTokens == 40 && response.Usage.OutputTokens == 0, "OpenAI usage");
+        Assert.True(response.Usage.InputTokens == 40 && response.Usage.OutputTokens == 0, "OpenAI usage");
 
         // Images become a user message with ordered parts.
         using var imageClient = new OpenAIDecisionsClient("openai-key", new HttpClient(new StubHandler(message =>
@@ -72,10 +73,10 @@ internal static class OpenAIChecks
             .Noul("ok", "Does the photo match?").Build(OpenAIDecisionsClient.DefaultModel));
         var message = sent.GetProperty("input")[0];
         var parts = message.GetProperty("content").EnumerateArray().ToArray();
-        Check(message.GetProperty("role").GetString() == "user" && parts[0].GetProperty("type").GetString() == "input_text" &&
+        Assert.True(message.GetProperty("role").GetString() == "user" && parts[0].GetProperty("type").GetString() == "input_text" &&
             parts[1].GetProperty("type").GetString() == "input_image" &&
             parts[1].GetProperty("image_url").GetString() == $"data:image/png;base64,{Png}", "Image input parts");
-        Check(refused.Answers["ok"] is RefusalAnswer, "Refusal answer");
+        Assert.True(refused.Answers["ok"] is RefusalAnswer, "Refusal answer");
         try { refused.GetAnswer<NoulAnswer>("ok"); throw new Exception("Expected refusal to fail typed read"); }
         catch (InvalidOperationException) { }
 
@@ -96,7 +97,7 @@ internal static class OpenAIChecks
         }
         catch (JevApiException error)
         {
-            Check(error.Service == "OpenAI" && error.ResponseBody == "bad model", "OpenAI error details");
+            Assert.True(error.Service == "OpenAI" && error.ResponseBody == "bad model", "OpenAI error details");
         }
 
         var services = new ServiceCollection();
@@ -104,7 +105,7 @@ internal static class OpenAIChecks
             new Dictionary<string, string?> { ["OpenAI:ApiKey"] = "cfg-key" }).Build());
         services.AddKeyedOpenAIDecisionsClient("luna", "keyed-key");
         using var provider = services.BuildServiceProvider();
-        Check(provider.GetRequiredService<IDecisionsClient>() is OpenAIDecisionsClient &&
+        Assert.True(provider.GetRequiredService<IDecisionsClient>() is OpenAIDecisionsClient &&
             provider.GetRequiredKeyedService<IDecisionsClient>("luna") is OpenAIDecisionsClient, "OpenAI DI registration");
         try { new ServiceCollection().AddOpenAIDecisionsClient(new ConfigurationBuilder().Build()); throw new Exception("Expected missing key"); }
         catch (InvalidOperationException error) when (error.Message.Contains("OpenAI:ApiKey")) { }
@@ -118,10 +119,6 @@ internal static class OpenAIChecks
         catch (TException) { }
     }
 
-    private static void Check(bool condition, string name)
-    {
-        if (!condition) throw new Exception($"Failed: {name}");
-    }
 
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {
