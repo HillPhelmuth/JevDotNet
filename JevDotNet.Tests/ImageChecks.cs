@@ -2,37 +2,27 @@ using System.Net;
 using System.Text.Json;
 using DecisionsDotNet;
 
-internal static class ImageChecks
+public sealed class ImageChecks
 {
     private const string PngUrl = "data:image/png;base64,AQID";
     private const string JpegUrl = "data:image/jpeg;base64,BAUG";
     private static readonly IReadOnlyDictionary<string, DecisionsQuestion> Questions =
         new Dictionary<string, DecisionsQuestion> { ["visible"] = new NoulQuestion("Is the item visible?") };
 
-    internal static async Task RunAsync()
-    {
-        CheckFactories();
-        await CheckWireFormatsAsync();
-        await CheckValidationAsync();
-        await CheckModelSerializationAsync();
-        await CheckCatalogAsync();
-        await CheckDiscoveryIntegrationAsync();
-        await CheckRetriesAndErrorsAsync();
-    }
-
-    private static void CheckFactories()
+    [Fact]
+    public void Factories()
     {
         var bytes = new byte[] { 1, 2, 3 };
         var image = DecisionsValue.ImageFromBytes(bytes, "image/png");
         bytes[0] = 9;
-        Check(image.ToJsonElement().GetProperty("image_url").GetProperty("url").GetString() == PngUrl,
+        Assert.True(image.ToJsonElement().GetProperty("image_url").GetProperty("url").GetString() == PngUrl,
             "Byte helper snapshots the data");
-        Check(JsonElement.DeepEquals(image.ToJsonElement(), DecisionsValue.ImageFromDataUrl(PngUrl).ToJsonElement()),
+        Assert.True(JsonElement.DeepEquals(image.ToJsonElement(), DecisionsValue.ImageFromDataUrl(PngUrl).ToJsonElement()),
             "Data URL and byte helpers agree");
         var parts = new DecisionsValue[] { "Title", image };
         var state = DecisionsValue.FromParts(parts);
         parts[0] = "Changed";
-        Check(state.ToJsonElement()[0].GetString() == "Title", "Parts snapshot caller array");
+        Assert.True(state.ToJsonElement()[0].GetString() == "Title", "Parts snapshot caller array");
         foreach (var url in new[] { "", "https://example.com/a.png", "AQID", "data:image/gif;base64,AQID",
                      "data:image/png;base64,", "data:image/png;base64,!!!!", "data:image/png;base64,AQI",
                      "data:image/png;base64,AQ ID", "data:image/png;charset=utf8;base64,AQID" })
@@ -44,7 +34,8 @@ internal static class ImageChecks
         Expect<ArgumentNullException>(() => DecisionsValue.FromParts(null!));
     }
 
-    private static async Task CheckWireFormatsAsync()
+    [Fact]
+    public async Task WireFormatsAsync()
     {
         // Small synthetic payloads exercise the wire contract; no image decoding occurs in the SDK.
         var png = DecisionsValue.ImageFromDataUrl(PngUrl);
@@ -54,10 +45,10 @@ internal static class ImageChecks
         using (var client = Router(message =>
         {
             using var body = Body(message);
-            Check(JsonElement.DeepEquals(body.RootElement.GetProperty("state"), original), "OpenRouter preserves ordered image state");
-            Check(!body.RootElement.TryGetProperty("images", out _) && !body.RootElement.TryGetProperty("assets", out _),
+            Assert.True(JsonElement.DeepEquals(body.RootElement.GetProperty("state"), original), "OpenRouter preserves ordered image state");
+            Assert.True(!body.RootElement.TryGetProperty("images", out _) && !body.RootElement.TryGetProperty("assets", out _),
                 "OpenRouter uses state image parts");
-            Check(!message.Headers.Contains("TypeSafe-Danger-Zone-Images"), "TypeSafe header stays off OpenRouter");
+            Assert.True(!message.Headers.Contains("TypeSafe-Danger-Zone-Images"), "TypeSafe header stays off OpenRouter");
             return Success();
         }, "image")) await client.EvaluateAsync(Request(state));
 
@@ -67,27 +58,27 @@ internal static class ImageChecks
             var root = body.RootElement;
             var sent = root.GetProperty("state");
             var assets = root.GetProperty("assets");
-            Check(sent[0].GetString() == "Listing" && sent[2].GetProperty("item").GetString() == "sticker",
+            Assert.True(sent[0].GetString() == "Listing" && sent[2].GetProperty("item").GetString() == "sticker",
                 "Direct context order preserved");
-            Check(assets.EnumerateObject().Count() == 2, "Direct asset count");
+            Assert.True(assets.EnumerateObject().Count() == 2, "Direct asset count");
             foreach (var index in new[] { 1, 3 })
             {
                 var reference = sent[index].GetString()!;
-                Check(Guid.TryParse(reference, out var parsedReference), "Direct references are UUIDs");
+                Assert.True(Guid.TryParse(reference, out var parsedReference), "Direct references are UUIDs");
                 var asset = assets.GetProperty(reference);
-                Check(asset.GetProperty("type").GetString() == "image" &&
+                Assert.True(asset.GetProperty("type").GetString() == "image" &&
                     asset.GetProperty("format").GetString() == (index == 1 ? "png" : "jpg") &&
                     asset.GetProperty("data_base64").GetString() == (index == 1 ? "AQID" : "BAUG"), "Direct asset encoding");
             }
-            Check(message.Headers.GetValues("TypeSafe-Danger-Zone-Images").Single() == "true", "Direct image header");
+            Assert.True(message.Headers.GetValues("TypeSafe-Danger-Zone-Images").Single() == "true", "Direct image header");
             return Task.FromResult(Success());
         })))) await client.EvaluateAsync(Request(state, "jev-latest"));
-        Check(JsonElement.DeepEquals(state.ToJsonElement(), original), "Both clients preserve caller state");
+        Assert.True(JsonElement.DeepEquals(state.ToJsonElement(), original), "Both clients preserve caller state");
 
         using var single = Router(message =>
         {
             using var body = Body(message);
-            Check(body.RootElement.GetProperty("state").GetArrayLength() == 1, "Standalone image normalized");
+            Assert.True(body.RootElement.GetProperty("state").GetArrayLength() == 1, "Standalone image normalized");
             return Success();
         }, "image");
         await single.EvaluateAsync(Request(png));
@@ -101,7 +92,7 @@ internal static class ImageChecks
             {
                 using var body = Body(message);
                 var sent = body.RootElement.GetProperty("state");
-                Check(sent.GetArrayLength() == 1 && sent[0].ValueKind == JsonValueKind.String &&
+                Assert.True(sent.GetArrayLength() == 1 && sent[0].ValueKind == JsonValueKind.String &&
                     body.RootElement.GetProperty("assets").TryGetProperty(sent[0].GetString()!, out var asset),
                     "Known direct model accepts standalone image");
                 return Task.FromResult(Success());
@@ -110,7 +101,8 @@ internal static class ImageChecks
         }
     }
 
-    private static async Task CheckValidationAsync()
+    [Fact]
+    public async Task ValidationAsync()
     {
         var image = DecisionsValue.ImageFromDataUrl(PngUrl);
         var nestedStates = new[]
@@ -157,7 +149,8 @@ internal static class ImageChecks
         await ExpectAsync<NotSupportedException>(() => textOnly.EvaluateAsync(Request(image, "jev-latest")));
     }
 
-    private static async Task CheckModelSerializationAsync()
+    [Fact]
+    public async Task ModelSerializationAsync()
     {
         var states = new[] { DecisionsValue.FromObject(new { text = "Help" }), DecisionsValue.FromParts("Help", DecisionsValue.FromObject(new { count = 2 })),
             DecisionsValue.Text(""), DecisionsValue.Text("Quotes: \"help\"\nUnicode: café 日本語 😀"), DecisionsValue.Text("{\"x\":1}") };
@@ -171,11 +164,11 @@ internal static class ImageChecks
                 var original = state.ToJsonElement();
                 if (mode == "text" && original.ValueKind != JsonValueKind.String)
                 {
-                    Check(sent.ValueKind == JsonValueKind.String, "Text-only structured state becomes text");
+                    Assert.True(sent.ValueKind == JsonValueKind.String, "Text-only structured state becomes text");
                     using var parsed = JsonDocument.Parse(sent.GetString()!);
-                    Check(JsonElement.DeepEquals(parsed.RootElement, original), "JSON text preserves structure");
+                    Assert.True(JsonElement.DeepEquals(parsed.RootElement, original), "JSON text preserves structure");
                 }
-                else Check(JsonElement.DeepEquals(sent, original), "Multimodal structure and plain strings preserved");
+                else Assert.True(JsonElement.DeepEquals(sent, original), "Multimodal structure and plain strings preserved");
                 return Success();
             }, mode);
             await client.EvaluateAsync(Request(state));
@@ -186,9 +179,9 @@ internal static class ImageChecks
             using var client = new JevClient("key", new HttpClient(new Handler((message, _) =>
             {
                 using var body = Body(message);
-                Check(body.RootElement.GetProperty("state").ValueKind ==
+                Assert.True(body.RootElement.GetProperty("state").ValueKind ==
                     (model == "configured-text" ? JsonValueKind.String : JsonValueKind.Object), "Direct state capability selection");
-                Check(!message.Headers.Contains("TypeSafe-Danger-Zone-Images") && !body.RootElement.TryGetProperty("assets", out var unusedAssets),
+                Assert.True(!message.Headers.Contains("TypeSafe-Danger-Zone-Images") && !body.RootElement.TryGetProperty("assets", out var unusedAssets),
                     "Text request has no image header or assets");
                 return Task.FromResult(Success());
             })), new JevClientOptions { ModelInputModalitiesOverrides = Overrides("configured-text", "text") });
@@ -199,7 +192,7 @@ internal static class ImageChecks
         var overrides = new Dictionary<string, IReadOnlyList<string>> { ["test/model"] = configuredInputs };
         using var configured = new OpenRouterDecisionsClient("key", new HttpClient(new Handler((message, _) =>
         {
-            Check(message.Method == HttpMethod.Post, "Overrides bypass catalog discovery");
+            Assert.True(message.Method == HttpMethod.Post, "Overrides bypass catalog discovery");
             return Task.FromResult(Success());
         })), new OpenRouterDecisionsClientOptions { ModelInputModalitiesOverrides = overrides });
         configuredInputs[1] = "text";
@@ -211,7 +204,8 @@ internal static class ImageChecks
         await directCustom.EvaluateAsync(Request(DecisionsValue.ImageFromDataUrl(PngUrl), "custom"));
     }
 
-    private static async Task CheckCatalogAsync()
+    [Fact]
+    public async Task CatalogAsync()
     {
         var clock = new TestClock();
         var catalog = new OpenRouterModelCatalog(clock);
@@ -221,28 +215,28 @@ internal static class ImageChecks
         using var http = new HttpClient(new Handler((message, _) =>
         {
             calls++;
-            Check(message.Method == HttpMethod.Get && message.RequestUri == new Uri(baseUri, "api/v1/models?output_modalities=decisions"),
+            Assert.True(message.Method == HttpMethod.Get && message.RequestUri == new Uri(baseUri, "api/v1/models?output_modalities=decisions"),
                 "Catalog endpoint");
-            Check(message.Headers.Authorization is null, "Public catalog sends no credentials");
+            Assert.True(message.Headers.Authorization is null, "Public catalog sends no credentials");
             return Task.FromResult(fail ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) : Catalog());
         }));
-        Check((await catalog.ResolveAsync(http, baseUri, "test/model", default))!.Contains("image"), "Discover image support");
-        Check((await catalog.ResolveAsync(http, baseUri, "test/model-pinned", default))!.Contains("image"), "Canonical slug lookup");
-        Check(await catalog.ResolveAsync(http, baseUri, "missing", default) is null, "Unknown model unresolved");
-        Check(await catalog.ResolveAsync(http, baseUri, "missing/modalities", default) is null, "Missing modalities unresolved");
-        Check(calls == 1, "Cache reused across models");
+        Assert.True((await catalog.ResolveAsync(http, baseUri, "test/model", default))!.Contains("image"), "Discover image support");
+        Assert.True((await catalog.ResolveAsync(http, baseUri, "test/model-pinned", default))!.Contains("image"), "Canonical slug lookup");
+        Assert.True(await catalog.ResolveAsync(http, baseUri, "missing", default) is null, "Unknown model unresolved");
+        Assert.True(await catalog.ResolveAsync(http, baseUri, "missing/modalities", default) is null, "Missing modalities unresolved");
+        Assert.True(calls == 1, "Cache reused across models");
         clock.Advance(TimeSpan.FromMinutes(14));
         await catalog.ResolveAsync(http, baseUri, "test/model", default);
-        Check(calls == 1, "Cache lives for 15 minutes");
+        Assert.True(calls == 1, "Cache lives for 15 minutes");
         fail = true;
         clock.Advance(TimeSpan.FromMinutes(1));
-        Check((await catalog.ResolveAsync(http, baseUri, "test/model", default))!.Contains("image"), "Failed refresh retains snapshot");
+        Assert.True((await catalog.ResolveAsync(http, baseUri, "test/model", default))!.Contains("image"), "Failed refresh retains snapshot");
         await catalog.ResolveAsync(http, baseUri, "test/model", default);
-        Check(calls == 2, "Failed refresh observes retry interval");
+        Assert.True(calls == 2, "Failed refresh observes retry interval");
         clock.Advance(TimeSpan.FromMinutes(15));
         fail = false;
         await catalog.ResolveAsync(http, baseUri, "test/model", default);
-        Check(calls == 3, "Refresh recovers after failure");
+        Assert.True(calls == 3, "Refresh recovers after failure");
 
         clock.Advance(TimeSpan.FromMinutes(15));
         using var malformed = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -251,11 +245,12 @@ internal static class ImageChecks
                 {"data":[{"id":"test/model","architecture":{"input_modalities":["text"]}},{"id":null}]}
                 """)
         })));
-        Check((await catalog.ResolveAsync(malformed, baseUri, "test/model", default))!.Contains("image"),
+        Assert.True((await catalog.ResolveAsync(malformed, baseUri, "test/model", default))!.Contains("image"),
             "Invalid refresh never publishes a partial snapshot");
     }
 
-    private static async Task CheckDiscoveryIntegrationAsync()
+    [Fact]
+    public async Task DiscoveryIntegrationAsync()
     {
         var gets = 0;
         var posts = 0;
@@ -265,14 +260,14 @@ internal static class ImageChecks
             if (message.Method == HttpMethod.Get) { gets++; return Task.FromResult(Catalog()); }
             posts++;
             using var body = Body(message);
-            Check(body.RootElement.GetProperty("state").ValueKind == JsonValueKind.Array, "Discovered image model uses native state");
+            Assert.True(body.RootElement.GetProperty("state").ValueKind == JsonValueKind.Array, "Discovered image model uses native state");
             return Task.FromResult(Success());
         }));
         using (var first = new OpenRouterDecisionsClient("key", http, new() { BaseUri = baseUri }))
             await first.EvaluateAsync(Request(DecisionsValue.ImageFromDataUrl(PngUrl)));
         using (var second = new OpenRouterDecisionsClient("other-key", http, new() { BaseUri = baseUri }))
             await second.EvaluateAsync(Request(DecisionsValue.ImageFromDataUrl(PngUrl), "test/model-pinned"));
-        Check(gets == 1 && posts == 2, "Catalog shared across client instances and credentials");
+        Assert.True(gets == 1 && posts == 2, "Catalog shared across client instances and credentials");
 
         foreach (var catalogBody in new[] { "unparseable", "{}", "{\"data\":[]}", "{\"data\":[{\"id\":\"unknown\"}]}" })
         {
@@ -287,13 +282,13 @@ internal static class ImageChecks
                 }
                 evaluations++;
                 using var body = Body(message);
-                Check(body.RootElement.GetProperty("state").ValueKind == JsonValueKind.String, "Unresolved model text fallback");
+                Assert.True(body.RootElement.GetProperty("state").ValueKind == JsonValueKind.String, "Unresolved model text fallback");
                 return Task.FromResult(Success());
             }));
             using var fallback = new OpenRouterDecisionsClient("key", fallbackHttp, new() { BaseUri = UniqueUri() });
             await fallback.EvaluateAsync(Request(DecisionsValue.FromObject(new { x = 1 })));
             await ExpectAsync<NotSupportedException>(() => fallback.EvaluateAsync(Request(DecisionsValue.ImageFromDataUrl(PngUrl))));
-            Check(lookups == 1 && evaluations == 1, "Unknown images rejected and failed lookup cached");
+            Assert.True(lookups == 1 && evaluations == 1, "Unknown images rejected and failed lookup cached");
         }
 
         foreach (var failure in new[] { "http", "network", "timeout" })
@@ -310,13 +305,13 @@ internal static class ImageChecks
             using var client = new OpenRouterDecisionsClient("key", fallbackHttp, new() { BaseUri = UniqueUri() });
             await client.EvaluateAsync(Request("text"));
             await ExpectAsync<NotSupportedException>(() => client.EvaluateAsync(Request(DecisionsValue.ImageFromDataUrl(PngUrl))));
-            Check(lookups == 1, "Failed catalog lookup cooldown");
+            Assert.True(lookups == 1, "Failed catalog lookup cooldown");
         }
 
         using var cancellation = new CancellationTokenSource();
         using var cancelHttp = new HttpClient(new Handler((message, token) =>
         {
-            Check(message.Method == HttpMethod.Get, "Canceled discovery never evaluates");
+            Assert.True(message.Method == HttpMethod.Get, "Canceled discovery never evaluates");
             cancellation.Cancel();
             token.ThrowIfCancellationRequested();
             throw new Exception("Expected cancellation");
@@ -352,9 +347,9 @@ internal static class ImageChecks
         release.TrySetResult();
         await first;
         await Task.WhenAll(others);
-        Check(calls == 1, "Concurrent lookups coalesce");
+        Assert.True(calls == 1, "Concurrent lookups coalesce");
         await cache.ResolveAsync(http, UniqueUri(), "test/model", default);
-        Check(calls == 2, "Catalog caches isolated by base URI");
+        Assert.True(calls == 2, "Catalog caches isolated by base URI");
 
         var cancellationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var cancelHttp = new HttpClient(new Handler(async (_, token) =>
@@ -369,11 +364,12 @@ internal static class ImageChecks
         await cancellationStarted.Task;
         cancellation.Cancel();
         await ExpectAsync<OperationCanceledException>(async () => await fetch);
-        Check((await cache.ResolveAsync(http, canceledUri, "test/model", default))!.Contains("image"),
+        Assert.True((await cache.ResolveAsync(http, canceledUri, "test/model", default))!.Contains("image"),
             "Canceled fetch does not poison cache or impose cooldown");
     }
 
-    private static async Task CheckRetriesAndErrorsAsync()
+    [Fact]
+    public async Task RetriesAndErrorsAsync()
     {
         foreach (var direct in new[] { false, true })
         {
@@ -383,14 +379,14 @@ internal static class ImageChecks
             {
                 var body = message.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
                 firstBody ??= body;
-                Check(body == firstBody, "Image retry bodies and references are identical");
+                Assert.True(body == firstBody, "Image retry bodies and references are identical");
                 return Task.FromResult(++calls == 1 ? new HttpResponseMessage(HttpStatusCode.TooManyRequests) : Success());
             }));
             using var jev = new JevClient("key", http, new() { InitialRetryDelay = TimeSpan.Zero, MaxRetryDelay = TimeSpan.Zero });
             using var router = new OpenRouterDecisionsClient("key", http, RouterOptions("image"));
             IDecisionsClient client = direct ? jev : router;
             await client.EvaluateAsync(Request(DecisionsValue.ImageFromDataUrl(PngUrl), direct ? "jev-latest" : "test/model"));
-            Check(calls == 2, "Image retries succeed");
+            Assert.True(calls == 2, "Image retries succeed");
 
             using var canceled = new CancellationTokenSource();
             canceled.Cancel();
@@ -411,7 +407,7 @@ internal static class ImageChecks
             }
             catch (JevApiException error)
             {
-                Check((int)error.StatusCode == status && error.ResponseBody == "image rejected" &&
+                Assert.True((int)error.StatusCode == status && error.ResponseBody == "image rejected" &&
                     error.Service == (direct ? "TypeSafe" : "OpenRouter"), "Image provider error retained");
             }
         }
@@ -437,21 +433,13 @@ internal static class ImageChecks
     private static HttpResponseMessage Success() => new(HttpStatusCode.OK) { Content = new StringContent("""
         {"model":"test/model","answers":{"visible":{"type":"noul","noul":0.9}},"usage":{"input_tokens":100,"output_tokens":0}}
         """) };
-    private static void Check(bool condition, string message)
-    {
-        if (!condition) throw new Exception($"Failed: {message}");
-    }
     private static void Expect<T>(Action action) where T : Exception
     {
-        try { action(); }
-        catch (T) { return; }
-        throw new Exception($"Expected {typeof(T).Name}");
+        Assert.ThrowsAny<T>(action);
     }
     private static async Task ExpectAsync<T>(Func<Task> action) where T : Exception
     {
-        try { await action(); }
-        catch (T) { return; }
-        throw new Exception($"Expected {typeof(T).Name}");
+        await Assert.ThrowsAnyAsync<T>(action);
     }
     private sealed class Handler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler
     {

@@ -1,0 +1,61 @@
+@page "/platform-race"
+@using JevDotNet.Demo.Components.Race
+@using JevDotNet.Demo.Services
+@implements IAsyncDisposable
+
+<PageTitle>Platform Race · JevDotNet Demo</PageTitle>
+
+<div class="page-heading race-heading">
+    <div>
+        <a class="back-link" href="/">← All demos</a>
+        <h1>Platform Race<span class="title-period">.</span></h1>
+        <p>Pick two decision models and race their dogs up the same tower. First to 500 wins.</p>
+    </div>
+</div>
+
+@if (!Decisions.Available)
+{
+    <ApiKeyNotice />
+}
+
+<div class="race-controls">
+    <label>
+        Left dog model
+        <select class="model-select" @bind="left" disabled="@Locked">
+            @foreach (var model in models) { <option @key="model.Id" value="@model.Id">@model.Name</option> }
+        </select>
+    </label>
+    <label>
+        Right dog model
+        <select class="model-select" @bind="right" disabled="@Locked">
+            @foreach (var model in models) { <option @key="model.Id" value="@model.Id">@model.Name</option> }
+        </select>
+    </label>
+    <div class="race-actions">
+        @if (round?.Running == true)
+        {
+            <button class="button button-primary" disabled="@changingBoard" @onclick="StopAsync">Stop</button>
+        }
+        else
+        {
+            <button class="button button-primary" disabled="@(!CanStart)" @onclick="StartAsync">Start race</button>
+        }
+        <button class="button" disabled="@(!boardReady || changingBoard || round is null)" @onclick="ResetAsync">Reset</button>
+    </div>
+</div>
+
+<p class="race-status" role="status">@status</p>
+<div class="race-layout">
+    <RaceBoard @ref="board" Names="@(round?.Names ?? SelectedNames)" Progress="@round?.Progress"
+               Ready="BoardReady" Hop="OnHopAsync" Update="OnUpdateAsync" />
+    <RaceTelemetry Names="@(round?.Names ?? SelectedNames)" Round="round" />
+</div>
+
+<section class="race-explainer" aria-labelledby="race-how-title">
+    <h2 id="race-how-title">How it works</h2>
+    <p>The game checks which platforms each dog can reach. The model picks one using its height and sideways distance. A dog bounces in place while waiting for an answer, then steers toward the numbered platform on its next jump. Bones are counted separately from the score.</p>
+    <details>
+        <summary>View C# example</summary>
+        <pre><code>@CodeExample</code></pre>
+    </details>
+</section>

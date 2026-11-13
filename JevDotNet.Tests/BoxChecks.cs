@@ -2,13 +2,14 @@ using System.Net;
 using System.Text.Json;
 using DecisionsDotNet;
 
-internal static class BoxChecks
+public sealed class BoxChecks
 {
     private const string Answer = """
         {"type":"box","box":{"top":0.25,"bottom":0.82,"left":0.44,"right":0.84},"confidence":0.92}
         """;
 
-    internal static async Task RunAsync()
+    [Fact]
+    public async Task BoundingBoxesValidateAndRoundTripAsync()
     {
         try { _ = new BoxQuestion(null!); throw new Exception("Expected null instructions error"); }
         catch (ArgumentNullException) { }
@@ -26,24 +27,24 @@ internal static class BoxChecks
             string? firstBody = null;
             using var http = new HttpClient(new Handler(message =>
             {
-                Check(message.Method == HttpMethod.Post, "Box evaluation method");
+                Assert.True(message.Method == HttpMethod.Post, "Box evaluation method");
                 var text = message.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
                 firstBody ??= text;
-                Check(text == firstBody, "Box retry body is unchanged");
+                Assert.True(text == firstBody, "Box retry body is unchanged");
                 using var body = JsonDocument.Parse(text);
                 var question = body.RootElement.GetProperty("questions").GetProperty("mug");
-                Check(question.GetProperty("type").GetString() == "box" &&
+                Assert.True(question.GetProperty("type").GetString() == "box" &&
                     question.GetProperty("instructions").GetString() == "Find the coffee mug in the photo." &&
                     !question.TryGetProperty("criteria", out _), "Box question has instructions and no criteria");
                 if (direct)
                 {
-                    Check(message.Headers.GetValues("TypeSafe-Danger-Zone-Images").Single() == "true", "Direct Box header");
-                    Check(body.RootElement.GetProperty("assets").EnumerateObject().Count() == 1, "Box image asset");
+                    Assert.True(message.Headers.GetValues("TypeSafe-Danger-Zone-Images").Single() == "true", "Direct Box header");
+                    Assert.True(body.RootElement.GetProperty("assets").EnumerateObject().Count() == 1, "Box image asset");
                 }
                 else
                 {
-                    Check(!message.Headers.Contains("TypeSafe-Danger-Zone-Images"), "OpenRouter excludes direct header");
-                    Check(body.RootElement.GetProperty("state")[1].GetProperty("type").GetString() == "image_url", "Box image part");
+                    Assert.True(!message.Headers.Contains("TypeSafe-Danger-Zone-Images"), "OpenRouter excludes direct header");
+                    Assert.True(body.RootElement.GetProperty("state")[1].GetProperty("type").GetString() == "image_url", "Box image part");
                 }
                 if (++calls == 1) return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
                 return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""
@@ -64,11 +65,11 @@ internal static class BoxChecks
             IDecisionsClient client = direct ? jev : router;
             var response = await client.EvaluateAsync(request);
             var answer = response.GetAnswer<BoxAnswer>("mug");
-            Check(answer.Box.Top == 0.25 && answer.Box.Bottom == 0.82 && answer.Box.Left == 0.44 &&
+            Assert.True(answer.Box.Top == 0.25 && answer.Box.Bottom == 0.82 && answer.Box.Left == 0.44 &&
                 answer.Box.Right == 0.84 && answer.Confidence == 0.92, "Typed Box coordinates and confidence");
-            Check(response.GetAnswer<NoulAnswer>("visible").Noul == 0.98 && calls == 2, "Mixed Box and Noul request");
+            Assert.True(response.GetAnswer<NoulAnswer>("visible").Noul == 0.98 && calls == 2, "Mixed Box and Noul request");
             var roundTrip = JsonSerializer.Deserialize<JevAnswer>(JsonSerializer.Serialize<JevAnswer>(answer));
-            Check(roundTrip is BoxAnswer box && box == answer, "Box answer round trip");
+            Assert.True(roundTrip is BoxAnswer box && box == answer, "Box answer round trip");
         }
 
         var questions = new Dictionary<string, DecisionsQuestion> { ["mug"] = new BoxQuestion("Find the mug.") };
@@ -96,13 +97,13 @@ internal static class BoxChecks
             var fullImage = Answer.Replace("0.25", "0").Replace("0.82", "1").Replace("0.44", "0")
                 .Replace("0.84", "1").Replace("0.92", confidence);
             var answer = JevResponseValidator.DeserializeAndValidate(Response(fullImage), questions).GetAnswer<BoxAnswer>("mug");
-            Check(answer.Box.Left == 0 && answer.Box.Right == 1, "Box accepts inclusive interval boundaries");
+            Assert.True(answer.Box.Left == 0 && answer.Box.Right == 1, "Box accepts inclusive interval boundaries");
         }
 
         // Box itself requires the direct header even when the server will need to reject missing image input.
         using var headerHttp = new HttpClient(new Handler(message =>
         {
-            Check(message.Headers.Contains("TypeSafe-Danger-Zone-Images"), "Box without image still enables required header");
+            Assert.True(message.Headers.Contains("TypeSafe-Danger-Zone-Images"), "Box without image still enables required header");
             return new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("Box requires an image") };
         }));
         using var headerClient = new JevClient("key", headerHttp);
@@ -125,10 +126,6 @@ internal static class BoxChecks
         throw new Exception("Expected invalid Box response to fail validation");
     }
 
-    private static void Check(bool condition, string message)
-    {
-        if (!condition) throw new Exception($"Failed: {message}");
-    }
 
     private sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {

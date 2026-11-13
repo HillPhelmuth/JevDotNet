@@ -1,0 +1,80 @@
+@using System.Globalization
+@using JevDotNet.Demo.Services
+
+@{
+    var rows = Round?.Requests ?? Array.Empty<RaceRequest>();
+}
+<section class="race-panel" aria-labelledby="race-timeline-title">
+    <h2 id="race-timeline-title">Request timeline</h2>
+    <dl class="race-metrics">
+        <div><dt>Calls</dt><dd>@rows.Count</dd></div>
+        <div><dt>Errors</dt><dd>@rows.Count(row => row.Status == RaceRequestStatus.Error)</dd></div>
+        <div><dt>p50</dt><dd>@Latency(rows, .50)</dd></div>
+        <div><dt>p90</dt><dd>@Latency(rows, .90)</dd></div>
+        <div><dt>Used</dt><dd>@rows.Count(row => row.Status == RaceRequestStatus.Used)</dd></div>
+        <div><dt>Reported cost</dt><dd>@Cost(rows)</dd></div>
+    </dl>
+    @if (rows.Count == 0)
+    {
+        <p class="race-empty">Each dog’s model requests will appear here once the race starts.</p>
+    }
+    else
+    {
+        <div class="race-history" tabindex="0" role="region" aria-label="Latest 100 race requests">
+            <ol>
+                @foreach (var row in rows.OrderByDescending(row => row.Id).Take(100))
+                {
+                    <li @key="row.Id">
+                        <span class="race-time">@TimeSpan.FromSeconds(row.Elapsed).ToString(@"mm\:ss\.f", CultureInfo.InvariantCulture)</span>
+                        <span class="race-runner" title="@Names[row.Racer]"><span class="race-marker" data-racer="@row.Racer"></span>@Names[row.Racer]</span>
+                        <span class="race-request-state" data-state="@row.Status">@Status(row.Status)</span>
+                        <span class="race-time">@(row.Latency is { } latency ? FormatLatency(latency) : "—")</span>
+                        @if (row.Detail is not null) { <span class="race-request-detail">@row.Detail</span> }
+                    </li>
+                }
+            </ol>
+        </div>
+    }
+</section>
+<section class="race-panel race-benchmark" aria-labelledby="race-benchmark-title">
+    <h2 id="race-benchmark-title">Benchmark</h2>
+    <div class="race-table-wrap" tabindex="0" role="region" aria-label="Race benchmark table">
+        <table>
+            <thead>
+                <tr><th scope="col">Model</th><th scope="col">Score</th><th scope="col">Model hops</th><th scope="col">Waits</th><th scope="col">Missed</th><th scope="col">Errors</th><th scope="col">Bones</th><th scope="col">Median</th><th scope="col">Reported cost</th></tr>
+            </thead>
+            <tbody>
+                @for (var racer = 0; racer < Names.Count; racer++)
+                {
+                    var index = racer;
+                    var stats = Round?.Progress[index];
+                    var calls = rows.Where(row => row.Racer == index).ToArray();
+                    <tr>
+                        <th scope="row"><span class="race-marker" data-racer="@index"></span>@Names[index]</th>
+                        <td>@(stats?.Score ?? 0)</td><td>@(stats?.Hops ?? 0)</td><td>@(stats?.Waits ?? 0)</td>
+                        <td>@(stats?.Misses ?? 0)</td><td>@calls.Count(row => row.Status == RaceRequestStatus.Error)</td>
+                        <td>@(stats?.Bones ?? 0)</td><td>@Latency(calls, .50)</td><td>@Cost(calls)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<string> Names { get; set; } = [];
+    [Parameter] public PlatformRaceRound? Round { get; set; }
+
+    private static string Status(RaceRequestStatus status) => status == RaceRequestStatus.InFlight ? "In flight" : status.ToString();
+    private static string FormatLatency(double milliseconds) => $"{milliseconds:0} ms";
+    private static string Latency(IEnumerable<RaceRequest> rows, double percentile) =>
+        PlatformRaceRound.Percentile(rows, percentile) is { } value ? FormatLatency(value) : "—";
+
+    private static string Cost(IEnumerable<RaceRequest> rows)
+    {
+        var settled = rows.Where(row => row.Status != RaceRequestStatus.InFlight).ToArray();
+        if (settled.Length == 0 || settled.All(row => row.Cost is null)) return "—";
+        var total = settled.Sum(row => row.Cost).GetValueOrDefault().ToString("$0.000000", CultureInfo.InvariantCulture);
+        return settled.Any(row => row.Cost is null) ? $"{total} + unknown" : total;
+    }
+}

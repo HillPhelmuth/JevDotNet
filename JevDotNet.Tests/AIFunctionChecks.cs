@@ -5,9 +5,10 @@ using DecisionsDotNet.AI;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
-internal static class AIFunctionChecks
+public sealed class AIFunctionChecks
 {
-    public static async Task RunAsync()
+    [Fact]
+    public async Task ToolsExposeSchemasAndEvaluateDecisionsAsync()
     {
         DecisionsRequest? sent = null;
         var client = new FakeClient(request =>
@@ -35,17 +36,17 @@ internal static class AIFunctionChecks
                 .Noul("refund", "Wants money back?")
                 .Choice("team", "Which team?", "billing", "other")
                 .Questions, "typesafe/jev-1.14");
-        Check(triage.Name == "triage_ticket" && triage.Description == "Scores a ticket.", "Fixed tool metadata");
+        Assert.True(triage.Name == "triage_ticket" && triage.Description == "Scores a ticket.", "Fixed tool metadata");
         var schema = triage.JsonSchema.GetProperty("properties");
-        Check(schema.TryGetProperty("input", out _) && !schema.TryGetProperty("cancellationToken", out _), "Fixed tool schema");
+        Assert.True(schema.TryGetProperty("input", out _) && !schema.TryGetProperty("cancellationToken", out _), "Fixed tool schema");
 
         var result = Parse(await triage.InvokeAsync(new AIFunctionArguments { ["input"] = "Charged twice" }));
-        Check(sent!.State.AsText() == "Charged twice" && sent.Model == "typesafe/jev-1.14" && sent.Questions.Count == 2, "Fixed tool request");
-        Check(result["answers"]!["refund"]!["probability_yes"]!.GetValue<double>() == 0.912, "Yes/no result rounded");
-        Check(result["answers"]!["team"]!["choice"]!.GetValue<string>() == "billing", "Choice result");
+        Assert.True(sent!.State.AsText() == "Charged twice" && sent.Model == "typesafe/jev-1.14" && sent.Questions.Count == 2, "Fixed tool request");
+        Assert.True(result["answers"]!["refund"]!["probability_yes"]!.GetValue<double>() == 0.912, "Yes/no result rounded");
+        Assert.True(result["answers"]!["team"]!["choice"]!.GetValue<string>() == "billing", "Choice result");
 
         var open = client.AsOpenDecisionsAIFunction("gpt-6-luna");
-        Check(open.Name == "evaluate_decisions" && open.JsonSchema.GetProperty("properties").TryGetProperty("questions", out _),
+        Assert.True(open.Name == "evaluate_decisions" && open.JsonSchema.GetProperty("properties").TryGetProperty("questions", out _),
             "Open tool schema");
         var questions = JsonSerializer.SerializeToElement(new[]
         {
@@ -53,9 +54,9 @@ internal static class AIFunctionChecks
             new { id = "refund", type = "yes_no", instructions = "Wants a refund?", levels = (string[]?)null }
         });
         result = Parse(await open.InvokeAsync(new AIFunctionArguments { ["input"] = "Ugh", ["questions"] = questions }));
-        Check(sent!.Model == "gpt-6-luna" && sent.Questions["angry"] is ScoreQuestion { Criteria.Count: 3 } &&
+        Assert.True(sent!.Model == "gpt-6-luna" && sent.Questions["angry"] is ScoreQuestion { Criteria.Count: 3 } &&
             sent.Questions["refund"] is NoulQuestion, "Open tool builds questions");
-        Check(result["answers"]!["angry"]!["most_likely_level"]!.GetValue<string>() == "Furious", "Score most likely level");
+        Assert.True(result["answers"]!["angry"]!["most_likely_level"]!.GetValue<string>() == "Furious", "Score most likely level");
 
         try
         {
@@ -73,15 +74,11 @@ internal static class AIFunctionChecks
 
         // The README's agent wiring compiles against Microsoft Agent Framework.
         AIAgent agent = new ChatClientAgent(new NoChat(), instructions: "Call triage_ticket first.", tools: [triage]);
-        Check(agent is not null, "Agent accepts the tool");
+        Assert.True(agent is not null, "Agent accepts the tool");
     }
 
     private static JsonObject Parse(object? value) => JsonNode.Parse(JsonSerializer.Serialize(value))!.AsObject();
 
-    private static void Check(bool condition, string name)
-    {
-        if (!condition) throw new Exception($"Failed: {name}");
-    }
 
     private sealed class FakeClient(Func<DecisionsRequest, DecisionsResponse> respond) : IDecisionsClient
     {

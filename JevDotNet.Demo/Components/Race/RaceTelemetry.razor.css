@@ -1,0 +1,47 @@
+.race-panel {
+    min-width: 0;
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid #dbe7df;
+    border-radius: 1rem;
+}
+
+.race-panel h2 { font-size: 1.3rem; margin: 0 0 .8rem; }
+.race-benchmark { grid-column: 1 / -1; }
+
+.race-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .45rem;
+    margin: 0 0 .8rem;
+}
+
+.race-metrics div { padding: .55rem .6rem; border-radius: .5rem; background: #edf4ef; }
+.race-metrics dt { font-size: .73rem; color: #425c51; }
+.race-metrics dd { font-weight: 700; margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.race-empty { color: #425c51; font-size: .9rem; margin-bottom: 0; }
+.race-history { height: 24rem; max-height: 50vh; overflow: auto; }
+.race-history ol { list-style: none; margin: 0; padding: 0; }
+.race-history li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: .2rem .45rem;
+    padding: .5rem .1rem;
+    border-top: 1px solid #e6ede9;
+    font-size: .78rem;
+}
+
+.race-time { color: #425c51; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.race-runner { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.race-marker { display: inline-block; width: .52rem; height: .52rem; border-radius: 50%; margin-right: .34rem; background: #6235c3; }
+.race-marker[data-racer="1"] { background: #176363; }
+.race-request-state { padding: .15rem .35rem; border-radius: .3rem; color: #32455f; background: #edf1f6; white-space: nowrap; }
+.race-request-state[data-state="Used"] { color: #14573c; background: #daf1e4; }
+.race-request-state[data-state="Queued"] { color: #5a4c14; background: #f8efc9; }
+.race-request-state[data-state="Error"] { color: #841e24; background: #fce6e7; }
+.race-request-detail { grid-column: 2 / -1; color: #425c51; overflow-wrap: anywhere; }
+.race-table-wrap { overflow-x: auto; }
+.race-table-wrap table { width: 100%; border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; }
+.race-table-wrap th, .race-table-wrap td { padding: .55rem .65rem; text-align: right; border-top: 1px solid #e6ede9; white-space: nowrap; }
+.race-table-wrap th:first-child { text-align: left; }

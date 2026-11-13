@@ -1,0 +1,38 @@
+.race-stage {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #bccbf1;
+    border-radius: 1rem;
+    background: #b4c7f2;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.race-scores {
+    position: absolute;
+    inset: .65rem .65rem auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+}
+
+.race-score {
+    --racer-color: #c9b3ff;
+    padding: .55rem .65rem;
+    border-radius: .6rem;
+    color: white;
+    background: #172445;
+    font-size: .82rem;
+}
+
+.race-score:nth-child(2) { --racer-color: #91e9d7; }
+.race-score div { display: flex; align-items: center; gap: .35rem; }
+.race-dog-dot { flex: 0 0 .56rem; height: .56rem; border-radius: 50%; background: var(--racer-color); }
+.race-dog-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.race-score strong { display: block; font-variant-numeric: tabular-nums; }
+.race-score small { color: #ced7ec; }
+progress { display: block; width: 100%; height: .4rem; accent-color: var(--racer-color); }
