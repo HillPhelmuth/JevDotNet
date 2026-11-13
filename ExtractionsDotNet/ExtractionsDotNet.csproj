@@ -4,10 +4,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>ExtractionsDotNet</PackageId>
-    <PackageVersion>0.2.0-preview</PackageVersion>
+    <PackageVersion>0.3.0-preview</PackageVersion>
     <Authors>Adam Holm</Authors>
     <Description>Typed .NET client for OpenRouter's Extractions API, with model discovery and text, image, and PDF inputs.</Description>
-    <PackageTags>OpenRouter;AI;extraction;decisions;SDK;dotnet;llm</PackageTags>
+    <PackageTags>OpenRouter;AI;extraction;decisions;SDK;dotnet;llm;systemone</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/HillPhelmuth/JevDotNet</PackageProjectUrl>

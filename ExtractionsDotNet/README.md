@@ -3,7 +3,7 @@
 A .NET 10 client for OpenRouter's alpha Extractions API.
 
 ```powershell
-dotnet add package ExtractionsDotNet --version 0.2.0-preview
+dotnet add package ExtractionsDotNet --version 0.3.0-preview
 ```
 
 ## Discover models

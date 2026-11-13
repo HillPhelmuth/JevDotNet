@@ -57,16 +57,16 @@ jobs:
         run: dotnet pack JevDotNet.AI/JevDotNet.AI.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
       - name: Pack ExtractionsDotNet
         run: dotnet pack ExtractionsDotNet/ExtractionsDotNet.csproj --configuration Release --no-build --output ./artifacts/nuget -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true
-      - name: Publish packages and symbols to nuget.org
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: dotnet nuget push "./artifacts/nuget/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate
+    # - name: Publish packages and symbols to nuget.org
+    #    env:
+    #      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+    #    run: dotnet nuget push "./artifacts/nuget/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate
       
-    #  - name: NuGet login (OIDC)
-    #    uses: NuGet/login@v1
-    #    id: login
-    #    with:
-    #      user: ${{ secrets.NUGET_USER }}
+      - name: NuGet login (OIDC)
+        uses: NuGet/login@v1
+        id: login
+        with:
+         user: ${{ secrets.NUGET_USER }}
 
-     # - name: Publish packages and symbols to nuget.org
-     #   run: dotnet nuget push "./artifacts/nuget/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --skip-duplicate
+      - name: Publish packages and symbols to nuget.org
+        run: dotnet nuget push "./artifacts/nuget/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --skip-duplicate
