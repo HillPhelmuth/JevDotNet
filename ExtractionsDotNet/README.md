@@ -3,7 +3,7 @@
 A .NET 10 client for OpenRouter's alpha Extractions API.
 
 ```powershell
-dotnet add package ExtractionsDotNet --version 0.1.0-preview
+dotnet add package ExtractionsDotNet --version 0.2.0-preview
 ```
 
 ## Discover models
@@ -48,7 +48,7 @@ When a model cannot determine a value, `Value` can be null and `Guess` can still
 
 ## Extract from images and PDFs
 
-Reuse the client with a model that accepts the asset format. These examples send only the asset. When you supply accompanying state text, use the asset name in that text or in a field's instructions as required by OpenRouter. [Asset rules](https://openrouter.ai/docs/guides/community/extractions#assets)
+Reuse the client with a model that accepts the asset format. When state is empty and exactly one asset is supplied, the SDK uses that asset's name as the state so the request references it. For multiple assets, provide state text that references each asset. [Asset rules](https://openrouter.ai/docs/guides/community/extractions#assets)
 
 ```csharp
 var fields = new Dictionary<string, ExtractionField>

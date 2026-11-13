@@ -51,8 +51,6 @@ public sealed class OpenRouterExtractionsClient : IDisposable
         // Use the same field definitions for serialization and decoding after the HTTP call.
         var fields = new Dictionary<string, ExtractionField>(request.Fields, StringComparer.Ordinal);
         ValidateFields(fields);
-        if (request.State.Length == 0 && request.Assets is not { Count: > 0 })
-            throw new ArgumentException("Supply state text or at least one asset.", nameof(request));
 
         if (request.Assets is { } assets)
         {
@@ -63,9 +61,20 @@ public sealed class OpenRouterExtractionsClient : IDisposable
             }
         }
 
+        var state = request.State;
+        if (state.Length == 0)
+        {
+            if (request.Assets is not { Count: > 0 })
+                throw new ArgumentException("Supply state text or at least one asset.", nameof(request));
+            if (request.Assets.Count != 1)
+                throw new ArgumentException("Supply state text that references each asset when sending multiple assets.", nameof(request));
+
+            state = request.Assets.Keys.Single();
+        }
+
         using var message = new HttpRequestMessage(HttpMethod.Post, new Uri(_baseUri, ExtractionsPath));
         message.Headers.Authorization = _authorization;
-        message.Content = JsonContent.Create(request with { Fields = fields }, options: ExtractionJson.Options);
+        message.Content = JsonContent.Create(request with { State = state, Fields = fields }, options: ExtractionJson.Options);
         var content = await SendAsync(_httpClient, message, cancellationToken).ConfigureAwait(false);
         return ExtractionJson.ReadResponse(content, fields);
     }

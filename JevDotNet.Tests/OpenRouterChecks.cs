@@ -46,7 +46,13 @@ public sealed class OpenRouterChecks
                 sentQuestions.GetProperty("team").GetProperty("criteria").GetProperty("technical")[0].GetString() == "Bugs",
                 "OpenRouter structured choice criteria preserved");
             return Success();
-        }))))
+        })), new OpenRouterDecisionsClientOptions
+        {
+            ModelInputModalitiesOverrides = new Dictionary<string, IReadOnlyList<string>>
+            {
+                ["typesafe/jev-1.13"] = ["text"]
+            }
+        }))
         {
             var result = await client.EvaluateAsync(request);
             Assert.True(result.Model == "typesafe/jev-1.13-20260917", "Resolved OpenRouter model");

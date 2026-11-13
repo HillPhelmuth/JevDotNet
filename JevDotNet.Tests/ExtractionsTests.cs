@@ -229,7 +229,7 @@ public sealed class ExtractionsTests
             AssertBody(message, $$"""
                 {
                   "model": "{{model}}",
-                  "state": "",
+                  "state": "asset-1",
                   "fields": {"value":{"type":"text"} },
                   "assets": {"asset-1":{"format":"{{wireFormat}}","type":"{{type}}","data_base64":"+/8="} }
                 }
@@ -324,6 +324,15 @@ public sealed class ExtractionsTests
         using var http = new HttpClient(new StubHandler(_ => throw new InvalidOperationException("Unexpected HTTP call.")));
         using var client = new OpenRouterExtractionsClient("test-key", http);
         await Assert.ThrowsAsync<ArgumentException>(() => client.ExtractAsync(TextRequest() with { State = "" }, TestCancellation));
+        await Assert.ThrowsAsync<ArgumentException>(() => client.ExtractAsync(TextRequest() with
+        {
+            State = "",
+            Assets = new Dictionary<string, ExtractionAsset>
+            {
+                ["asset-1"] = new(ExtractionAssetFormat.Png, [1]),
+                ["asset-2"] = new(ExtractionAssetFormat.Png, [2])
+            }
+        }, TestCancellation));
         await Assert.ThrowsAsync<ArgumentException>(() =>
             client.ExtractAsync(new ExtractionRequest("model", new Dictionary<string, ExtractionField>()) { State = "text" }, TestCancellation));
 
