@@ -141,8 +141,6 @@ OpenRouter responses can also expose `Id`, `Provider`, and `Usage.Cost`; these a
 
 ## OpenAI Decisions API
 
-> `OpenAIDecisionsClient` and its `AddOpenAIDecisionsClient` registrations are marked `[Experimental]` with diagnostic `DECISIONS001`. The client has been verified against recorded response shapes, not yet against the live API, so it may change in a minor release. Add `<NoWarn>$(NoWarn);DECISIONS001</NoWarn>` to your project, or `#pragma warning disable DECISIONS001`, to use it.
-
 `OpenAIDecisionsClient` sends the same `DecisionsRequest` to OpenAI's [Decisions API](https://developers.openai.com/api/docs/guides/decisions) at `POST /v1/decisions`. Set `OPENAI_API_KEY`, then pass `OpenAIDecisionsClient.DefaultModel` (`gpt-6-luna`, the only model the API supports today):
 
 ```csharp
@@ -168,9 +166,7 @@ Text state is sent as the `input` string, and structured state as JSON text. Sta
 
 ## Microsoft Foundry and Azure OpenAI
 
-> Both clients and their registrations are marked `[Experimental]` with diagnostic `DECISIONS003`. They follow Microsoft's documented request shapes but have not yet been checked against the live services. Add `<NoWarn>$(NoWarn);DECISIONS003</NoWarn>` to your project, or `#pragma warning disable DECISIONS003`, to use them.
-
-Both Azure clients take an endpoint, a deployment name, and either an API key or an Azure.Core `TokenCredential`, such as `DefaultAzureCredential` or `AzureCliCredential` from Azure.Identity. An API key is sent in the `api-key` header. A credential's tokens are requested for `https://cognitiveservices.azure.com/.default` (change it with the options' `TokenScope`), sent as a bearer token, and cached until five minutes before they expire. Azure routes by deployment, so the client always sends its deployment name as the model and the request's `Model` is not sent.
+Both Azure clients take an endpoint, a deployment name, and either an API key or an Azure.Core `TokenCredential`, such as `DefaultAzureCredential` or `AzureCliCredential` from Azure.Identity. An API key is sent in the `api-key` header. A credential's tokens are requested for `https://cognitiveservices.azure.com/.default` (change it with the options' `TokenScope`), sent as a bearer token, and cached until five minutes before they expire. Azure routes by deployment, so the client always sends its deployment name as the model and the request's `Model` is not sent. Neither service returns an evaluation ID, so `DecisionsResponse.Id` is null for both.
 
 `FoundryDecisionsClient` calls [Microsoft decision models in Foundry](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/use-foundry-models-microsoft-decision), such as Microsoft-Decision-1.1, at `{endpoint}/v1/systemone`. It sends the same Noul, Choice, and Score questions as OpenRouter and reads the same answers. Box questions are not supported. Images in the state array are sent as Foundry `assets` and referenced from the state text as `image:<name>`.
 
@@ -310,8 +306,6 @@ Requests run one after another. By default a failed request is reported through 
 
 ## Conditionals in ordinary C#
 
-> Experimental (`DECISIONS002`). Add `<NoWarn>$(NoWarn);DECISIONS002</NoWarn>` to use it.
-
 `ForModel` binds a client to a model, and the verbs on the resulting `DecisionModel` each ask one question and return something you can branch on. Each verb is one paid network call, so put cheap checks first and let `&&` skip the model when it can:
 
 ```csharp
@@ -363,6 +357,8 @@ Every result keeps its evidence: the probability or distribution, the raw `Answe
 
 ### Several questions in one request
 
+> Experimental (`DECISIONS002`), along with the `[Noul]`, `[Choice]` and `[Score]` attributes. Add `<NoWarn>$(NoWarn);DECISIONS002</NoWarn>` to use it.
+
 `DecideAsync<T>` asks every question declared on a class in one request and returns it populated. Properties can be the rich result types or plain values: `[Noul]` fits `DecisionVerdict` (with `UnsureMin`/`UnsureMax`), `bool` (with `MinProbability`), or `double`; `[Choice]` fits `DecisionChoice<TEnum>` or the enum; `[Score]` fits `DecisionScore<TEnum>` or the enum, or `int`, `double` and `DecisionScore` when you pass text levels.
 
 ```csharp
@@ -384,6 +380,8 @@ TicketTriage triage = await model.DecideAsync<TicketTriage>(ticket.Text, ct);
 The class needs a public parameterless constructor and settable properties, and is read by reflection once per type, so `DecideAsync` is not trim or AOT safe. `DecideWithResponseAsync` also returns the response for logging and usage.
 
 ### Collections
+
+> Experimental (`DECISIONS002`). Add `<NoWarn>$(NoWarn);DECISIONS002</NoWarn>` to use it.
 
 The collection verbs ask one question about every item and pack items into batched requests, so 200 items with the default `ItemsPerRequest` of 10 is 20 requests, not 200. They accept `IEnumerable<T>` or `IAsyncEnumerable<T>`:
 
@@ -480,6 +478,6 @@ Each keyed registration gets its own named `HttpClient` and returns its `IHttpCl
 From 1.0.0 the public types in this package follow semantic versioning: breaking changes only arrive in a major version. Two things sit outside that promise.
 
 - **Upstream APIs.** OpenRouter's Decisions route is still served under `/api/alpha/`, and TypeSafe labels image input on its direct API as experimental. When a provider changes its wire format, the SDK adapts in a minor or patch release and keeps its own types stable where it can.
-- **Experimental members.** Anything marked `[Experimental]` may change in a minor release: currently the OpenAI client under `DECISIONS001`, the conditional verbs under `DECISIONS002`, and the Foundry and Azure OpenAI clients under `DECISIONS003`.
+- **Experimental members.** Anything marked `[Experimental]` may change in a minor release: currently, under `DECISIONS002`, decision sets (`DecideAsync<T>`), the collection verbs, the `DecisionsDotNet.Pipeline` namespace, the guardrail and workflow helpers in `DecisionsDotNet.AI`, and everything in `DecisionsDotNet.Testing` and `DecisionsDotNet.Caching`. `ForModel`, `DecisionModel`, its single-question verbs and their result types are stable from 1.1.0, as are the OpenAI, Foundry and Azure OpenAI clients.
 
 See the [changelog](https://github.com/HillPhelmuth/JevDotNet/blob/main/CHANGELOG.md) for the migration from 0.3.

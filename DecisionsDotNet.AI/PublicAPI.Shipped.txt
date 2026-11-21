@@ -14,3 +14,63 @@ DecisionsDotNet.AI.DecisionToolQuestion.Type.get -> string!
 DecisionsDotNet.AI.DecisionToolQuestion.Type.init -> void
 static DecisionsDotNet.AI.DecisionsAIFunctions.AsAIFunction(this DecisionsDotNet.IDecisionsClient! client, string! name, string! description, System.Collections.Generic.IReadOnlyDictionary<string!, DecisionsDotNet.DecisionsQuestion!>! questions, string! model) -> Microsoft.Extensions.AI.AIFunction!
 static DecisionsDotNet.AI.DecisionsAIFunctions.AsOpenDecisionsAIFunction(this DecisionsDotNet.IDecisionsClient! client, string! model, string! name = "evaluate_decisions", string? description = null) -> Microsoft.Extensions.AI.AIFunction!
+const DecisionsDotNet.AI.DecisionGuardrailChatClient.GuardrailProperty = "decisions.guardrail" -> string!
+const DecisionsDotNet.AI.DecisionGuardrailChatClient.StageProperty = "decisions.guardrail.stage" -> string!
+DecisionsDotNet.AI.DecisionGate<TMessage>
+DecisionsDotNet.AI.DecisionGate<TMessage>.DecisionGate(TMessage Message, DecisionsDotNet.DecisionVerdict! Verdict) -> void
+DecisionsDotNet.AI.DecisionGate<TMessage>.Message.get -> TMessage
+DecisionsDotNet.AI.DecisionGate<TMessage>.Message.init -> void
+DecisionsDotNet.AI.DecisionGate<TMessage>.Verdict.get -> DecisionsDotNet.DecisionVerdict!
+DecisionsDotNet.AI.DecisionGate<TMessage>.Verdict.init -> void
+DecisionsDotNet.AI.DecisionGuardrail
+DecisionsDotNet.AI.DecisionGuardrail.DecisionGuardrail(string! Name, string! Instructions, double MinProbability) -> void
+DecisionsDotNet.AI.DecisionGuardrail.Instructions.get -> string!
+DecisionsDotNet.AI.DecisionGuardrail.Instructions.init -> void
+DecisionsDotNet.AI.DecisionGuardrail.MinProbability.get -> double
+DecisionsDotNet.AI.DecisionGuardrail.MinProbability.init -> void
+DecisionsDotNet.AI.DecisionGuardrail.Name.get -> string!
+DecisionsDotNet.AI.DecisionGuardrail.Name.init -> void
+DecisionsDotNet.AI.DecisionGuardrailChatClient
+DecisionsDotNet.AI.DecisionGuardrailChatClient.DecisionGuardrailChatClient(Microsoft.Extensions.AI.IChatClient! innerClient, DecisionsDotNet.DecisionModel! model, DecisionsDotNet.AI.DecisionGuardrailOptions! options) -> void
+DecisionsDotNet.AI.DecisionGuardrailChatClientBuilderExtensions
+DecisionsDotNet.AI.DecisionGuardrailOptions
+DecisionsDotNet.AI.DecisionGuardrailOptions.BlockOnRefusal.get -> bool
+DecisionsDotNet.AI.DecisionGuardrailOptions.BlockOnRefusal.set -> void
+DecisionsDotNet.AI.DecisionGuardrailOptions.DecisionGuardrailOptions() -> void
+DecisionsDotNet.AI.DecisionGuardrailOptions.Input.get -> System.Collections.Generic.IList<DecisionsDotNet.AI.DecisionGuardrail!>!
+DecisionsDotNet.AI.DecisionGuardrailOptions.OnViolation.get -> System.Func<DecisionsDotNet.AI.DecisionGuardrailViolation!, Microsoft.Extensions.AI.ChatResponse!>?
+DecisionsDotNet.AI.DecisionGuardrailOptions.OnViolation.set -> void
+DecisionsDotNet.AI.DecisionGuardrailOptions.Output.get -> System.Collections.Generic.IList<DecisionsDotNet.AI.DecisionGuardrail!>!
+DecisionsDotNet.AI.DecisionGuardrailOptions.RefusalMessage.get -> string!
+DecisionsDotNet.AI.DecisionGuardrailOptions.RefusalMessage.set -> void
+DecisionsDotNet.AI.DecisionGuardrailOptions.SelectInput.get -> System.Func<System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>!, string?>?
+DecisionsDotNet.AI.DecisionGuardrailOptions.SelectInput.set -> void
+DecisionsDotNet.AI.DecisionGuardrailViolation
+DecisionsDotNet.AI.DecisionGuardrailViolation.DecisionGuardrailViolation(DecisionsDotNet.AI.GuardrailStage Stage, DecisionsDotNet.AI.DecisionGuardrail! Guardrail, double? Probability, DecisionsDotNet.DecisionsResponse! Response) -> void
+DecisionsDotNet.AI.DecisionGuardrailViolation.Guardrail.get -> DecisionsDotNet.AI.DecisionGuardrail!
+DecisionsDotNet.AI.DecisionGuardrailViolation.Guardrail.init -> void
+DecisionsDotNet.AI.DecisionGuardrailViolation.Probability.get -> double?
+DecisionsDotNet.AI.DecisionGuardrailViolation.Probability.init -> void
+DecisionsDotNet.AI.DecisionGuardrailViolation.Response.get -> DecisionsDotNet.DecisionsResponse!
+DecisionsDotNet.AI.DecisionGuardrailViolation.Response.init -> void
+DecisionsDotNet.AI.DecisionGuardrailViolation.Stage.get -> DecisionsDotNet.AI.GuardrailStage
+DecisionsDotNet.AI.DecisionGuardrailViolation.Stage.init -> void
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.Choice.get -> DecisionsDotNet.DecisionChoice<TEnum>!
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.Choice.init -> void
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.DecisionRoute(TMessage Message, TEnum Route, DecisionsDotNet.DecisionChoice<TEnum>! Choice) -> void
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.Message.get -> TMessage
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.Message.init -> void
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.Route.get -> TEnum
+DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.Route.init -> void
+DecisionsDotNet.AI.DecisionWorkflowExtensions
+DecisionsDotNet.AI.GuardrailStage
+DecisionsDotNet.AI.GuardrailStage.Input = 0 -> DecisionsDotNet.AI.GuardrailStage
+DecisionsDotNet.AI.GuardrailStage.Output = 1 -> DecisionsDotNet.AI.GuardrailStage
+override DecisionsDotNet.AI.DecisionGuardrailChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+override DecisionsDotNet.AI.DecisionGuardrailChatClient.GetStreamingResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.ChatResponseUpdate!>!
+static DecisionsDotNet.AI.DecisionGate<TMessage>.When(DecisionsDotNet.VerdictOutcome outcome) -> System.Func<DecisionsDotNet.AI.DecisionGate<TMessage>?, bool>!
+static DecisionsDotNet.AI.DecisionGuardrailChatClientBuilderExtensions.UseDecisionGuardrails(this Microsoft.Extensions.AI.ChatClientBuilder! builder, System.Action<DecisionsDotNet.AI.DecisionGuardrailOptions!>! configure, DecisionsDotNet.DecisionModel? model = null) -> Microsoft.Extensions.AI.ChatClientBuilder!
+static DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>.When(TEnum route) -> System.Func<DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>?, bool>!
+static DecisionsDotNet.AI.DecisionWorkflowExtensions.Gate<TMessage>(this DecisionsDotNet.DecisionModel! model, System.Func<TMessage, DecisionsDotNet.DecisionsValue!>! selector, DecisionsDotNet.DecisionsValue! instructions, (double Low, double High) unsureBand) -> System.Func<TMessage, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<DecisionsDotNet.AI.DecisionGate<TMessage>!>>!
+static DecisionsDotNet.AI.DecisionWorkflowExtensions.Router<TMessage, TEnum>(this DecisionsDotNet.DecisionModel! model, System.Func<TMessage, DecisionsDotNet.DecisionsValue!>! selector, DecisionsDotNet.DecisionsValue! instructions, double minProbability, TEnum lowConfidenceRoute) -> System.Func<TMessage, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<DecisionsDotNet.AI.DecisionRoute<TMessage, TEnum>!>>!

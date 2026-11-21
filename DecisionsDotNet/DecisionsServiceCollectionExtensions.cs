@@ -151,7 +151,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers the OpenAI client as <see cref="IDecisionsClient"/> with the given API key.</summary>
-    [Experimental(DecisionsDiagnostics.OpenAIClient, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddOpenAIDecisionsClient(
         this IServiceCollection services,
         string apiKey,
@@ -166,7 +165,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers the OpenAI client as <see cref="IDecisionsClient"/> using the <c>OpenAI:ApiKey</c> configuration value.</summary>
-    [Experimental(DecisionsDiagnostics.OpenAIClient, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddOpenAIDecisionsClient(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -174,7 +172,6 @@ public static class DecisionsServiceCollectionExtensions
         => services.AddOpenAIDecisionsClient(OpenAIKey(configuration), options);
 
     /// <summary>Registers an OpenAI client as a keyed <see cref="IDecisionsClient"/>, so it can sit beside other providers.</summary>
-    [Experimental(DecisionsDiagnostics.OpenAIClient, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedOpenAIDecisionsClient(
         this IServiceCollection services,
         object serviceKey,
@@ -194,7 +191,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers a keyed OpenAI client using the <c>OpenAI:ApiKey</c> configuration value.</summary>
-    [Experimental(DecisionsDiagnostics.OpenAIClient, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedOpenAIDecisionsClient(
         this IServiceCollection services,
         object serviceKey,
@@ -216,7 +212,6 @@ public static class DecisionsServiceCollectionExtensions
     /// <param name="deploymentName">The model deployment every request is sent to.</param>
     /// <param name="apiKey">The resource's API key.</param>
     /// <param name="options">The token scope and retry settings.</param>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddFoundryDecisionsClient(this IServiceCollection services,
         Uri endpoint, string deploymentName, string apiKey, FoundryDecisionsClientOptions? options = null)
     {
@@ -232,7 +227,6 @@ public static class DecisionsServiceCollectionExtensions
     /// <param name="deploymentName">The model deployment every request is sent to.</param>
     /// <param name="credential">A credential such as <c>DefaultAzureCredential</c>. It is shared by every client the registration creates.</param>
     /// <param name="options">The token scope and retry settings.</param>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddFoundryDecisionsClient(this IServiceCollection services,
         Uri endpoint, string deploymentName, TokenCredential credential, FoundryDecisionsClientOptions? options = null)
     {
@@ -246,7 +240,6 @@ public static class DecisionsServiceCollectionExtensions
     /// Registers the Microsoft Foundry client as <see cref="IDecisionsClient"/> from the <c>Foundry:Endpoint</c>,
     /// <c>Foundry:DeploymentName</c>, and <c>Foundry:ApiKey</c> configuration values. Without an API key, <paramref name="credential"/> is used.
     /// </summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddFoundryDecisionsClient(this IServiceCollection services,
         IConfiguration configuration, TokenCredential? credential = null, FoundryDecisionsClientOptions? options = null)
     {
@@ -257,7 +250,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers a Microsoft Foundry client as a keyed <see cref="IDecisionsClient"/>, authenticating with an API key.</summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedFoundryDecisionsClient(this IServiceCollection services, object serviceKey,
         Uri endpoint, string deploymentName, string apiKey, FoundryDecisionsClientOptions? options = null)
     {
@@ -269,7 +261,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers a Microsoft Foundry client as a keyed <see cref="IDecisionsClient"/>, authenticating with Microsoft Entra ID.</summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedFoundryDecisionsClient(this IServiceCollection services, object serviceKey,
         Uri endpoint, string deploymentName, TokenCredential credential, FoundryDecisionsClientOptions? options = null)
     {
@@ -281,7 +272,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers a keyed Microsoft Foundry client from the <c>Foundry</c> configuration section, using <paramref name="credential"/> when no API key is configured.</summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedFoundryDecisionsClient(this IServiceCollection services, object serviceKey,
         IConfiguration configuration, TokenCredential? credential = null, FoundryDecisionsClientOptions? options = null)
     {
@@ -297,7 +287,6 @@ public static class DecisionsServiceCollectionExtensions
     /// <param name="deploymentName">The model deployment every request is sent to.</param>
     /// <param name="apiKey">The resource's API key.</param>
     /// <param name="options">The token scope and retry settings.</param>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddAzureOpenAIDecisionsClient(this IServiceCollection services,
         Uri endpoint, string deploymentName, string apiKey, AzureOpenAIDecisionsClientOptions? options = null)
     {
@@ -313,7 +302,6 @@ public static class DecisionsServiceCollectionExtensions
     /// <param name="deploymentName">The model deployment every request is sent to.</param>
     /// <param name="credential">A credential such as <c>DefaultAzureCredential</c>. It is shared by every client the registration creates.</param>
     /// <param name="options">The token scope and retry settings.</param>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddAzureOpenAIDecisionsClient(this IServiceCollection services,
         Uri endpoint, string deploymentName, TokenCredential credential, AzureOpenAIDecisionsClientOptions? options = null)
     {
@@ -327,7 +315,6 @@ public static class DecisionsServiceCollectionExtensions
     /// Registers the Azure OpenAI client as <see cref="IDecisionsClient"/> from the <c>AzureOpenAI:Endpoint</c>,
     /// <c>AzureOpenAI:DeploymentName</c>, and <c>AzureOpenAI:ApiKey</c> configuration values. Without an API key, <paramref name="credential"/> is used.
     /// </summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddAzureOpenAIDecisionsClient(this IServiceCollection services,
         IConfiguration configuration, TokenCredential? credential = null, AzureOpenAIDecisionsClientOptions? options = null)
     {
@@ -338,7 +325,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers an Azure OpenAI client as a keyed <see cref="IDecisionsClient"/>, authenticating with an API key.</summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedAzureOpenAIDecisionsClient(this IServiceCollection services, object serviceKey,
         Uri endpoint, string deploymentName, string apiKey, AzureOpenAIDecisionsClientOptions? options = null)
     {
@@ -350,7 +336,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers an Azure OpenAI client as a keyed <see cref="IDecisionsClient"/>, authenticating with Microsoft Entra ID.</summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedAzureOpenAIDecisionsClient(this IServiceCollection services, object serviceKey,
         Uri endpoint, string deploymentName, TokenCredential credential, AzureOpenAIDecisionsClientOptions? options = null)
     {
@@ -362,7 +347,6 @@ public static class DecisionsServiceCollectionExtensions
     }
 
     /// <summary>Registers a keyed Azure OpenAI client from the <c>AzureOpenAI</c> configuration section, using <paramref name="credential"/> when no API key is configured.</summary>
-    [Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     public static IHttpClientBuilder AddKeyedAzureOpenAIDecisionsClient(this IServiceCollection services, object serviceKey,
         IConfiguration configuration, TokenCredential? credential = null, AzureOpenAIDecisionsClientOptions? options = null)
     {

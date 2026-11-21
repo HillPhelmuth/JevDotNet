@@ -48,9 +48,9 @@ public sealed class LiveSmokeTests
     [Fact]
     public async Task FoundryDecisionsAnswersAYesNoQuestionAsync()
     {
-        RequireLive("FOUNDRY_API_KEY");
-        using var client = new FoundryDecisionsClient(new Uri(Required("FOUNDRY_ENDPOINT")), Required("FOUNDRY_DEPLOYMENT"),
-            Required("FOUNDRY_API_KEY"));
+        RequireLive("FOUNDRY_API_KEY", "FOUNDRY_DECISIONS_API_KEY", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_APIKEY");
+        using var client = new FoundryDecisionsClient(new Uri(Required("FOUNDRY_ENDPOINT", "FOUNDRY_DECISIONS_ENDPOINT")),
+            Required("FOUNDRY_DEPLOYMENT", "FOUNDRY_DECISIONS_DEPLOYMENT"), Required("FOUNDRY_API_KEY", "FOUNDRY_DECISIONS_API_KEY", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_APIKEY"));
 
         var response = await client.EvaluateAsync(Ticket().Build(client.DeploymentName), TestCancellation);
 
@@ -60,9 +60,9 @@ public sealed class LiveSmokeTests
     [Fact]
     public async Task AzureOpenAIDecisionsAnswersAYesNoQuestionAsync()
     {
-        RequireLive("AZURE_OPENAI_API_KEY");
+        RequireLive("AZURE_OPENAI_API_KEY", "AZURE_OPENAI_APIKEY");
         using var client = new AzureOpenAIDecisionsClient(new Uri(Required("AZURE_OPENAI_ENDPOINT")), Required("AZURE_OPENAI_DEPLOYMENT"),
-            Required("AZURE_OPENAI_API_KEY"));
+            Required("AZURE_OPENAI_API_KEY", "AZURE_OPENAI_APIKEY"));
 
         var response = await client.EvaluateAsync(Ticket().Build(client.DeploymentName), TestCancellation);
 
@@ -150,16 +150,21 @@ public sealed class LiveSmokeTests
         Assert.InRange(response.GetAnswer<NoulAnswer>("urgent").Noul, 0.5, 1.0);
     }
 
-    private static string Required(string variable)
+    /// <summary>Reads the first of <paramref name="variables"/> that is set; later names are accepted aliases.</summary>
+    private static string Required(params string[] variables)
     {
-        var value = Environment.GetEnvironmentVariable(variable);
-        Assert.SkipWhen(string.IsNullOrWhiteSpace(value), $"Set {variable} to run this test.");
+        var value = Read(variables);
+        Assert.SkipWhen(value is null, $"Set {string.Join(" or ", variables)} to run this test.");
         return value!;
     }
 
-    private static void RequireLive(string keyVariable)
+    private static void RequireLive(params string[] keyVariables)
     {
         Assert.SkipUnless(Environment.GetEnvironmentVariable("LIVE_TESTS") == "1", "Set LIVE_TESTS=1 to run live smoke tests.");
-        Assert.SkipWhen(string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(keyVariable)), $"Set {keyVariable} to run this test.");
+        Assert.SkipWhen(Read(keyVariables) is null, $"Set {string.Join(" or ", keyVariables)} to run this test.");
     }
+
+    private static string? Read(string[] variables) => variables
+        .Select(Environment.GetEnvironmentVariable)
+        .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
 }

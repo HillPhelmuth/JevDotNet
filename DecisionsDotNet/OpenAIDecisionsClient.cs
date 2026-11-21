@@ -5,7 +5,6 @@ using System.Text;
 namespace DecisionsDotNet;
 
 /// <summary>The base URI, organization and project headers, and retry settings for <see cref="OpenAIDecisionsClient"/>.</summary>
-[Experimental(DecisionsDiagnostics.OpenAIClient, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class OpenAIDecisionsClientOptions : DecisionsClientOptions
 {
     /// <summary>Absolute HTTPS service root. Evaluations go to v1/decisions under it.</summary>
@@ -20,11 +19,6 @@ public sealed class OpenAIDecisionsClientOptions : DecisionsClientOptions
 /// HTTP client for OpenAI's Decisions API (<c>POST /v1/decisions</c>). It accepts the same <see cref="DecisionsRequest"/>
 /// as the other providers and maps Noul questions to predicates, Choice to choices, and Score to levels.
 /// </summary>
-/// <remarks>
-/// Experimental (DECISIONS001): this client has been verified against recorded response shapes, not yet against the live API,
-/// so its behaviour may change in a minor release. Suppress the diagnostic to use it.
-/// </remarks>
-[Experimental(DecisionsDiagnostics.OpenAIClient, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class OpenAIDecisionsClient : IDecisionsClient, IDisposable
 {
     /// <summary>The model OpenAI's Decisions API supports. Pass it as the request model.</summary>

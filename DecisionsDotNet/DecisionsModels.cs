@@ -39,7 +39,7 @@ public sealed record DecisionsRequest
 /// <summary>The result of one evaluation: one answer per question, the model that answered, and token usage.</summary>
 public sealed record DecisionsResponse
 {
-    /// <summary>The provider's ID for the evaluation. Null for direct TypeSafe responses.</summary>
+    /// <summary>The provider's ID for the evaluation. Null when the provider sends none: direct TypeSafe, Microsoft Foundry, and Azure OpenAI responses.</summary>
     [JsonPropertyName("id")]
     public string? Id { get; init; }
 

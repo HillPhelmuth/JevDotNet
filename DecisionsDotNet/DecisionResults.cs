@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 namespace DecisionsDotNet;
 
 /// <summary>The outcome of a <see cref="DecisionModel.VerdictAsync"/> call.</summary>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public enum VerdictOutcome
 {
     /// <summary>The probability is above the unsure band.</summary>
@@ -17,7 +16,6 @@ public enum VerdictOutcome
 }
 
 /// <summary>A three-valued answer to a yes/no question, with the evidence behind it.</summary>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed record DecisionVerdict
 {
     internal DecisionVerdict(VerdictOutcome outcome, NoulAnswer? answer, DecisionsResponse response)
@@ -52,7 +50,6 @@ public sealed record DecisionVerdict
 
 /// <summary>An enum option chosen by the model, with the evidence behind it.</summary>
 /// <typeparam name="TEnum">The enum whose members were offered.</typeparam>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed record DecisionChoice<TEnum> where TEnum : struct, Enum
 {
     internal DecisionChoice(TEnum value, double selectedProbability, IReadOnlyDictionary<TEnum, double> probabilities,
@@ -83,7 +80,6 @@ public sealed record DecisionChoice<TEnum> where TEnum : struct, Enum
 
 /// <summary>A rating on ordered enum levels, with the evidence behind it.</summary>
 /// <typeparam name="TEnum">The enum whose members are the levels, lowest value first.</typeparam>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed record DecisionScore<TEnum> where TEnum : struct, Enum
 {
     internal DecisionScore(TEnum value, IReadOnlyList<TEnum> levels, ScoreAnswer answer, DecisionsResponse response)
@@ -111,7 +107,6 @@ public sealed record DecisionScore<TEnum> where TEnum : struct, Enum
 }
 
 /// <summary>A rating on ordered levels described in text, with the evidence behind it.</summary>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed record DecisionScore
 {
     internal DecisionScore(int level, int levelCount, ScoreAnswer answer, DecisionsResponse response)
@@ -140,7 +135,6 @@ public sealed record DecisionScore
 
 /// <summary>The model declined to answer a question whose verb has no way to return a refusal, such as <see cref="DecisionModel.MatchesAsync"/>.</summary>
 /// <remarks>Use <see cref="DecisionModel.VerdictAsync"/> to receive refusals as <see cref="VerdictOutcome.Refused"/> instead.</remarks>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class DecisionRefusedException : Exception
 {
     /// <summary>Creates the exception for a refused question.</summary>

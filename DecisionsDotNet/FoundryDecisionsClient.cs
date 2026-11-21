@@ -7,7 +7,6 @@ using Azure.Core;
 namespace DecisionsDotNet;
 
 /// <summary>The token scope and retry settings for <see cref="FoundryDecisionsClient"/>.</summary>
-[Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class FoundryDecisionsClientOptions : DecisionsClientOptions
 {
     /// <summary>The scope requested from a <see cref="TokenCredential"/>. Ignored when the client uses an API key.</summary>
@@ -26,12 +25,7 @@ public sealed class FoundryDecisionsClientOptions : DecisionsClientOptions
 /// <para>
 /// Images in the state array are sent as Foundry assets and referenced from the state text as <c>image:&lt;name&gt;</c>.
 /// </para>
-/// <para>
-/// Experimental (DECISIONS003): this client has been verified against the documented request shape, not yet against the live
-/// API, so its behaviour may change in a minor release. Suppress the diagnostic to use it.
-/// </para>
 /// </remarks>
-[Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class FoundryDecisionsClient : IDecisionsClient, IDisposable
 {
     private const string Service = "Foundry";

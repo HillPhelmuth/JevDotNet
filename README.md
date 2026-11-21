@@ -51,7 +51,7 @@ Package versions live in `Directory.Build.props`.
 
 ### Live smoke tests
 
-Four tests in `LiveSmokeTests.cs` send one real request per provider. They are skipped unless you set `LIVE_TESTS=1` and the provider's key (`OPENROUTER_API_KEY`, `TYPESAFE_API_KEY`, or `OPENAI_API_KEY`). Each costs a fraction of a cent.
+The tests in `LiveSmokeTests.cs` send real requests to each provider. They are skipped unless you set `LIVE_TESTS=1` and the provider's settings: `OPENROUTER_API_KEY`, `TYPESAFE_API_KEY`, or `OPENAI_API_KEY`; for Foundry, `FOUNDRY_ENDPOINT`, `FOUNDRY_DEPLOYMENT` and `FOUNDRY_API_KEY`; for Azure OpenAI, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT` and `AZURE_OPENAI_API_KEY`. The Foundry tests also accept `FOUNDRY_DECISIONS_ENDPOINT`, `FOUNDRY_DECISIONS_DEPLOYMENT` and `FOUNDRY_DECISIONS_API_KEY`, and fall back to the Azure OpenAI key; `AZURE_OPENAI_APIKEY` works in place of `AZURE_OPENAI_API_KEY`. Each request costs a fraction of a cent.
 
 ```powershell
 $env:LIVE_TESTS = "1"

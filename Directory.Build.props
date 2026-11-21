@@ -2,7 +2,7 @@
 
   <!-- Versions. DecisionsDotNet and its add-on packages (.AI, .Testing, .Caching) always ship together; ExtractionsDotNet versions on its own. -->
   <PropertyGroup>
-    <DecisionsVersion>1.1.0-preview.2</DecisionsVersion>
+    <DecisionsVersion>1.1.0</DecisionsVersion>
     <ExtractionsVersion>1.0.0</ExtractionsVersion>
   </PropertyGroup>
 
@@ -15,8 +15,12 @@
     <WarningsAsErrors>$(WarningsAsErrors);CS1591;RS0016;RS0017;RS0036;RS0037</WarningsAsErrors>
     <!-- RS0026/RS0027 object to overloads that both take optional parameters; the Add* and builder overloads are deliberate. -->
     <NoWarn>$(NoWarn);RS0026;RS0027</NoWarn>
-    <!-- Checks the package against itself today; set PackageValidationBaselineVersion to 1.0.0 once that ships. -->
     <EnablePackageValidation>true</EnablePackageValidation>
+  </PropertyGroup>
+
+  <!-- Compares each package against its last stable release, so a breaking change fails the pack. Caching and Testing first shipped in 1.1. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'DecisionsDotNet' or '$(MSBuildProjectName)' == 'DecisionsDotNet.AI' or '$(MSBuildProjectName)' == 'ExtractionsDotNet'">
+    <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <!-- Settings shared by the shipped packages. Harmless for the demo and tests, which are never packed. -->

@@ -8,7 +8,7 @@
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <IsPackable>false</IsPackable>
     <!-- The tests exercise the experimental OpenAI and Azure clients and the conditional layer. -->
-    <NoWarn>$(NoWarn);DECISIONS001;DECISIONS002;DECISIONS003</NoWarn>
+    <NoWarn>$(NoWarn);DECISIONS002</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Using Include="Xunit" />

@@ -5,7 +5,6 @@ using Azure.Core;
 namespace DecisionsDotNet;
 
 /// <summary>The token scope and retry settings for <see cref="AzureOpenAIDecisionsClient"/>.</summary>
-[Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class AzureOpenAIDecisionsClientOptions : DecisionsClientOptions
 {
     /// <summary>The scope requested from a <see cref="TokenCredential"/>. Ignored when the client uses an API key.</summary>
@@ -21,12 +20,7 @@ public sealed class AzureOpenAIDecisionsClientOptions : DecisionsClientOptions
 /// Azure OpenAI routes by deployment, so every request is sent with the deployment name this client was created with as its
 /// model, and <see cref="DecisionsRequest.Model"/> is not sent.
 /// </para>
-/// <para>
-/// Experimental (DECISIONS003): this client has been verified against the documented request shape, not yet against the live
-/// API, so its behaviour may change in a minor release. Suppress the diagnostic to use it.
-/// </para>
 /// </remarks>
-[Experimental(DecisionsDiagnostics.AzureClients, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class AzureOpenAIDecisionsClient : IDecisionsClient, IDisposable
 {
     private const string Service = "Azure OpenAI";

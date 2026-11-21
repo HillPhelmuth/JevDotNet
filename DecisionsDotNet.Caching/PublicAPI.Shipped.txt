@@ -1,1 +1,8 @@
 #nullable enable
+const DecisionsDotNet.Caching.CachingDecisionsClient.CacheTag = "decisions" -> string!
+DecisionsDotNet.Caching.CachingDecisionsClient
+DecisionsDotNet.Caching.CachingDecisionsClient.CachingDecisionsClient(DecisionsDotNet.IDecisionsClient! innerClient, Microsoft.Extensions.Caching.Hybrid.HybridCache! cache, System.TimeSpan? expiration = null) -> void
+DecisionsDotNet.Caching.DecisionsCachingExtensions
+override DecisionsDotNet.Caching.CachingDecisionsClient.EvaluateAsync(DecisionsDotNet.DecisionsRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<DecisionsDotNet.DecisionsResponse!>!
+static DecisionsDotNet.Caching.CachingDecisionsClient.GetCacheKey(DecisionsDotNet.DecisionsRequest! request) -> string!
+static DecisionsDotNet.Caching.DecisionsCachingExtensions.UseCaching(this DecisionsDotNet.Pipeline.DecisionsClientBuilder! builder, System.TimeSpan? expiration = null, Microsoft.Extensions.Caching.Hybrid.HybridCache? cache = null) -> DecisionsDotNet.Pipeline.DecisionsClientBuilder!

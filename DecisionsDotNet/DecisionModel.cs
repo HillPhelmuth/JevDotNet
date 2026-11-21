@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DecisionsDotNet;
 
-#pragma warning disable DECISIONS002 // The conditional layer uses its own experimental types.
+#pragma warning disable DECISIONS002 // Decision sets are still experimental; DecideAsync uses them.
 
 /// <summary>
 /// A Decisions client bound to one provider-specific model, with single-question verbs that fit ordinary C# control flow.
@@ -16,7 +16,6 @@ namespace DecisionsDotNet;
 ///     await QueueRefundReviewAsync(ticket);
 /// </code>
 /// </example>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public sealed class DecisionModel
 {
     /// <summary>The question ID the single-question verbs send and read back.</summary>
@@ -153,6 +152,7 @@ public sealed class DecisionModel
     /// </summary>
     /// <exception cref="InvalidOperationException"><typeparamref name="T"/> is not a valid decision set. No request is sent.</exception>
     /// <exception cref="DecisionRefusedException">The model refused a question whose property cannot hold a refusal; only <see cref="DecisionVerdict"/> can.</exception>
+    [Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     [RequiresUnreferencedCode(DecisionSets.TrimMessage)]
     [RequiresDynamicCode(DecisionSets.AotMessage)]
     public async Task<T> DecideAsync<[DynamicallyAccessedMembers(DecisionSets.Members)] T>(DecisionsValue input,
@@ -160,6 +160,7 @@ public sealed class DecisionModel
         => (await DecideWithResponseAsync<T>(input, cancellationToken).ConfigureAwait(false)).Value;
 
     /// <summary>Like <see cref="DecideAsync{T}"/>, and also returns the response, for logging and usage accounting.</summary>
+    [Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
     [RequiresUnreferencedCode(DecisionSets.TrimMessage)]
     [RequiresDynamicCode(DecisionSets.AotMessage)]
     public async Task<DecisionSetResult<T>> DecideWithResponseAsync<[DynamicallyAccessedMembers(DecisionSets.Members)] T>(
@@ -206,7 +207,6 @@ public sealed class DecisionModel
 }
 
 /// <summary>Binds Decisions clients to models for the conditional verbs on <see cref="DecisionModel"/>.</summary>
-[Experimental(DecisionsDiagnostics.Conditions, UrlFormat = DecisionsDiagnostics.UrlFormat)]
 public static class DecisionModelExtensions
 {
     /// <summary>Binds the client to a provider-specific model ID. No network call is made.</summary>
